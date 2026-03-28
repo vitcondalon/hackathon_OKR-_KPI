@@ -1,0 +1,15 @@
+[Unit]
+Description=OKR KPI Backend API
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/var/www/okr-kpi/backend
+EnvironmentFile=/var/www/okr-kpi/backend/.env
+ExecStart=/var/www/okr-kpi/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
