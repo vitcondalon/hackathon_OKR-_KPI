@@ -14,6 +14,7 @@ git pull --ff-only origin "$BRANCH"
 python3 -m venv backend/.venv
 backend/.venv/bin/pip install --upgrade pip
 backend/.venv/bin/pip install -r backend/requirements.txt
+backend/.venv/bin/python backend/create_admin.py
 
 cd "$APP_DIR/frontend"
 npm ci

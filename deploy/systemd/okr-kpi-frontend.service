@@ -7,7 +7,6 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/var/www/okr-kpi/frontend
 Environment=NODE_ENV=production
-EnvironmentFile=-/var/www/okr-kpi/frontend/.env.local
 ExecStart=/usr/bin/npm run start -- --hostname 0.0.0.0 --port 3000
 Restart=always
 RestartSec=5

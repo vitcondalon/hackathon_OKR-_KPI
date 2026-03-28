@@ -68,12 +68,18 @@ cd /var/www/okr-kpi/backend
 cd /var/www/okr-kpi/frontend
 cp .env.example .env.local
 npm ci
-npm run build
 ```
 
 Edit `frontend/.env.local` and set:
 
 - `NEXT_PUBLIC_API_URL=/api`
+
+Then build the production frontend:
+
+```bash
+cd /var/www/okr-kpi/frontend
+npm run build
+```
 
 ## 5. Create systemd services
 
@@ -93,6 +99,12 @@ Check status:
 sudo systemctl status okr-kpi-backend
 sudo systemctl status okr-kpi-frontend
 ```
+
+Important:
+
+- `NEXT_PUBLIC_API_URL` is compiled into the frontend bundle at build time.
+- After changing `frontend/.env.local`, you must run `npm run build` again before restarting the frontend service.
+- The frontend systemd service does not need to read `.env.local` at runtime when using `next start`.
 
 ## 6. Open firewall ports
 
@@ -122,6 +134,7 @@ This script will:
 
 - pull the latest code from GitHub
 - reinstall backend dependencies
+- re-run the idempotent admin seed script
 - rebuild the frontend
 - restart both services
 
