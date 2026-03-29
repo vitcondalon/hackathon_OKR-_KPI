@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg-page: #ffffff;
+  --bg-muted: #f8fbff;
+  --line-soft: rgba(15, 23, 42, 0.06);
+  --line-card: #e5eefb;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --blue-500: #246bff;
+  --blue-600: #1a57da;
+  --green-500: #16a34a;
+  --amber-500: #f59e0b;
+  --red-500: #ef4444;
+  --gray-500: #64748b;
+}
+
+body {
+  margin: 0;
+  font-family: 'Manrope', 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+  color: var(--text-primary);
+  background-color: var(--bg-page);
+  background-image:
+    linear-gradient(to right, transparent 0, transparent 23px, var(--line-soft) 24px),
+    linear-gradient(to bottom, transparent 0, transparent 23px, var(--line-soft) 24px),
+    radial-gradient(circle at 12% 8%, rgba(36, 107, 255, 0.07), transparent 34%),
+    radial-gradient(circle at 88% 12%, rgba(59, 130, 246, 0.06), transparent 26%),
+    radial-gradient(circle at 80% 88%, rgba(56, 189, 248, 0.06), transparent 30%);
+  background-size: 24px 24px, 24px 24px, auto, auto, auto;
+  background-attachment: fixed;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(36, 107, 255, 0.18);
+}
+
+input,
+select,
+textarea {
+  @apply w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition;
+  border-color: var(--line-card);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 4px rgba(36, 107, 255, 0.16);
+}
+
+@layer components {
+  .ui-shell {
+    @apply min-h-screen p-4 lg:p-6;
+  }
+
+  .ui-surface {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 251, 255, 0.96) 100%);
+    border: 1px solid var(--line-card);
+    box-shadow: 0 14px 38px rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(1px);
+  }
+
+  .ui-page-enter {
+    animation: uiPageEnter 420ms ease-out;
+  }
+
+  .ui-card-enter {
+    animation: uiCardEnter 360ms ease-out;
+  }
+
+  .ui-soft-hover {
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .ui-soft-hover:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.1);
+    border-color: rgba(36, 107, 255, 0.3);
+  }
+
+  .status-badge {
+    @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold capitalize;
+  }
+}
+
+@keyframes uiPageEnter {
+  0% {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes uiCardEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-page-enter,
+  .ui-card-enter {
+    animation: none !important;
+  }
+
+  .ui-soft-hover {
+    transition: none;
+  }
+}

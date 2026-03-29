@@ -1,0 +1,4 @@
+-- Legacy file intentionally kept for compatibility.
+-- Active database source of truth is:
+--   ../../database/schema.sql
+--   ../../database/seed.sql
