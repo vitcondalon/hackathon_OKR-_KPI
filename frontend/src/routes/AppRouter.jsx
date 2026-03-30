@@ -9,6 +9,7 @@ import ObjectivesPage from '../pages/ObjectivesPage';
 import KeyResultsPage from '../pages/KeyResultsPage';
 import CheckinsPage from '../pages/CheckinsPage';
 import KPIPage from '../pages/KPIPage';
+import FunnyPage from '../pages/FunnyPage';
 import ProfilePage from '../pages/ProfilePage';
 import NotFoundPage from '../pages/NotFoundPage';
 
@@ -38,6 +39,7 @@ export default function AppRouter() {
       <Route path="/key-results" element={<ProtectedRoute><KeyResultsPage /></ProtectedRoute>} />
       <Route path="/checkins" element={<ProtectedRoute><CheckinsPage /></ProtectedRoute>} />
       <Route path="/kpis" element={<ProtectedRoute><KPIPage /></ProtectedRoute>} />
+      <Route path="/funny" element={<ProtectedRoute><FunnyPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<NotFoundPage />} />

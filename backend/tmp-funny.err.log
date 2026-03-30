@@ -1,0 +1,24 @@
+error: password authentication failed for user "postgres"
+    at C:\hackathon_OKR _KPI\backend\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async getUserByIdentifier (C:\hackathon_OKR _KPI\backend\src\services\authService.js:25:18)
+    at async Object.login (C:\hackathon_OKR _KPI\backend\src\services\authService.js:55:16)
+    at async login (C:\hackathon_OKR _KPI\backend\src\controllers\authController.js:22:20) {
+  length: 104,
+  severity: 'FATAL',
+  code: '28P01',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'auth.c',
+  line: '320',
+  routine: 'auth_failed'
+}

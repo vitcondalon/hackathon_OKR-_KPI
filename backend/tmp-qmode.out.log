@@ -1,0 +1,4 @@
+Backend running on http://0.0.0.0:8018/api
+[0mPOST /api/auth/login [32m200[0m 242.644 ms - 633[0m
+[0mGET /api/funny/questions [32m200[0m 6.928 ms - 2817[0m
+[0mPOST /api/funny/chat [32m200[0m 22.687 ms - 1024[0m

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   async function handleSubmit(event) {
@@ -29,6 +31,15 @@ export default function LoginPage() {
   return (
     <div className="ui-shell flex items-center justify-center">
       <div className="grid w-full max-w-6xl gap-5 lg:grid-cols-[1.05fr_0.95fr] ui-page-enter">
+        <div className="lg:col-span-2 flex justify-end">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="ui-soft-hover rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
+          >
+            Theme: {theme === 'dark' ? 'Dark' : 'Light'}
+          </button>
+        </div>
         <section className="ui-surface rounded-3xl p-8 lg:p-12">
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand-700">OKR/KPI PLATFORM</p>
           <h1 className="mt-5 text-4xl font-extrabold leading-tight text-slate-950 lg:text-5xl">

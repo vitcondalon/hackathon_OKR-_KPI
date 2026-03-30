@@ -194,6 +194,18 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS funny_logs (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  conversation_id VARCHAR(100),
+  message TEXT NOT NULL,
+  detected_intent VARCHAR(80) NOT NULL,
+  answer_short TEXT,
+  used_ai BOOLEAN NOT NULL DEFAULT FALSE,
+  model_name VARCHAR(120),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE OR REPLACE FUNCTION fn_set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -280,6 +292,9 @@ CREATE INDEX IF NOT EXISTS idx_kpi_checkins_checkin_date ON kpi_checkins(checkin
 CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_user_id ON audit_logs(actor_user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_funny_logs_user_id ON funny_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_funny_logs_intent ON funny_logs(detected_intent);
+CREATE INDEX IF NOT EXISTS idx_funny_logs_created_at ON funny_logs(created_at DESC);
 
 CREATE OR REPLACE VIEW vw_objective_progress AS
 SELECT

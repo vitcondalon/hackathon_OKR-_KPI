@@ -1,83 +1,30 @@
-# Deployment Guide (Express + Vite)
+# Deployment Guide
 
-## 1. System packages
+This project is deployed as:
+- Backend Node.js API on `127.0.0.1:8000`
+- Frontend Vite build output in `frontend/dist`
+- Nginx serves frontend static files and proxies `/api` to backend
 
-```bash
-sudo apt update
-sudo apt install -y git nodejs npm postgresql postgresql-contrib
-```
+See full production checklist in [DEPLOY_NOTES.md](./DEPLOY_NOTES.md).
 
-## 2. PostgreSQL setup
+## Quick Start
 
-```bash
-sudo -u postgres psql
-```
-
-```sql
-CREATE USER okr_user WITH PASSWORD 'change_this_password';
-CREATE DATABASE okr_kpi_db OWNER okr_user;
-GRANT ALL PRIVILEGES ON DATABASE okr_kpi_db TO okr_user;
-\q
-```
-
-## 3. Backend setup
+1. Configure backend env from `backend/.env.example`.
+2. Configure frontend env from `frontend/.env.example` (`VITE_API_BASE_URL=/api`).
+3. Build frontend:
 
 ```bash
-cd /var/www/okr-kpi/backend
-cp .env.example .env
-npm install
-```
-
-Edit `backend/.env`:
-
-```env
-NODE_ENV=production
-PORT=8000
-HOST=0.0.0.0
-DATABASE_URL=postgresql://okr_user:change_this_password@127.0.0.1:5432/okr_kpi_db
-JWT_SECRET=replace_with_long_random_secret
-JWT_EXPIRES_IN=1d
-```
-
-Seed schema + demo data:
-
-```bash
-npm run seed
-```
-
-Start backend:
-
-```bash
-npm start
-```
-
-## 4. Frontend setup
-
-```bash
-cd /var/www/okr-kpi/frontend
-cp .env.example .env
-npm install
+cd frontend
+npm ci
 npm run build
 ```
 
-Edit `frontend/.env`:
-
-```env
-VITE_API_BASE_URL=https://your-backend-domain/api
-```
-
-Run preview (or serve `dist/` by nginx):
+4. Run backend:
 
 ```bash
-npm run preview
+cd backend
+npm ci
+npm start
 ```
 
-## 5. Demo accounts
-
-- `admin@okr.local / Admin@123`
-- `manager.eng@okr.local / Manager@123`
-- `manager.sales@okr.local / Manager@123`
-- `manager.hr@okr.local / Manager@123`
-- `lan@okr.local / Employee@123`
-- `nam@okr.local / Employee@123`
-- `ha@okr.local / Employee@123`
+5. Configure Nginx with `deploy/nginx/okr-kpi.conf` and reload Nginx.

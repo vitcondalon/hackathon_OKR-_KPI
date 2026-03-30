@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+ï»¿import { useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -159,7 +159,7 @@ export default function DashboardPage() {
                     <p className="font-semibold text-slate-900">{item.full_name}</p>
                     <p className="font-semibold text-brand-600">{percent(item.objective_avg_progress || 0)}</p>
                   </div>
-                  <p className="text-xs text-slate-500">{item.objective_count} objectives • {item.kpi_count} KPIs</p>
+                  <p className="text-xs text-slate-500">{item.objective_count} objectives - {item.kpi_count} KPIs</p>
                 </div>
               ))}
 
@@ -221,3 +221,4 @@ export default function DashboardPage() {
     </AppLayout>
   );
 }
+

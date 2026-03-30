@@ -1,5 +1,5 @@
 [Unit]
-Description=OKR KPI Frontend
+Description=OKR KPI Frontend Preview (Optional)
 After=network.target
 
 [Service]
@@ -7,7 +7,7 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/var/www/okr-kpi/frontend
 Environment=NODE_ENV=production
-ExecStart=/usr/bin/npm run start -- --hostname 0.0.0.0 --port 3000
+ExecStart=/usr/bin/npm run preview -- --host 127.0.0.1 --port 4173
 Restart=always
 RestartSec=5
 

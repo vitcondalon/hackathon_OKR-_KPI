@@ -1,0 +1,21 @@
+Backend running on http://0.0.0.0:8014/api
+[0mGET /api/funny/suggestions [33m401[0m 2.892 ms - 42[0m
+[0mPOST /api/auth/login [32m200[0m 265.271 ms - 633[0m
+[0mPOST /api/auth/login [32m200[0m 109.229 ms - 651[0m
+[0mPOST /api/auth/login [32m200[0m 104.434 ms - 633[0m
+[0mGET /api/funny/health [32m200[0m 7.384 ms - 92[0m
+[0mGET /api/funny/suggestions [32m200[0m 3.415 ms - 182[0m
+[0mPOST /api/funny/chat [32m200[0m 13.037 ms - 478[0m
+[0mPOST /api/funny/chat [32m200[0m 8.131 ms - 498[0m
+[0mPOST /api/funny/chat [32m200[0m 11.255 ms - 600[0m
+[0mPOST /api/funny/chat [32m200[0m 15.980 ms - 1071[0m
+[0mPOST /api/funny/chat [32m200[0m 9.684 ms - 790[0m
+[0mPOST /api/funny/chat [32m200[0m 10.172 ms - 1251[0m
+[0mPOST /api/funny/chat [32m200[0m 37.766 ms - 1721[0m
+[0mPOST /api/funny/chat [32m200[0m 16.191 ms - 1071[0m
+[0mPOST /api/funny/chat [32m200[0m 8.632 ms - 1730[0m
+[0mPOST /api/funny/chat [32m200[0m 6.766 ms - 790[0m
+[0mPOST /api/funny/chat [32m200[0m 37.916 ms - 3198[0m
+[0mPOST /api/funny/chat [32m200[0m 5.905 ms - 478[0m
+[0mPOST /api/funny/chat [33m403[0m 2.956 ms - 59[0m
+[0mPOST /api/funny/chat [33m400[0m 4.389 ms - 132[0m

@@ -1,6 +1,7 @@
 BEGIN;
 
 TRUNCATE TABLE
+  funny_logs,
   audit_logs,
   kpi_checkins,
   kpi_metrics,

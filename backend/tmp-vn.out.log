@@ -1,0 +1,4 @@
+Backend running on http://0.0.0.0:8017/api
+[0mPOST /api/auth/login [32m200[0m 210.201 ms - 633[0m
+[0mGET /api/funny/suggestions [32m200[0m 13.086 ms - 218[0m
+[0mPOST /api/funny/chat [32m200[0m 74.868 ms - 1786[0m

@@ -30,10 +30,17 @@ backend/
       checkinController.js
       kpiController.js
       dashboardController.js
+      funnyController.js
     services/
       authService.js
       progressService.js
       dashboardService.js
+      funny/
+        funnyIntentService.js
+        funnyQueryService.js
+        funnyPromptService.js
+        funnyGeminiService.js
+        funnyResponseService.js
     routes/
       authRoutes.js
       userRoutes.js
@@ -44,10 +51,12 @@ backend/
       checkinRoutes.js
       kpiRoutes.js
       dashboardRoutes.js
+      funnyRoutes.js
     utils/
       jwt.js
       password.js
       response.js
+      aiSanitizer.js
     app.js
     server.js
   scripts/
@@ -84,6 +93,10 @@ HOST=0.0.0.0
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/okr_kpi_db
 JWT_SECRET=change_me_to_a_long_random_secret
 JWT_EXPIRES_IN=1d
+FUNNY_ENABLED=true
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-1.5-flash
+GEMINI_TIMEOUT_MS=8000
 ```
 
 ## Run PostgreSQL (Docker)
@@ -172,15 +185,70 @@ This script executes directly:
   - `/api/dashboard/risks`
   - `/api/dashboard/top-performers`
   - `/api/dashboard/charts`
+- Funny (protected):
+  - `POST /api/funny/chat`
+  - `GET /api/funny/suggestions`
+  - `GET /api/funny/health`
+
+## Funny Internal AI Assistant
+
+`Funny` is an internal AI assistant module for OKR/KPI analytics.
+
+- Safe architecture:
+  - Intent classification with whitelist (`count_users`, `risky_kpis`, `dashboard_summary`, ...)
+  - Fixed backend query functions only (no LLM-generated SQL execution)
+  - Optional Gemini summarization for `generic_analysis`
+  - Fallback to direct DB-based summary when Gemini is not configured or fails
+- Security:
+  - Auth required (`/api/funny/*`)
+  - Zod validation for chat payload
+  - Input sanitization and prompt-injection signal guard
+  - Employee role is limited for broader management analytics intents
+
+### Quick Test (Postman/curl)
+
+1. Login and get token:
+
+```bash
+curl -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"identifier":"admin@okr.local","password":"Admin@123"}'
+```
+
+2. Ask Funny:
+
+```bash
+curl -X POST http://localhost:8000/api/funny/chat \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Hien tai co bao nhieu nhan vien?"}'
+```
+
+3. Suggestions:
+
+```bash
+curl -X GET http://localhost:8000/api/funny/suggestions \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+4. Health:
+
+```bash
+curl -X GET http://localhost:8000/api/funny/health \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+If `GEMINI_API_KEY` is empty or Gemini request fails, Funny still answers using direct DB queries for standard statistical intents and uses deterministic fallback summary for generic analysis.
 
 ## Notes
 
 - Active runtime is Node/Express + PostgreSQL.
 - Legacy backend schema file `backend/src/db/init.sql` is marked deprecated and not used by runtime.
-- Frontend remains optional at this stage; backend APIs are prioritized.
+- Frontend production API base URL must use `VITE_API_BASE_URL=/api`.
+- Detailed production instructions: `DEPLOY_NOTES.md`.
 
 ## Swagger
 
-- UI: http://localhost:8000/api/docs`r
-- OpenAPI JSON: http://localhost:8000/api/docs/openapi.json`r
+- UI: http://localhost:8000/api/docs
+- OpenAPI JSON: http://localhost:8000/api/docs/openapi.json
 

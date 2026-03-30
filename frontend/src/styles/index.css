@@ -16,6 +16,26 @@
   --amber-500: #f59e0b;
   --red-500: #ef4444;
   --gray-500: #64748b;
+  --input-bg: #ffffff;
+  --input-text: #0f172a;
+  --surface-top: rgba(255, 255, 255, 0.96);
+  --surface-bottom: rgba(248, 251, 255, 0.96);
+  --surface-shadow: 0 14px 38px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg-page: #020617;
+  --bg-muted: #0f172a;
+  --line-soft: rgba(148, 163, 184, 0.1);
+  --line-card: rgba(148, 163, 184, 0.35);
+  --text-primary: #e2e8f0;
+  --text-secondary: #cbd5e1;
+  --input-bg: #0f172a;
+  --input-text: #e2e8f0;
+  --surface-top: rgba(15, 23, 42, 0.92);
+  --surface-bottom: rgba(2, 6, 23, 0.92);
+  --surface-shadow: 0 16px 40px rgba(2, 6, 23, 0.55);
 }
 
 body {
@@ -44,8 +64,10 @@ body {
 input,
 select,
 textarea {
-  @apply w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition;
+  @apply w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition;
   border-color: var(--line-card);
+  background-color: var(--input-bg);
+  color: var(--input-text);
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
@@ -62,9 +84,9 @@ textarea:focus {
   }
 
   .ui-surface {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 251, 255, 0.96) 100%);
+    background: linear-gradient(180deg, var(--surface-top) 0%, var(--surface-bottom) 100%);
     border: 1px solid var(--line-card);
-    box-shadow: 0 14px 38px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--surface-shadow);
     backdrop-filter: blur(1px);
   }
 
@@ -89,6 +111,64 @@ textarea:focus {
   .status-badge {
     @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold capitalize;
   }
+}
+
+:root[data-theme='dark'] .bg-white {
+  background-color: #0f172a !important;
+}
+
+:root[data-theme='dark'] .bg-white\/95,
+:root[data-theme='dark'] .bg-white\/90,
+:root[data-theme='dark'] .bg-white\/80 {
+  background-color: #0b1730 !important;
+}
+
+:root[data-theme='dark'] .bg-slate-50,
+:root[data-theme='dark'] .bg-slate-50\/70,
+:root[data-theme='dark'] .bg-slate-50\/80 {
+  background-color: #1e293b !important;
+}
+
+:root[data-theme='dark'] .bg-brand-50\/50 {
+  background-color: rgba(36, 107, 255, 0.14) !important;
+}
+
+:root[data-theme='dark'] .border-slate-200,
+:root[data-theme='dark'] .border-brand-100 {
+  border-color: rgba(148, 163, 184, 0.35) !important;
+}
+
+:root[data-theme='dark'] .text-slate-950,
+:root[data-theme='dark'] .text-slate-900 {
+  color: #f8fafc !important;
+}
+
+:root[data-theme='dark'] .text-slate-800,
+:root[data-theme='dark'] .text-slate-700 {
+  color: #e2e8f0 !important;
+}
+
+:root[data-theme='dark'] .text-slate-600,
+:root[data-theme='dark'] .text-slate-500 {
+  color: #c2cfdf !important;
+}
+
+:root[data-theme='dark'] input::placeholder,
+:root[data-theme='dark'] textarea::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+
+:root[data-theme='dark'] table thead tr {
+  background-color: #1e293b !important;
+}
+
+:root[data-theme='dark'] table tbody td {
+  color: #e5edf8 !important;
+}
+
+:root[data-theme='dark'] table tbody tr:hover {
+  background-color: rgba(36, 107, 255, 0.12) !important;
 }
 
 @keyframes uiPageEnter {

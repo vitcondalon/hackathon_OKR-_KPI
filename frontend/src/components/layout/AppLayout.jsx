@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -10,11 +11,13 @@ const navItems = [
   { to: '/key-results', label: 'Key Results' },
   { to: '/checkins', label: 'Check-ins' },
   { to: '/kpis', label: 'KPIs' },
+  { to: '/funny', label: 'Funny AI' },
   { to: '/profile', label: 'Profile' }
 ];
 
 export default function AppLayout({ title, children }) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   return (
@@ -71,9 +74,18 @@ export default function AppLayout({ title, children }) {
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-700">Workspace</p>
                 <h2 className="mt-1 text-2xl font-extrabold text-slate-950 md:text-3xl">{title}</h2>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-right text-sm">
-                <p className="font-semibold text-slate-900">{user?.full_name}</p>
-                <p className="text-xs uppercase tracking-[0.14em] text-slate-500">{user?.role}</p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="ui-soft-hover rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
+                >
+                  Theme: {theme === 'dark' ? 'Dark' : 'Light'}
+                </button>
+                <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-right text-sm">
+                  <p className="font-semibold text-slate-900">{user?.full_name}</p>
+                  <p className="text-xs uppercase tracking-[0.14em] text-slate-500">{user?.role}</p>
+                </div>
               </div>
             </div>
 

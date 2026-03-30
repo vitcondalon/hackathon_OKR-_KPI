@@ -1,7 +1,9 @@
 const path = require('path');
 const dotenv = require('dotenv');
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({
+  path: path.resolve(__dirname, '../../.env')
+});
 
 function required(name) {
   const value = process.env[name];
@@ -18,7 +20,11 @@ const env = {
   apiPrefix: '/api',
   databaseUrl: required('DATABASE_URL'),
   jwtSecret: required('JWT_SECRET'),
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1d'
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1d',
+  funnyEnabled: process.env.FUNNY_ENABLED !== 'false',
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
+  geminiModel: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+  geminiTimeoutMs: Number(process.env.GEMINI_TIMEOUT_MS || 8000)
 };
 
 module.exports = env;

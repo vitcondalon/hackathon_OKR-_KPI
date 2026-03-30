@@ -1,8 +1,20 @@
 import axios from 'axios';
 import { clearToken, getToken } from '../lib/authStorage';
 
+function resolveApiBaseUrl() {
+  const raw = import.meta.env.VITE_API_BASE_URL;
+  if (!raw || typeof raw !== 'string') {
+    return '/api';
+  }
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return '/api';
+  }
+  return trimmed.replace(/\/+$/, '');
+}
+
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+  baseURL: resolveApiBaseUrl(),
   timeout: 15000
 });
 
