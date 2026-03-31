@@ -9,6 +9,9 @@ BACKEND_ENV_FILE="${BACKEND_ENV_FILE:-$APP_DIR/backend/.env}"
 FRONTEND_ENV_FILE="${FRONTEND_ENV_FILE:-$APP_DIR/frontend/.env}"
 BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://127.0.0.1:8000/health}"
 GUIDE_INFO_URL="${GUIDE_INFO_URL:-http://127.0.0.1:8000/api/guides/user-guide}"
+BACKEND_STARTUP_RETRIES="${BACKEND_STARTUP_RETRIES:-30}"
+BACKEND_STARTUP_SLEEP_SECONDS="${BACKEND_STARTUP_SLEEP_SECONDS:-1}"
+DISABLE_DEFAULT_NGINX_SITE="${DISABLE_DEFAULT_NGINX_SITE:-true}"
 
 DO_INIT="false"
 DO_SEED="false"
@@ -67,6 +70,9 @@ if [[ "$DO_INIT" == "true" ]]; then
   sudo cp "$APP_DIR/deploy/systemd/okr-kpi-backend.service" "/etc/systemd/system/$BACKEND_SERVICE.service"
   sudo cp "$APP_DIR/deploy/nginx/okr-kpi.conf" "/etc/nginx/sites-available/okr-kpi"
   sudo ln -sf "/etc/nginx/sites-available/okr-kpi" "/etc/nginx/sites-enabled/okr-kpi"
+  if [[ "$DISABLE_DEFAULT_NGINX_SITE" == "true" ]]; then
+    sudo rm -f /etc/nginx/sites-enabled/default
+  fi
   sudo systemctl daemon-reload
   sudo nginx -t
 fi
@@ -94,12 +100,24 @@ print_step "Building frontend"
 npm run build
 
 print_step "Restarting services"
+sudo systemctl daemon-reload
 sudo systemctl restart "$BACKEND_SERVICE"
 sudo nginx -t
 sudo systemctl reload "$NGINX_SERVICE"
 
 print_step "Running smoke checks"
-curl -fsS "$BACKEND_HEALTH_URL" >/dev/null
+for ((i=1; i<=BACKEND_STARTUP_RETRIES; i++)); do
+  if curl -fsS "$BACKEND_HEALTH_URL" >/dev/null; then
+    break
+  fi
+  if [[ "$i" == "$BACKEND_STARTUP_RETRIES" ]]; then
+    echo "Backend health check failed after $BACKEND_STARTUP_RETRIES attempts: $BACKEND_HEALTH_URL"
+    sudo systemctl status "$BACKEND_SERVICE" --no-pager -l || true
+    sudo journalctl -u "$BACKEND_SERVICE" -n 80 --no-pager || true
+    exit 1
+  fi
+  sleep "$BACKEND_STARTUP_SLEEP_SECONDS"
+done
 curl -fsS "$GUIDE_INFO_URL" >/dev/null
 sudo systemctl is-active --quiet "$BACKEND_SERVICE"
 

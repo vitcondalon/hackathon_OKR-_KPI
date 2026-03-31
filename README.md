@@ -197,7 +197,7 @@ This script executes directly:
   - `GET /api/insights/overview`
 - Guides:
   - `GET /api/guides/user-guide`
-  - `GET /api/guides/user-guide/raw`
+  - `GET /api/guides/user-guide/view`
   - `GET /api/guides/user-guide/download`
 
 ## Funny Internal AI Assistant

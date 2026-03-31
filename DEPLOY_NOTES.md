@@ -54,6 +54,14 @@ server {
 
 Important:
 - `proxy_pass http://127.0.0.1:8000;` (no trailing slash) to keep `/api` prefix intact.
+- Keep public access on `80/443` only, and keep app processes internal (`127.0.0.1:*`).
+
+## 3.1 Cloudflare SSL (Recommended)
+
+- DNS records for `@` and `www` should be **Proxied**.
+- Use SSL mode `Full` or `Full (strict)`. Avoid `Flexible`.
+- For `Full (strict)`, install a Cloudflare Origin CA certificate/key on Nginx.
+- Prevent redirect loops: avoid duplicate or conflicting HTTPS redirects between Cloudflare and origin.
 
 ## 4. Backend Production Env
 
@@ -98,3 +106,10 @@ cd ../frontend && npm ci && npm run build
 sudo systemctl restart okr-kpi-backend
 sudo systemctl reload nginx
 ```
+
+## 7. Deploy Script Notes
+
+`deploy/update_app.sh` now:
+- checks required env files,
+- removes default nginx site on `--init` by default (can disable via `DISABLE_DEFAULT_NGINX_SITE=false`),
+- retries backend health check (`BACKEND_STARTUP_RETRIES`, default `30`) before failing.
