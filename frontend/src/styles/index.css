@@ -4,38 +4,41 @@
 
 :root {
   color-scheme: light;
-  --bg-page: #ffffff;
-  --bg-muted: #f8fbff;
+  --bg-page: #f6f8fc;
+  --bg-muted: #eef4ff;
   --line-soft: rgba(15, 23, 42, 0.06);
-  --line-card: #e5eefb;
+  --line-card: rgba(148, 163, 184, 0.22);
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --blue-500: #246bff;
-  --blue-600: #1a57da;
+  --blue-600: #1d5ce1;
   --green-500: #16a34a;
   --amber-500: #f59e0b;
   --red-500: #ef4444;
-  --gray-500: #64748b;
-  --input-bg: #ffffff;
+  --surface-top: rgba(255, 255, 255, 0.92);
+  --surface-bottom: rgba(248, 251, 255, 0.94);
+  --surface-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+  --input-bg: rgba(255, 255, 255, 0.96);
   --input-text: #0f172a;
-  --surface-top: rgba(255, 255, 255, 0.96);
-  --surface-bottom: rgba(248, 251, 255, 0.96);
-  --surface-shadow: 0 14px 38px rgba(15, 23, 42, 0.08);
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg-page: #020617;
+  --bg-page: #07111f;
   --bg-muted: #0f172a;
-  --line-soft: rgba(148, 163, 184, 0.1);
-  --line-card: rgba(148, 163, 184, 0.35);
+  --line-soft: rgba(148, 163, 184, 0.08);
+  --line-card: rgba(148, 163, 184, 0.28);
   --text-primary: #e2e8f0;
   --text-secondary: #cbd5e1;
-  --input-bg: #0f172a;
+  --surface-top: rgba(15, 23, 42, 0.9);
+  --surface-bottom: rgba(7, 17, 31, 0.92);
+  --surface-shadow: 0 26px 66px rgba(2, 6, 23, 0.48);
+  --input-bg: rgba(15, 23, 42, 0.92);
   --input-text: #e2e8f0;
-  --surface-top: rgba(15, 23, 42, 0.92);
-  --surface-bottom: rgba(2, 6, 23, 0.92);
-  --surface-shadow: 0 16px 40px rgba(2, 6, 23, 0.55);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -44,13 +47,20 @@ body {
   color: var(--text-primary);
   background-color: var(--bg-page);
   background-image:
-    linear-gradient(to right, transparent 0, transparent 23px, var(--line-soft) 24px),
-    linear-gradient(to bottom, transparent 0, transparent 23px, var(--line-soft) 24px),
-    radial-gradient(circle at 12% 8%, rgba(36, 107, 255, 0.07), transparent 34%),
-    radial-gradient(circle at 88% 12%, rgba(59, 130, 246, 0.06), transparent 26%),
-    radial-gradient(circle at 80% 88%, rgba(56, 189, 248, 0.06), transparent 30%);
-  background-size: 24px 24px, 24px 24px, auto, auto, auto;
+    radial-gradient(circle at top left, rgba(36, 107, 255, 0.13), transparent 22%),
+    radial-gradient(circle at right 10%, rgba(14, 165, 233, 0.12), transparent 20%),
+    radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.08), transparent 24%),
+    linear-gradient(to right, transparent 0, transparent 31px, var(--line-soft) 32px),
+    linear-gradient(to bottom, transparent 0, transparent 31px, var(--line-soft) 32px);
+  background-size: auto, auto, auto, 32px 32px, 32px 32px;
   background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
 * {
@@ -64,38 +74,43 @@ body {
 input,
 select,
 textarea {
-  @apply w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition;
+  @apply w-full rounded-2xl border px-3.5 py-3 text-sm outline-none transition;
   border-color: var(--line-card);
   background-color: var(--input-bg);
   color: var(--input-text);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--blue-500);
-  box-shadow: 0 0 0 4px rgba(36, 107, 255, 0.16);
+  box-shadow: 0 0 0 4px rgba(36, 107, 255, 0.14);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
 }
 
 @layer components {
   .ui-shell {
-    @apply min-h-screen p-4 lg:p-6;
+    @apply min-h-screen p-3 sm:p-4 xl:p-6;
   }
 
   .ui-surface {
     background: linear-gradient(180deg, var(--surface-top) 0%, var(--surface-bottom) 100%);
     border: 1px solid var(--line-card);
     box-shadow: var(--surface-shadow);
-    backdrop-filter: blur(1px);
+    backdrop-filter: blur(18px);
   }
 
   .ui-page-enter {
-    animation: uiPageEnter 420ms ease-out;
+    animation: uiPageEnter 400ms ease-out;
   }
 
   .ui-card-enter {
-    animation: uiCardEnter 360ms ease-out;
+    animation: uiCardEnter 320ms ease-out;
   }
 
   .ui-soft-hover {
@@ -104,8 +119,8 @@ textarea:focus {
 
   .ui-soft-hover:hover {
     transform: translateY(-1px);
-    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.1);
-    border-color: rgba(36, 107, 255, 0.3);
+    box-shadow: 0 22px 44px rgba(15, 23, 42, 0.1);
+    border-color: rgba(36, 107, 255, 0.24);
   }
 
   .status-badge {
@@ -114,28 +129,29 @@ textarea:focus {
 }
 
 :root[data-theme='dark'] .bg-white {
-  background-color: #0f172a !important;
+  background-color: rgba(15, 23, 42, 0.92) !important;
 }
 
 :root[data-theme='dark'] .bg-white\/95,
 :root[data-theme='dark'] .bg-white\/90,
 :root[data-theme='dark'] .bg-white\/80 {
-  background-color: #0b1730 !important;
+  background-color: rgba(15, 23, 42, 0.9) !important;
+}
+
+:root[data-theme='dark'] .bg-brand-50,
+:root[data-theme='dark'] .bg-brand-50\/80 {
+  background-color: rgba(29, 92, 225, 0.18) !important;
 }
 
 :root[data-theme='dark'] .bg-slate-50,
 :root[data-theme='dark'] .bg-slate-50\/70,
 :root[data-theme='dark'] .bg-slate-50\/80 {
-  background-color: #1e293b !important;
-}
-
-:root[data-theme='dark'] .bg-brand-50\/50 {
-  background-color: rgba(36, 107, 255, 0.14) !important;
+  background-color: rgba(30, 41, 59, 0.9) !important;
 }
 
 :root[data-theme='dark'] .border-slate-200,
 :root[data-theme='dark'] .border-brand-100 {
-  border-color: rgba(148, 163, 184, 0.35) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
 }
 
 :root[data-theme='dark'] .text-slate-950,
@@ -149,32 +165,28 @@ textarea:focus {
 }
 
 :root[data-theme='dark'] .text-slate-600,
-:root[data-theme='dark'] .text-slate-500 {
-  color: #c2cfdf !important;
+:root[data-theme='dark'] .text-slate-500,
+:root[data-theme='dark'] .text-slate-400 {
+  color: #cbd5e1 !important;
 }
 
-:root[data-theme='dark'] input::placeholder,
-:root[data-theme='dark'] textarea::placeholder {
-  color: #94a3b8;
-  opacity: 1;
+:root[data-theme='dark'] .text-brand-700,
+:root[data-theme='dark'] .text-brand-600 {
+  color: #93c5fd !important;
 }
 
 :root[data-theme='dark'] table thead tr {
-  background-color: #1e293b !important;
-}
-
-:root[data-theme='dark'] table tbody td {
-  color: #e5edf8 !important;
+  background-color: rgba(30, 41, 59, 0.92) !important;
 }
 
 :root[data-theme='dark'] table tbody tr:hover {
-  background-color: rgba(36, 107, 255, 0.12) !important;
+  background-color: rgba(36, 107, 255, 0.1) !important;
 }
 
 @keyframes uiPageEnter {
   0% {
     opacity: 0;
-    filter: blur(4px);
+    filter: blur(5px);
     transform: translateY(14px);
   }
   100% {
@@ -203,5 +215,9 @@ textarea:focus {
 
   .ui-soft-hover {
     transition: none;
+  }
+
+  html {
+    scroll-behavior: auto;
   }
 }

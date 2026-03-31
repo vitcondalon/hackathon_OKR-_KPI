@@ -1,6 +1,6 @@
 const { z } = require('zod');
 const { query } = require('../config/db');
-const { sendSuccess, sendCreated } = require('../utils/response');
+const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
 
 const departmentSchema = z.object({
   code: z.string().trim().min(2).max(30).optional(),
@@ -266,7 +266,7 @@ async function deleteDepartment(req, res, next) {
       throw error;
     }
 
-    return res.status(204).send();
+    return sendNoContent(res);
   } catch (error) {
     return next(error);
   }

@@ -5,6 +5,7 @@ import { kpiApi } from '../api/kpiApi';
 import { usersApi } from '../api/usersApi';
 import { departmentsApi } from '../api/departmentsApi';
 import { cyclesApi } from '../api/cyclesApi';
+import { percent } from '../utils/format';
 
 export default function KPIPage() {
   const [ownerOptions, setOwnerOptions] = useState([]);
@@ -26,7 +27,7 @@ export default function KPIPage() {
   }, []);
 
   return (
-    <AppLayout title="KPI Management">
+    <AppLayout title="KPI Management" description="Monitor KPI ownership, current values, and status with a cleaner decision-friendly layout.">
       <EntityCrudPage
         title="KPI"
         description="Employee and department KPIs with progress tracking"
@@ -69,7 +70,20 @@ export default function KPIPage() {
           { key: 'name', label: 'Name' },
           { key: 'target_value', label: 'Target' },
           { key: 'current_value', label: 'Current' },
-          { key: 'progress', label: 'Progress' },
+          {
+            key: 'progress',
+            label: 'Progress',
+            render: (row) => (
+              <div className="min-w-[150px]">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="font-semibold text-slate-700">{percent(row.progress || 0)}</span>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-slate-100">
+                  <div className="h-2 rounded-full bg-emerald-500" style={{ width: percent(row.progress || 0) }} />
+                </div>
+              </div>
+            )
+          },
           { key: 'status', label: 'Status' }
         ]}
         loadItems={kpiApi.list}

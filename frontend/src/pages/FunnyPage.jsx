@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
 import Card from '../components/common/Card';
@@ -7,74 +7,133 @@ import { funnyApi } from '../api/funnyApi';
 import { apiErrorMessage } from '../api/helpers';
 
 const TXT = {
-  pageTitle: 'Funny - Preset Questions',
-  cardTitle: 'Funny Answers from a Fixed Question Set',
-  cardSubtitle: 'Preset Questions Only',
-  emptyChat: 'No conversation yet. Pick a question and click "Ask Funny".',
-  questionLabel: 'Select a question (30 practical templates)',
-  selectedPrefix: 'Selected:',
-  askBtn: 'Ask Funny',
-  loadingBtn: 'Funny is processing...',
-  healthTitle: 'Module Status',
-  healthSubtitle: 'Funny backend health',
-  loadingHealth: 'Loading module status...',
-  noteTitle: 'Usage Notes',
-  noteSubtitle: 'Fixed Flow',
-  note1: 'No free-form question input.',
-  note2: 'Only questions from the preset list are allowed.',
-  note3: 'Each answer includes quick navigation links.',
-  linksTitle: 'Related Links',
-  loadQuestionError: 'Failed to load Funny question list',
-  noAnswer: 'Funny has no response yet.',
+  pageTitle: 'Funny Assistant',
+  heroTitle: 'Assistant workspace for fast OKR/KPI decisions',
+  heroSubtitle: 'Use preset prompts, free-form questions, explain cards, and role-based recommendations in one place.',
+  emptyChat: 'No conversation yet. Start with a preset, type your own question, or pick a recommendation.',
+  loadError: 'Failed to load Funny workspace',
   askError: 'Funny request failed',
-  askErrorBubble: 'Funny failed to process this question. Please try again.'
+  askErrorBubble: 'Funny could not answer that request. Try another question or switch to a preset.',
+  noAnswer: 'Funny has no response yet.',
+  noRecommendations: 'No recommendations available yet.',
+  noQuickActions: 'No quick actions available yet.',
+  noInsights: 'No insights available yet.'
 };
 
-function MessageBubble({ item }) {
+function safeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function objectOrNull(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+}
+
+function normalizeQuickAction(action) {
+  const targetRoute = action?.targetRoute || action?.path || action?.target || '/dashboard';
+  return {
+    label: action?.label || 'Open',
+    actionType: action?.actionType || 'navigate',
+    targetRoute,
+    questionId: action?.questionId || action?.sourceQuestionId || null
+  };
+}
+
+function normalizeRecommended(item) {
+  return {
+    id: item?.id || '',
+    text: item?.text || 'Suggested question',
+    intent: item?.intent || '',
+    category: item?.category || 'general',
+    targetRoute: item?.targetRoute || '/dashboard',
+    reason: item?.reason || ''
+  };
+}
+
+function normalizeInsight(item, idx) {
+  return {
+    id: item?.id || `${item?.type || 'insight'}-${idx}`,
+    type: item?.type || 'insight',
+    label: item?.label || item?.title || 'Insight',
+    message: item?.message || '',
+    value: Number.isFinite(Number(item?.value)) ? Number(item.value) : item?.value || 0,
+    severity: item?.severity || 'info',
+    targetRoute: item?.targetRoute || '/dashboard'
+  };
+}
+
+function roleBadgeTone(role) {
+  if (role === 'admin') return 'border-rose-200 bg-rose-50 text-rose-700';
+  if (role === 'manager') return 'border-amber-200 bg-amber-50 text-amber-700';
+  return 'border-sky-200 bg-sky-50 text-sky-700';
+}
+
+function insightTone(severity) {
+  if (severity === 'critical') return 'border-red-200 bg-red-50/80 text-red-700';
+  if (severity === 'warning') return 'border-amber-200 bg-amber-50/80 text-amber-700';
+  return 'border-sky-200 bg-sky-50/80 text-sky-700';
+}
+
+function askableAction(action) {
+  return action.actionType === 'ask_question' || Boolean(action.questionId);
+}
+
+function LinkPills({ links = [] }) {
+  if (safeArray(links).length === 0) return null;
+  return (
+    <div className="rounded-[1.3rem] border border-slate-200 bg-slate-50/80 p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Related links</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {links.map((link) => (
+          <Link key={`${link.label}-${link.path}`} to={link.path} className="rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-700">
+            {link.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MessageBubble({ item, onAskQuestion }) {
   const isUser = item.role === 'user';
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div
-        className={`max-w-[90%] rounded-2xl border px-4 py-3 text-sm ${
-          isUser
-            ? 'border-brand-200 bg-brand-500 text-white'
-            : 'border-slate-200 bg-white text-slate-800'
-        }`}
-      >
+      <div className={`max-w-full rounded-[1.6rem] border px-4 py-3 sm:max-w-[92%] ${isUser ? 'border-brand-400 bg-brand-500 text-white' : 'border-slate-200 bg-white/95 text-slate-800'}`}>
         {isUser ? (
-          <p className="whitespace-pre-wrap">{item.text}</p>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed">{item.text}</p>
         ) : (
-          <div className="space-y-2">
-            <p className="whitespace-pre-wrap">{item.answer}</p>
-            {item.intent ? (
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="status-badge border-slate-200 bg-slate-50 text-slate-700">
-                  intent: {item.intent}
-                </span>
-                {item.meta?.fallback ? (
-                  <span className="status-badge border-amber-200 bg-amber-50 text-amber-700">fallback</span>
-                ) : null}
-                {item.meta?.usedAI ? (
-                  <span className="status-badge border-emerald-200 bg-emerald-50 text-emerald-700">
-                    AI: {item.meta?.model || 'gemini'}
-                  </span>
-                ) : null}
+          <div className="space-y-3">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed">{item.answer}</p>
+            <div className="flex flex-wrap gap-2 text-xs">
+              {item.intent ? <span className="status-badge border-slate-200 bg-slate-50 text-slate-700">intent: {item.intent}</span> : null}
+              {item.meta?.fallback ? <span className="status-badge border-amber-200 bg-amber-50 text-amber-700">fallback</span> : null}
+              {item.meta?.usedAI ? <span className="status-badge border-emerald-200 bg-emerald-50 text-emerald-700">AI enabled</span> : null}
+            </div>
+            <LinkPills links={item.links} />
+            {safeArray(item.quickActions).length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {item.quickActions.slice(0, 5).map((action, idx) => {
+                  const mapped = normalizeQuickAction(action);
+                  return askableAction(mapped) ? (
+                    <button key={`${item.id}-action-${idx}`} type="button" onClick={() => mapped.questionId && onAskQuestion(mapped.questionId)} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">
+                      {mapped.label}
+                    </button>
+                  ) : (
+                    <Link key={`${item.id}-link-${idx}`} to={mapped.targetRoute} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">
+                      {mapped.label}
+                    </Link>
+                  );
+                })}
               </div>
             ) : null}
-
-            {Array.isArray(item.links) && item.links.length > 0 ? (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-                <p className="text-xs font-semibold text-slate-600">{TXT.linksTitle}</p>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {item.links.map((link) => (
-                    <Link
-                      key={`${item.id}-${link.path}`}
-                      to={link.path}
-                      className="rounded-lg border border-brand-200 bg-white px-2 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-50"
-                    >
-                      {link.label}
-                    </Link>
+            {safeArray(item.suggestions).length > 0 ? (
+              <div className="rounded-[1.3rem] border border-brand-100 bg-brand-50/80 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-700">Suggested follow-ups</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {item.suggestions.slice(0, 4).map((suggestion) => (
+                    <span key={`${item.id}-${suggestion}`} className="rounded-full border border-brand-200 bg-white px-3 py-1 text-xs text-slate-700">
+                      {suggestion}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -86,161 +145,357 @@ function MessageBubble({ item }) {
   );
 }
 
+function SummaryPanel({ summary, suggestions }) {
+  const role = summary?.role || 'employee';
+  const roleSummary = objectOrNull(summary?.role_summary) || {};
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className={`status-badge ${roleBadgeTone(role)}`}>{role}</span>
+        <span className="status-badge border-slate-200 bg-white text-slate-600">Active cycles: {summary?.active_cycles?.total ?? 0}</span>
+      </div>
+
+      {summary?.narrative ? (
+        <div className="rounded-[1.4rem] border border-brand-100 bg-brand-50/80 p-4 text-sm leading-relaxed text-slate-700">
+          {summary.narrative}
+        </div>
+      ) : null}
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4">
+          <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Pending check-ins</p>
+          <p className="mt-2 text-2xl font-extrabold text-amber-600">{summary?.risk_snapshot?.pending_checkins ?? roleSummary.pending_checkins?.total ?? 0}</p>
+        </div>
+        <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4">
+          <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Risky KPIs</p>
+          <p className="mt-2 text-2xl font-extrabold text-red-600">{summary?.risk_snapshot?.risky_kpis ?? roleSummary.risky_kpis?.total ?? 0}</p>
+        </div>
+      </div>
+
+      {safeArray(roleSummary.priorities || suggestions).length > 0 ? (
+        <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/80 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">What to focus on</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {safeArray(roleSummary.priorities || suggestions).slice(0, 5).map((item) => (
+              <span key={item} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function FunnyPage() {
   const [questions, setQuestions] = useState([]);
   const [selectedId, setSelectedId] = useState('');
+  const [freeText, setFreeText] = useState('');
   const [chat, setChat] = useState([]);
   const [health, setHealth] = useState(null);
+  const [recommended, setRecommended] = useState([]);
+  const [quickActions, setQuickActions] = useState([]);
+  const [insights, setInsights] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [freeSuggestions, setFreeSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const chatEndRef = useRef(null);
 
-  const conversationId = useMemo(
-    () => `funny-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-    []
-  );
+  const conversationId = useMemo(() => `funny-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, []);
 
   useEffect(() => {
     async function bootstrap() {
       try {
-        const [questionItems, healthData] = await Promise.all([
+        const [questionItems, healthData, suggestionData, summaryData] = await Promise.all([
           funnyApi.questions(),
-          funnyApi.health()
+          funnyApi.health(),
+          funnyApi.suggestions(),
+          funnyApi.summary().catch(() => null)
         ]);
 
-        setQuestions(questionItems || []);
-        if (questionItems?.[0]?.id) {
-          setSelectedId(questionItems[0].id);
-        }
+        const normalizedQuestions = safeArray(questionItems);
+        setQuestions(normalizedQuestions);
+        if (normalizedQuestions[0]?.id) setSelectedId(normalizedQuestions[0].id);
+
         setHealth(healthData || null);
+        setRecommended(safeArray(suggestionData?.recommendedQuestions).map(normalizeRecommended));
+        setQuickActions(safeArray(suggestionData?.quickActions).map(normalizeQuickAction));
+        setInsights(safeArray(suggestionData?.insights).map(normalizeInsight));
+        setFreeSuggestions(safeArray(suggestionData?.suggestions));
+
+        if (summaryData?.summary) {
+          setSummary(summaryData.summary);
+          if (safeArray(summaryData.recommendedQuestions).length > 0) setRecommended(summaryData.recommendedQuestions.map(normalizeRecommended));
+          if (safeArray(summaryData.quickActions).length > 0) setQuickActions(summaryData.quickActions.map(normalizeQuickAction));
+          if (safeArray(summaryData.insights).length > 0) setInsights(summaryData.insights.map(normalizeInsight));
+          if (safeArray(summaryData.suggestions).length > 0) setFreeSuggestions(summaryData.suggestions);
+        }
       } catch (err) {
-        setError(apiErrorMessage(err, TXT.loadQuestionError));
+        setError(apiErrorMessage(err, TXT.loadError));
       }
     }
 
     bootstrap();
   }, []);
 
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [chat]);
+
   const selectedQuestion = questions.find((item) => item.id === selectedId);
+  const explainQuestions = questions.filter((item) => item.category === 'help' || String(item.intent || '').startsWith('explain_'));
+  const heroStats = [
+    { label: 'Chat turns', value: chat.filter((item) => item.role === 'assistant').length },
+    { label: 'Recommendations', value: recommended.length },
+    { label: 'Insights', value: insights.length }
+  ];
 
-  async function handleAsk() {
-    if (!selectedId || loading) return;
+  async function runQuestion({ question, message, fromQuickAction = false }) {
+    if ((!question?.id && !message) || loading) return;
 
+    const userText = question?.text || message;
     setError('');
     setLoading(true);
-
-    const questionText = selectedQuestion?.text || '';
-    setChat((prev) => [...prev, { id: `${Date.now()}-u`, role: 'user', text: questionText }]);
+    setChat((prev) => [...prev, { id: `${Date.now()}-user`, role: 'user', text: userText }]);
 
     try {
       const response = await funnyApi.chat({
-        questionId: selectedId,
+        questionId: question?.id,
+        message,
         conversationId
       });
 
       setChat((prev) => [
         ...prev,
         {
-          id: `${Date.now()}-a`,
+          id: `${Date.now()}-assistant`,
           role: 'assistant',
-          answer: response?.answer || TXT.noAnswer,
-          intent: response?.intent,
-          links: response?.links || [],
-          meta: response?.meta || {}
+          answer: response.answer || TXT.noAnswer,
+          intent: response.intent,
+          links: safeArray(response.links),
+          quickActions: safeArray(response.quickActions).map(normalizeQuickAction),
+          suggestions: safeArray(response.suggestions),
+          insights: safeArray(response.insights).map(normalizeInsight),
+          meta: response.meta || {}
         }
       ]);
+
+      if (safeArray(response.recommendedQuestions).length > 0) setRecommended(response.recommendedQuestions.map(normalizeRecommended));
+      if (safeArray(response.quickActions).length > 0) setQuickActions(response.quickActions.map(normalizeQuickAction));
+      if (safeArray(response.insights).length > 0) setInsights(response.insights.map(normalizeInsight));
+      if (safeArray(response.suggestions).length > 0) setFreeSuggestions(response.suggestions);
+      if (!fromQuickAction && question?.id) setSelectedId(question.id);
+      if (message) setFreeText('');
     } catch (err) {
       setError(apiErrorMessage(err, TXT.askError));
       setChat((prev) => [
         ...prev,
-        {
-          id: `${Date.now()}-e`,
-          role: 'assistant',
-          answer: TXT.askErrorBubble,
-          intent: null,
-          links: [],
-          meta: {}
-        }
+        { id: `${Date.now()}-error`, role: 'assistant', answer: TXT.askErrorBubble, intent: '', links: [], quickActions: [], suggestions: [], insights: [], meta: { fallback: true } }
       ]);
     } finally {
       setLoading(false);
     }
   }
 
+  async function handlePresetAsk() {
+    if (!selectedQuestion) return;
+    await runQuestion({ question: selectedQuestion });
+  }
+
+  async function handleMessageSubmit(event) {
+    event.preventDefault();
+    const text = freeText.trim();
+    if (!text) return;
+    await runQuestion({ message: text });
+  }
+
+  async function handleQuickAction(action) {
+    const mapped = normalizeQuickAction(action);
+    if (!askableAction(mapped)) return;
+    const question = questions.find((item) => item.id === mapped.questionId);
+    if (question) await runQuestion({ question, fromQuickAction: true });
+  }
+
   return (
-    <AppLayout title={TXT.pageTitle}>
-      <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card title={TXT.cardTitle} subtitle={TXT.cardSubtitle}>
-          <div className="space-y-4">
-            <div className="max-h-[500px] space-y-3 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
-              {chat.length === 0 ? (
-                <p className="text-sm text-slate-500">{TXT.emptyChat}</p>
-              ) : null}
-              {chat.map((item) => (
-                <MessageBubble key={item.id} item={item} />
-              ))}
+    <AppLayout title={TXT.pageTitle} description="A dedicated assistant workspace for contextual OKR/KPI questions, explainers, insights, and guided follow-up.">
+      <div className="space-y-5 ui-page-enter">
+        <Card className="overflow-hidden">
+          <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+            <div className="rounded-[1.9rem] border border-brand-100 bg-[radial-gradient(circle_at_top_left,_rgba(36,107,255,0.2),_transparent_35%),linear-gradient(135deg,_rgba(255,255,255,0.97),_rgba(240,247,255,0.96))] p-5 sm:p-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`status-badge ${roleBadgeTone(summary?.role || 'employee')}`}>{summary?.role || 'employee'}</span>
+                <span className="status-badge border-slate-200 bg-white text-slate-600">{health?.dbConnected ? 'Database ready' : 'Checking database'}</span>
+                <span className="status-badge border-slate-200 bg-white text-slate-600">{health?.geminiConfigured ? 'AI enabled' : 'Deterministic fallback'}</span>
+              </div>
+              <h3 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950">{TXT.heroTitle}</h3>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">{TXT.heroSubtitle}</p>
             </div>
 
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{TXT.questionLabel}</p>
-              <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
-                {questions.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.text}
-                  </option>
-                ))}
-              </select>
-
-              {selectedQuestion ? (
-                <p className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 text-sm text-slate-700">
-                  {TXT.selectedPrefix} <span className="font-semibold">{selectedQuestion.text}</span>
-                </p>
-              ) : null}
-
-              {error ? (
-                <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-              ) : null}
-
-              <div className="flex justify-end">
-                <Button type="button" onClick={handleAsk} disabled={loading || !selectedId}>
-                  {loading ? TXT.loadingBtn : TXT.askBtn}
-                </Button>
-              </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+              {heroStats.map((item) => (
+                <div key={item.label} className="rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{item.label}</p>
+                  <p className="mt-2 text-3xl font-extrabold tracking-tight text-brand-600">{item.value}</p>
+                </div>
+              ))}
             </div>
           </div>
         </Card>
 
-        <div className="space-y-5">
-          <Card title={TXT.healthTitle} subtitle={TXT.healthSubtitle}>
-            {health ? (
-              <div className="space-y-2 text-sm">
-                <p className="text-slate-700">
-                  DB:{' '}
-                  <span className={`font-semibold ${health.dbConnected ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {health.dbConnected ? 'Connected' : 'Disconnected'}
-                  </span>
-                </p>
-                <p className="text-slate-700">
-                  Gemini:{' '}
-                  <span className={`font-semibold ${health.geminiConfigured ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {health.geminiConfigured ? 'Configured' : 'Not configured'}
-                  </span>
-                </p>
-                <p className="text-slate-700">
-                  Model: <span className="font-semibold text-slate-900">{health.model || 'N/A'}</span>
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500">{TXT.loadingHealth}</p>
-            )}
-          </Card>
+        <div className="grid gap-5 2xl:grid-cols-[1.35fr_0.65fr]">
+          <div className="space-y-5">
+            <Card title="Conversation" subtitle="Chat history, preset prompts, and free-form questions">
+              <div className="space-y-4">
+                <div className="rounded-[1.6rem] border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+                  <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: '30rem' }}>
+                    {chat.length === 0 ? <p className="text-sm text-slate-500">{TXT.emptyChat}</p> : null}
+                    {chat.map((item) => (
+                      <MessageBubble
+                        key={item.id}
+                        item={item}
+                        onAskQuestion={async (questionId) => {
+                          const question = questions.find((entry) => entry.id === questionId);
+                          if (question) await runQuestion({ question, fromQuickAction: true });
+                        }}
+                      />
+                    ))}
+                    <div ref={chatEndRef} />
+                  </div>
+                </div>
 
-          <Card title={TXT.noteTitle} subtitle={TXT.noteSubtitle}>
-            <ul className="list-disc space-y-1 pl-4 text-sm text-slate-600">
-              <li>{TXT.note1}</li>
-              <li>{TXT.note2}</li>
-              <li>{TXT.note3}</li>
-            </ul>
-          </Card>
+                <div className="grid gap-4 xl:grid-cols-[1fr_auto]">
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Preset question selector</p>
+                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+                      <div className="min-w-0 flex-1">
+                        <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
+                          {questions.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.text}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <Button type="button" onClick={handlePresetAsk} disabled={loading || !selectedId}>
+                        {loading ? 'Funny is thinking...' : 'Ask preset'}
+                      </Button>
+                    </div>
+                    {selectedQuestion ? (
+                      <div className="mt-3 rounded-[1.2rem] border border-brand-100 bg-brand-50/80 px-3 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-700">Selected prompt</p>
+                        <p className="mt-1 text-sm text-slate-700">{selectedQuestion.text}</p>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <form onSubmit={handleMessageSubmit} className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Ask your own question</p>
+                    <textarea rows={4} value={freeText} onChange={(event) => setFreeText(event.target.value)} placeholder="Example: Which KPIs are at risk this cycle?" className="mt-3" />
+                    <Button type="submit" className="mt-3 w-full" disabled={loading || !freeText.trim()}>
+                      {loading ? 'Thinking...' : 'Send question'}
+                    </Button>
+                  </form>
+                </div>
+
+                {error ? <p className="rounded-[1.2rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
+              </div>
+            </Card>
+
+            <Card title="Explain this" subtitle="Short guided explainers for core metrics and concepts">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {explainQuestions.length === 0 ? <p className="text-sm text-slate-500">No explain templates available.</p> : explainQuestions.map((item) => (
+                  <button key={`explain-${item.id}`} type="button" onClick={() => runQuestion({ question: item, fromQuickAction: true })} className="ui-soft-hover rounded-[1.35rem] border border-slate-200 bg-white p-4 text-left">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{item.category || 'help'}</p>
+                    <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-900">{item.text}</p>
+                  </button>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          <div className="space-y-5">
+            <Card title="Recommended for you" subtitle="Role-aware prompts based on your current context">
+              <div className="space-y-3">
+                {recommended.length === 0 ? <p className="text-sm text-slate-500">{TXT.noRecommendations}</p> : recommended.slice(0, 6).map((item) => {
+                  const question = questions.find((entry) => entry.id === item.id);
+                  return (
+                    <button key={`rec-${item.id}`} type="button" onClick={() => question && runQuestion({ question, fromQuickAction: true })} className="ui-soft-hover w-full rounded-[1.35rem] border border-slate-200 bg-white/95 p-4 text-left">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{item.text}</p>
+                          {item.reason ? <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.reason}</p> : null}
+                        </div>
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{item.category}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </Card>
+
+            <Card title="Quick actions" subtitle="Direct navigation and assistant shortcuts">
+              <div className="flex flex-wrap gap-2.5">
+                {quickActions.length === 0 ? <p className="text-sm text-slate-500">{TXT.noQuickActions}</p> : quickActions.slice(0, 10).map((action, idx) => {
+                  const mapped = normalizeQuickAction(action);
+                  return askableAction(mapped) ? (
+                    <button key={`action-${idx}`} type="button" onClick={() => handleQuickAction(mapped)} className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700">
+                      {mapped.label}
+                    </button>
+                  ) : (
+                    <Link key={`link-${idx}`} to={mapped.targetRoute} className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700">
+                      {mapped.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </Card>
+
+            <Card title="Insights" subtitle="High-signal cards for risk, follow-up, and performance">
+              <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
+                {insights.length === 0 ? <p className="text-sm text-slate-500">{TXT.noInsights}</p> : insights.slice(0, 6).map((insight) => (
+                  <Link key={insight.id} to={insight.targetRoute} className="ui-soft-hover block rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{insight.type}</p>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">{insight.label}</p>
+                        {insight.message ? <p className="mt-2 text-xs text-slate-500">{insight.message}</p> : null}
+                      </div>
+                      <span className={`status-badge ${insightTone(insight.severity)}`}>{insight.severity}</span>
+                    </div>
+                    <p className="mt-3 text-3xl font-extrabold tracking-tight text-brand-600">{insight.value}</p>
+                  </Link>
+                ))}
+              </div>
+            </Card>
+
+            <Card title="Summary by role" subtitle="Short live narrative and priority snapshot">
+              <SummaryPanel summary={summary} suggestions={freeSuggestions} />
+            </Card>
+
+            <Card title="Module status" subtitle="Backend readiness and AI fallback status">
+              {health ? (
+                <div className="grid gap-3 sm:grid-cols-3 2xl:grid-cols-1">
+                  <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4">
+                    <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Database</p>
+                    <p className={`mt-2 text-lg font-bold ${health.dbConnected ? 'text-emerald-600' : 'text-red-600'}`}>{health.dbConnected ? 'Connected' : 'Disconnected'}</p>
+                  </div>
+                  <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4">
+                    <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Narrative mode</p>
+                    <p className={`mt-2 text-lg font-bold ${health.geminiConfigured ? 'text-emerald-600' : 'text-amber-600'}`}>{health.geminiConfigured ? 'AI enabled' : 'Deterministic fallback'}</p>
+                  </div>
+                  <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4">
+                    <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Model</p>
+                    <p className="mt-2 text-lg font-bold text-slate-900">{health.model || 'N/A'}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">Loading module status...</p>
+              )}
+            </Card>
+          </div>
         </div>
       </div>
     </AppLayout>

@@ -5,6 +5,7 @@ import { objectivesApi } from '../api/objectivesApi';
 import { usersApi } from '../api/usersApi';
 import { departmentsApi } from '../api/departmentsApi';
 import { cyclesApi } from '../api/cyclesApi';
+import { percent } from '../utils/format';
 
 export default function ObjectivesPage() {
   const [ownerOptions, setOwnerOptions] = useState([]);
@@ -26,7 +27,7 @@ export default function ObjectivesPage() {
   }, []);
 
   return (
-    <AppLayout title="Objectives">
+    <AppLayout title="Objectives" description="Track ownership, cycle alignment, and progress with a cleaner operational view.">
       <EntityCrudPage
         title="Objective"
         description="Track objective owners, cycle, and status"
@@ -57,7 +58,20 @@ export default function ObjectivesPage() {
           { key: 'department_name', label: 'Department' },
           { key: 'cycle_name', label: 'Cycle' },
           { key: 'status', label: 'Status' },
-          { key: 'progress', label: 'Progress' }
+          {
+            key: 'progress',
+            label: 'Progress',
+            render: (row) => (
+              <div className="min-w-[150px]">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="font-semibold text-slate-700">{percent(row.progress || 0)}</span>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-slate-100">
+                  <div className="h-2 rounded-full bg-brand-500" style={{ width: percent(row.progress || 0) }} />
+                </div>
+              </div>
+            )
+          }
         ]}
         loadItems={objectivesApi.list}
         createItem={objectivesApi.create}

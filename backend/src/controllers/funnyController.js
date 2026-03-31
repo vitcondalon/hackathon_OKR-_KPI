@@ -2,25 +2,27 @@ const { z } = require('zod');
 const { query } = require('../config/db');
 const env = require('../config/env');
 const { sanitizeMessage } = require('../utils/aiSanitizer');
-const { INTENTS } = require('../services/funny/funnyIntentService');
+const { INTENTS, detectIntentMeta } = require('../services/funny/funnyIntentService');
 const funnyQueryService = require('../services/funny/funnyQueryService');
 const funnyPromptService = require('../services/funny/funnyPromptService');
 const funnyGeminiService = require('../services/funny/funnyGeminiService');
 const funnyResponseService = require('../services/funny/funnyResponseService');
 const funnyQuestionBankService = require('../services/funny/funnyQuestionBankService');
+const funnyContextSuggestionService = require('../services/funny/funnyContextSuggestionService');
+const funnyExplainService = require('../services/funny/funnyExplainService');
+const funnyRoleSummaryService = require('../services/funny/funnyRoleSummaryService');
+const insightService = require('../services/insightService');
 
-const chatSchema = z.object({
-  questionId: z.string().trim().min(1).max(32),
-  message: z.string().trim().min(1).max(500).optional(),
-  conversationId: z.string().trim().min(1).max(100).optional()
-});
-
-const employeeBlockedIntents = new Set([
-  INTENTS.top_departments,
-  INTENTS.top_performers,
-  INTENTS.dashboard_summary,
-  INTENTS.generic_analysis
-]);
+const chatSchema = z
+  .object({
+    questionId: z.string().trim().min(1).max(32).optional(),
+    message: z.string().trim().min(1).max(500).optional(),
+    conversationId: z.string().trim().min(1).max(100).optional()
+  })
+  .refine((v) => Boolean(v.questionId || v.message), {
+    message: 'questionId or message is required',
+    path: ['questionId']
+  });
 
 function assertFunnyEnabled() {
   if (!env.funnyEnabled) {
@@ -30,8 +32,8 @@ function assertFunnyEnabled() {
   }
 }
 
-function ensureRoleAccess(intent, user) {
-  if (user.role === 'employee' && employeeBlockedIntents.has(intent)) {
+function ensureRoleAccess(question, user) {
+  if (!question.roles.includes(user.role)) {
     const error = new Error('Forbidden for this query type');
     error.status = 403;
     throw error;
@@ -65,22 +67,68 @@ async function writeFunnyLog({ userId, conversationId, message, intent, answer, 
   }
 }
 
+function resolveQuestionFromPayload(payload, user) {
+  const visibleQuestions = funnyQuestionBankService.listQuestionsByRole(user.role);
+
+  if (payload.questionId) {
+    const question = funnyQuestionBankService.findQuestionById(payload.questionId);
+    if (!question) return null;
+    return question;
+  }
+
+  const detected = detectIntentMeta(payload.message || '');
+  const byIntent = funnyQuestionBankService.findFirstQuestionByIntent(detected.intent, user.role);
+
+  return byIntent || visibleQuestions[0] || null;
+}
+
+function dedupeBy(items, keyBuilder) {
+  const seen = new Set();
+  const result = [];
+
+  for (const item of items || []) {
+    const key = keyBuilder(item);
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    result.push(item);
+  }
+
+  return result;
+}
+
+function buildInsights(intent, data) {
+  switch (intent) {
+    case INTENTS.risky_kpis:
+      return [{ type: 'risk', label: 'Risky KPIs', value: data.total || 0 }];
+    case INTENTS.low_progress_objectives:
+      return [{ type: 'risk', label: 'Low-progress objectives', value: data.total || 0 }];
+    case INTENTS.pending_checkins:
+      return [{ type: 'followup', label: 'Pending check-ins', value: data.total || 0 }];
+    default:
+      return [];
+  }
+}
+
 async function chat(req, res, next) {
   try {
     assertFunnyEnabled();
 
     const payload = chatSchema.parse(req.body);
-    const selectedQuestion = funnyQuestionBankService.findQuestionById(payload.questionId);
+    const selectedQuestion = resolveQuestionFromPayload(payload, req.user);
+
     if (!selectedQuestion) {
-      const error = new Error('Invalid questionId. Only predefined questions are allowed.');
+      const error = new Error('No available question for this role');
       error.status = 400;
       throw error;
     }
 
-    const sanitized = sanitizeMessage(selectedQuestion.text);
-    const intent = selectedQuestion.intent;
+    ensureRoleAccess(selectedQuestion, req.user);
 
-    ensureRoleAccess(intent, req.user);
+    const rawMessage = payload.message || selectedQuestion.text;
+    const sanitized = sanitizeMessage(rawMessage);
+    const intent = selectedQuestion.intent;
 
     let usedAI = false;
     let fallback = false;
@@ -94,7 +142,19 @@ async function chat(req, res, next) {
       relatedEntityIds: []
     };
 
-    if (intent === INTENTS.generic_analysis) {
+    if (funnyExplainService.isExplainIntent(intent)) {
+      const explain = funnyExplainService.getExplainContent(intent);
+      result = {
+        data: {
+          concept: explain.concept
+        },
+        sources: ['funny_explain_knowledge'],
+        chartHint: 'concept_card',
+        relatedEntityType: 'knowledge',
+        relatedEntityIds: []
+      };
+      answer = explain.answer;
+    } else if (intent === INTENTS.generic_analysis) {
       const context = await funnyQueryService.getContextForGenericAnalysis(req.user);
       result = {
         data: context,
@@ -131,13 +191,27 @@ async function chat(req, res, next) {
       answer = funnyResponseService.buildDirectAnswer(intent, result.data);
     }
 
-    const links = funnyResponseService.buildLinks(intent, result.data);
+    const links = funnyExplainService.isExplainIntent(intent)
+      ? funnyExplainService.getExplainContent(intent).links
+      : funnyResponseService.buildLinks(intent, result.data);
+    const contextSuggestions = await funnyContextSuggestionService.getContextSuggestions(req.user);
+    const quickActions = dedupeBy([
+      ...(funnyExplainService.isExplainIntent(intent)
+        ? (funnyExplainService.getExplainContent(intent).quickActions || [])
+        : (selectedQuestion.quickActions || [])),
+      ...contextSuggestions.quickActions
+    ], (action) => `${action.actionType}:${action.targetRoute}:${action.label}`).slice(0, 8);
+    const insights = dedupeBy([
+      ...buildInsights(intent, result.data),
+      ...contextSuggestions.insights
+    ], (item) => `${item.type}:${item.label}:${item.value}`);
+
     answer = funnyResponseService.appendLinksToAnswer(answer, links);
 
     await writeFunnyLog({
       userId: req.user.id,
       conversationId: payload.conversationId,
-      message: selectedQuestion.text,
+      message: rawMessage,
       intent,
       answer,
       usedAI,
@@ -145,7 +219,11 @@ async function chat(req, res, next) {
     });
 
     return res.json(
-      funnyResponseService.buildChatResponse({
+      {
+        success: true,
+        message: 'OK',
+        errors: null,
+        ...funnyResponseService.buildChatResponse({
         answer,
         intent,
         data: result.data,
@@ -154,14 +232,21 @@ async function chat(req, res, next) {
         relatedEntityType: result.relatedEntityType,
         relatedEntityIds: result.relatedEntityIds,
         links,
-        suggestions: funnyQuestionBankService.listQuestions().slice(0, 5).map((item) => item.text),
+        quickActions,
+        suggestions: contextSuggestions.suggestions,
+        recommendedQuestions: contextSuggestions.recommendedQuestions,
+        insights,
         meta: {
           usedAI,
           model,
           fallback,
-          promptInjectionGuard: sanitized.flags.hasPromptInjectionSignal
+          promptInjectionGuard: sanitized.flags.hasPromptInjectionSignal,
+          category: selectedQuestion.category,
+          questionId: selectedQuestion.id,
+          role: req.user.role
         }
-      })
+        })
+      }
     );
   } catch (error) {
     return next(error);
@@ -171,10 +256,18 @@ async function chat(req, res, next) {
 async function suggestions(req, res, next) {
   try {
     assertFunnyEnabled();
-    const questions = funnyQuestionBankService.listQuestions();
+    const context = await funnyContextSuggestionService.getContextSuggestions(req.user);
 
     return res.json({
-      suggestions: questions.slice(0, 5).map((item) => item.text)
+      success: true,
+      message: 'OK',
+      errors: null,
+      suggestions: context.suggestions,
+      recommendedQuestions: context.recommendedQuestions,
+      quickActions: context.quickActions,
+      insights: context.insights,
+      summary: context.summary,
+      meta: context.meta
     });
   } catch (error) {
     return next(error);
@@ -184,15 +277,61 @@ async function suggestions(req, res, next) {
 async function questions(req, res, next) {
   try {
     assertFunnyEnabled();
-    const allQuestions = funnyQuestionBankService.listQuestions();
-    const visibleQuestions = allQuestions.filter((item) => {
-      if (req.user.role !== 'employee') return true;
-      return !employeeBlockedIntents.has(item.intent);
-    });
+    const visibleQuestions = funnyQuestionBankService.listQuestionsByRole(req.user.role);
 
     return res.json({
+      success: true,
+      message: 'OK',
+      errors: null,
       total: visibleQuestions.length,
+      categories: funnyQuestionBankService.listCategoriesByRole(req.user.role),
       items: visibleQuestions
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function summary(req, res, next) {
+  try {
+    assertFunnyEnabled();
+    const [summaryData, context] = await Promise.all([
+      funnyRoleSummaryService.getRoleSummary(req.user),
+      funnyContextSuggestionService.getContextSuggestions(req.user)
+    ]);
+
+    return res.json({
+      success: true,
+      message: 'OK',
+      errors: null,
+      summary: summaryData,
+      insights: context.insights,
+      suggestions: context.suggestions,
+      recommendedQuestions: context.recommendedQuestions,
+      quickActions: context.quickActions,
+      meta: {
+        role: req.user.role,
+        generatedAt: summaryData.generated_at,
+        usedAI: summaryData.narrative_meta?.usedAI || false,
+        model: summaryData.narrative_meta?.model || null,
+        fallback: summaryData.narrative_meta?.fallback ?? true,
+        suggestionContext: context.meta
+      }
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function insights(req, res, next) {
+  try {
+    assertFunnyEnabled();
+    const payload = await insightService.getInsightOverview(req.user, { limit: 5 });
+    return res.json({
+      success: true,
+      message: 'OK',
+      errors: null,
+      ...payload
     });
   } catch (error) {
     return next(error);
@@ -213,6 +352,9 @@ async function health(req, res, next) {
     }
 
     return res.json({
+      success: true,
+      message: 'OK',
+      errors: null,
       dbConnected,
       geminiConfigured: funnyGeminiService.isConfigured(),
       model: funnyGeminiService.getModelName() || null,
@@ -227,5 +369,7 @@ module.exports = {
   chat,
   suggestions,
   questions,
+  summary,
+  insights,
   health
 };

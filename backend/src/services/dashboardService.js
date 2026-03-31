@@ -1,6 +1,6 @@
 const { query } = require('../config/db');
 
-async function getSummary() {
+async function getSummaryMetrics() {
   const result = await query(
     `SELECT
        (SELECT COUNT(*)::int FROM users WHERE deleted_at IS NULL) AS total_users,
@@ -19,7 +19,7 @@ async function getSummary() {
   return result.rows[0];
 }
 
-async function getProgressOverview() {
+async function getProgressCollections() {
   const [objectiveStatus, keyResultStatus, kpiStatus, cycleStats] = await Promise.all([
     query('SELECT status, COUNT(*)::int AS count FROM objectives GROUP BY status ORDER BY status'),
     query('SELECT status, COUNT(*)::int AS count FROM key_results GROUP BY status ORDER BY status'),
@@ -50,7 +50,7 @@ async function getProgressOverview() {
   };
 }
 
-async function getRisks() {
+async function getRiskCollections() {
   const [riskyKeyResults, riskyKpis] = await Promise.all([
     query(
       `SELECT
@@ -97,7 +97,7 @@ async function getRisks() {
   };
 }
 
-async function getTopPerformers() {
+async function getLeaderboardCollections() {
   const [users, departments] = await Promise.all([
     query(
       `SELECT
@@ -143,7 +143,7 @@ async function getTopPerformers() {
   };
 }
 
-async function getCharts() {
+async function getChartCollections() {
   const [objectiveByCycle, kpiDistribution, departmentPerformance, checkinTrend] = await Promise.all([
     query(
       `SELECT
@@ -201,10 +201,35 @@ async function getCharts() {
   };
 }
 
+async function getSummary() {
+  return getSummaryMetrics();
+}
+
+async function getProgressOverview() {
+  return getProgressCollections();
+}
+
+async function getRisks() {
+  return getRiskCollections();
+}
+
+async function getTopPerformers() {
+  return getLeaderboardCollections();
+}
+
+async function getCharts() {
+  return getChartCollections();
+}
+
 module.exports = {
   getSummary,
   getProgressOverview,
   getRisks,
   getTopPerformers,
-  getCharts
+  getCharts,
+  getSummaryMetrics,
+  getProgressCollections,
+  getRiskCollections,
+  getLeaderboardCollections,
+  getChartCollections
 };

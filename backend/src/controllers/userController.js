@@ -1,7 +1,7 @@
 const { z } = require('zod');
 const { query } = require('../config/db');
 const { hashPassword } = require('../utils/password');
-const { sendSuccess, sendCreated } = require('../utils/response');
+const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
 
 const roleEnum = z.enum(['admin', 'manager', 'employee']);
 
@@ -408,7 +408,7 @@ async function deleteUser(req, res, next) {
       throw error;
     }
 
-    return res.status(204).send();
+    return sendNoContent(res);
   } catch (error) {
     return next(error);
   }

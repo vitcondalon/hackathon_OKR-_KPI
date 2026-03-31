@@ -4,7 +4,7 @@ import { cyclesApi } from '../api/cyclesApi';
 
 export default function CyclesPage() {
   return (
-    <AppLayout title="OKR Cycles">
+    <AppLayout title="OKR Cycles" description="Manage planning windows and keep the reporting cadence visible to everyone.">
       <EntityCrudPage
         title="Cycle"
         description="Manage planning, active, and closed cycles"

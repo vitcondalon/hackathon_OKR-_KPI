@@ -1,6 +1,6 @@
 const { z } = require('zod');
 const { query } = require('../config/db');
-const { sendSuccess, sendCreated } = require('../utils/response');
+const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
 const { recalculateObjectiveProgress } = require('../services/progressService');
 
 const objectiveStatusSchema = z.enum(['draft', 'on_track', 'at_risk', 'completed', 'cancelled', 'active']);
@@ -545,7 +545,7 @@ async function deleteObjective(req, res, next) {
     }
 
     await query('DELETE FROM objectives WHERE id = $1', [id]);
-    return res.status(204).send();
+    return sendNoContent(res);
   } catch (error) {
     return next(error);
   }

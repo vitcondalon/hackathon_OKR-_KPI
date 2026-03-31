@@ -3,6 +3,7 @@ import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { keyResultsApi } from '../api/keyResultsApi';
 import { objectivesApi } from '../api/objectivesApi';
+import { percent } from '../utils/format';
 
 export default function KeyResultsPage() {
   const [objectiveOptions, setObjectiveOptions] = useState([]);
@@ -15,7 +16,7 @@ export default function KeyResultsPage() {
   }, []);
 
   return (
-    <AppLayout title="Key Results">
+    <AppLayout title="Key Results" description="Keep measurable outcomes visible and update them with less friction.">
       <EntityCrudPage
         title="Key Result"
         description="Define measurable outcomes under each objective"
@@ -45,7 +46,20 @@ export default function KeyResultsPage() {
           { key: 'title', label: 'Title' },
           { key: 'target_value', label: 'Target' },
           { key: 'current_value', label: 'Current' },
-          { key: 'progress', label: 'Progress' },
+          {
+            key: 'progress',
+            label: 'Progress',
+            render: (row) => (
+              <div className="min-w-[150px]">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="font-semibold text-slate-700">{percent(row.progress || 0)}</span>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-slate-100">
+                  <div className="h-2 rounded-full bg-sky-500" style={{ width: percent(row.progress || 0) }} />
+                </div>
+              </div>
+            )
+          },
           { key: 'status', label: 'Status' }
         ]}
         loadItems={keyResultsApi.list}

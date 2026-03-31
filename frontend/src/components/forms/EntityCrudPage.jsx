@@ -38,6 +38,14 @@ function initialState(fields) {
   return state;
 }
 
+function inferHighlightValue(items, columns) {
+  if (!Array.isArray(items) || items.length === 0) return '0';
+  const statusColumn = columns.find((column) => String(column.key).toLowerCase() === 'status');
+  if (!statusColumn) return String(items.length);
+  const liveCount = items.filter((item) => ['active', 'on_track', 'planning'].includes(String(item.status || '').toLowerCase())).length;
+  return String(liveCount);
+}
+
 export default function EntityCrudPage({
   title,
   description,
@@ -47,7 +55,9 @@ export default function EntityCrudPage({
   createItem,
   updateItem,
   deleteItem,
-  canDelete = true
+  canDelete = true,
+  canUpdate = true,
+  canCreate = true
 }) {
   const [items, setItems] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -69,6 +79,17 @@ export default function EntityCrudPage({
       })
     );
   }, [columns, items, search]);
+
+  const stats = useMemo(
+    () => [
+      { label: `${title}s`, value: items.length, tone: 'text-slate-900' },
+      { label: 'Visible now', value: filteredItems.length, tone: 'text-brand-600' },
+      { label: 'Live status', value: inferHighlightValue(items, columns), tone: 'text-emerald-600' }
+    ],
+    [columns, filteredItems.length, items, title]
+  );
+
+  const hasActions = canUpdate || canDelete;
 
   async function refresh() {
     setLoading(true);
@@ -96,11 +117,7 @@ export default function EntityCrudPage({
     const next = initialState(fields);
     fields.forEach((field) => {
       const value = item[field.name];
-      if (field.type === 'checkbox') {
-        next[field.name] = Boolean(value);
-      } else {
-        next[field.name] = value ?? '';
-      }
+      next[field.name] = field.type === 'checkbox' ? Boolean(value) : value ?? '';
     });
     if ('password' in next) next.password = '';
     setForm(next);
@@ -109,6 +126,9 @@ export default function EntityCrudPage({
 
   async function submit(event) {
     event.preventDefault();
+    if (!canCreate && !editingId) return;
+    if (!canUpdate && editingId) return;
+
     setSaving(true);
     setError('');
     try {
@@ -139,102 +159,152 @@ export default function EntityCrudPage({
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr] ui-page-enter">
-      <Card title={editingId ? `Edit ${title}` : `Create ${title}`} subtitle={description} className="h-fit">
-        <form onSubmit={submit} className="space-y-3">
-          {formFields.map((field) => (
-            <label key={field.name} className="block space-y-1 text-sm">
-              <span className="font-semibold text-slate-700">{field.label}</span>
-              {field.type === 'textarea' ? (
-                <textarea
-                  rows={4}
-                  value={form[field.name]}
-                  required={Boolean(field.required && !editingId)}
-                  onChange={(e) => setForm((prev) => ({ ...prev, [field.name]: e.target.value }))}
-                />
-              ) : field.type === 'select' ? (
-                <select
-                  value={form[field.name]}
-                  required={Boolean(field.required && !editingId)}
-                  onChange={(e) => setForm((prev) => ({ ...prev, [field.name]: e.target.value }))}
-                >
-                  <option value="">Select {field.label}</option>
-                  {(field.options || []).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              ) : field.type === 'checkbox' ? (
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(form[field.name])}
-                    onChange={(e) => setForm((prev) => ({ ...prev, [field.name]: e.target.checked }))}
-                    className="h-4 w-4 rounded border-slate-300 text-brand-500"
-                  />
-                  <span className="text-sm text-slate-600">Enable</span>
-                </div>
-              ) : (
-                <input
-                  type={field.type || 'text'}
-                  value={form[field.name]}
-                  step={field.type === 'number' ? '0.01' : undefined}
-                  required={Boolean(field.required && !editingId)}
-                  onChange={(e) => setForm((prev) => ({ ...prev, [field.name]: e.target.value }))}
-                />
-              )}
-            </label>
-          ))}
+    <div className="space-y-5 ui-page-enter">
+      <section className="grid gap-4 md:grid-cols-3">
+        {stats.map((item) => (
+          <Card key={item.label} className="rounded-[1.6rem]">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{item.label}</p>
+            <p className={`mt-3 text-3xl font-extrabold tracking-tight ${item.tone}`}>{item.value}</p>
+            <p className="mt-2 text-sm text-slate-500">{description}</p>
+          </Card>
+        ))}
+      </section>
 
-          {error ? <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+      <div className="grid gap-5 xl:grid-cols-[400px_minmax(0,1fr)]">
+        <Card
+          title={editingId ? `Update ${title}` : `Create ${title}`}
+          subtitle={description}
+          className="h-fit"
+          actions={editingId ? <span className="status-badge border-amber-200 bg-amber-50 text-amber-700">editing</span> : null}
+        >
+          {canCreate || canUpdate ? (
+            <form onSubmit={submit} className="space-y-4">
+              {formFields.map((field) => (
+                <label key={field.name} className="block space-y-1.5 text-sm">
+                  <span className="font-semibold text-slate-700">{field.label}</span>
+                  {field.type === 'textarea' ? (
+                    <textarea
+                      rows={4}
+                      value={form[field.name]}
+                      required={Boolean(field.required && !editingId)}
+                      onChange={(event) => setForm((prev) => ({ ...prev, [field.name]: event.target.value }))}
+                    />
+                  ) : field.type === 'select' ? (
+                    <select
+                      value={form[field.name]}
+                      required={Boolean(field.required && !editingId)}
+                      onChange={(event) => setForm((prev) => ({ ...prev, [field.name]: event.target.value }))}
+                    >
+                      <option value="">Select {field.label}</option>
+                      {(field.options || []).map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : field.type === 'checkbox' ? (
+                    <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                      <span className="text-sm text-slate-600">Enable this field</span>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(form[field.name])}
+                        onChange={(event) => setForm((prev) => ({ ...prev, [field.name]: event.target.checked }))}
+                        className="h-4 w-4 rounded border-slate-300 text-brand-500"
+                      />
+                    </div>
+                  ) : (
+                    <input
+                      type={field.type || 'text'}
+                      value={form[field.name]}
+                      step={field.type === 'number' ? '0.01' : undefined}
+                      required={Boolean(field.required && !editingId)}
+                      onChange={(event) => setForm((prev) => ({ ...prev, [field.name]: event.target.value }))}
+                    />
+                  )}
+                </label>
+              ))}
 
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Button type="submit" disabled={saving}>{saving ? 'Saving...' : editingId ? 'Update' : 'Create'}</Button>
-            <Button type="button" variant="ghost" onClick={resetForm}>Clear</Button>
-          </div>
-        </form>
-      </Card>
+              {error ? <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
 
-      <Card title={`${title} List`} subtitle="Live data from API">
-        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <input
-            placeholder={`Search ${title.toLowerCase()}...`}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="sm:max-w-xs"
-          />
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-            {filteredItems.length} result(s)
-          </p>
-        </div>
-
-        {loading ? (
-          <div className="space-y-2">
-            <div className="h-10 animate-pulse rounded-lg bg-slate-100" />
-            <div className="h-10 animate-pulse rounded-lg bg-slate-100" />
-            <div className="h-10 animate-pulse rounded-lg bg-slate-100" />
-          </div>
-        ) : (
-          <DataTable
-            columns={columns}
-            data={filteredItems}
-            emptyLabel={`No ${title} records`}
-            actions={(row) => (
-              <div className="flex gap-2">
-                <Button type="button" variant="ghost" className="px-3 py-1.5" onClick={() => startEdit(row)}>
-                  Edit
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button type="submit" disabled={saving}>
+                  {saving ? 'Saving...' : editingId ? 'Update now' : 'Create now'}
                 </Button>
-                {canDelete ? (
-                  <Button type="button" variant="danger" className="px-3 py-1.5" onClick={() => remove(row.id)}>
-                    Delete
-                  </Button>
-                ) : null}
+                <Button type="button" variant="ghost" onClick={resetForm}>
+                  Clear
+                </Button>
               </div>
-            )}
-          />
-        )}
-      </Card>
+            </form>
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-600">
+              This workspace is read-only for the current flow.
+            </div>
+          )}
+        </Card>
+
+        <Card
+          title={`${title} workspace`}
+          subtitle="Live API data with faster scanning and cleaner actions"
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="ghost" onClick={refresh}>
+                Refresh
+              </Button>
+              <span className="status-badge border-slate-200 bg-white text-slate-600">{filteredItems.length} visible</span>
+            </div>
+          }
+        >
+          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0 flex-1">
+              <input
+                placeholder={`Search ${title.toLowerCase()} by visible columns...`}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="max-w-xl"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {stats.map((item) => (
+                <span key={item.label} className="status-badge border-slate-200 bg-slate-50 text-slate-600">
+                  {item.label}: {item.value}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="space-y-3">
+              <div className="h-14 animate-pulse rounded-2xl bg-slate-100" />
+              <div className="h-14 animate-pulse rounded-2xl bg-slate-100" />
+              <div className="h-14 animate-pulse rounded-2xl bg-slate-100" />
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filteredItems}
+              emptyLabel={`No ${title.toLowerCase()} records matched this view`}
+              actions={
+                hasActions
+                  ? (row) => (
+                      <div className="flex flex-wrap gap-2">
+                        {canUpdate ? (
+                          <Button type="button" variant="ghost" className="px-3 py-2 text-xs" onClick={() => startEdit(row)}>
+                            Edit
+                          </Button>
+                        ) : null}
+                        {canDelete ? (
+                          <Button type="button" variant="danger" className="px-3 py-2 text-xs" onClick={() => remove(row.id)}>
+                            Delete
+                          </Button>
+                        ) : null}
+                      </div>
+                    )
+                  : null
+              }
+            />
+          )}
+        </Card>
+      </div>
     </div>
   );
 }

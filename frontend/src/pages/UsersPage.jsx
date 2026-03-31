@@ -17,7 +17,7 @@ export default function UsersPage() {
   }, []);
 
   return (
-    <AppLayout title="Users Management">
+    <AppLayout title="Users Management" description="Manage roles, activation, and department assignment with a clearer admin workspace.">
       <EntityCrudPage
         title="User"
         description="Manage users, role, and department assignment"
@@ -51,7 +51,7 @@ export default function UsersPage() {
           { key: 'username', label: 'Username' },
           { key: 'email', label: 'Email' },
           { key: 'role', label: 'Role' },
-          { key: 'department_id', label: 'Department ID' },
+          { key: 'department_name', label: 'Department' },
           { key: 'is_active', label: 'Active', render: (row) => (row.is_active ? 'Yes' : 'No') }
         ]}
         loadItems={usersApi.list}

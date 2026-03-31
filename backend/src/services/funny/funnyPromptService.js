@@ -18,6 +18,22 @@ function buildPrompt({ message, intent, context, user }) {
     'Respond in English in no more than 6 sentences.';
 }
 
+function buildRoleSummaryPrompt({ user, summary }) {
+  const instruction = [
+    'You are Funny, an internal OKR/KPI assistant.',
+    'Write a short executive summary based ONLY on provided JSON.',
+    'Do not invent data.',
+    'Keep answer concise (max 5 sentences).',
+    'Be practical and role-aware.'
+  ].join('\n');
+
+  return `${instruction}\n\n` +
+    `Role: ${user.role}\n` +
+    `Summary JSON:\n${JSON.stringify(summary, null, 2)}\n\n` +
+    'Output: a compact narrative for dashboard demo.';
+}
+
 module.exports = {
-  buildPrompt
+  buildPrompt,
+  buildRoleSummaryPrompt
 };

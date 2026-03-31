@@ -1,6 +1,6 @@
 const { z } = require('zod');
 const { query } = require('../config/db');
-const { sendSuccess, sendCreated } = require('../utils/response');
+const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
 const { calculateProgress, recalculateKpiProgress } = require('../services/progressService');
 
 const scopeSchema = z.enum(['employee', 'department']);
@@ -511,8 +511,7 @@ async function deleteKpi(req, res, next) {
     }
 
     await query('DELETE FROM kpi_metrics WHERE id = $1', [id]);
-
-    return res.status(204).send();
+    return sendNoContent(res);
   } catch (error) {
     return next(error);
   }

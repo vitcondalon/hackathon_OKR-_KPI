@@ -1,10 +1,26 @@
-﻿const DEFAULT_SUGGESTIONS = [
+const DEFAULT_SUGGESTIONS = [
   'How many employees are active right now?',
   'Which department has the best progress?',
   'Which KPIs are below 50%?',
   'Summarize today dashboard',
   'Which objectives are currently at risk?'
 ];
+
+function dedupeBy(items, keyBuilder) {
+  const seen = new Set();
+  const result = [];
+
+  for (const item of items || []) {
+    const key = keyBuilder(item);
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    result.push(item);
+  }
+
+  return result;
+}
 
 function getSuggestions() {
   return DEFAULT_SUGGESTIONS;
@@ -39,6 +55,19 @@ function buildLinks(intent, data) {
       push('Top Users', '/users');
       push('Dashboard', '/dashboard');
       break;
+    case 'pending_checkins':
+      push('Check-ins', '/checkins');
+      push('Key Results', '/key-results');
+      push('KPIs', '/kpis');
+      break;
+    case 'explain_objective_metric':
+      push('Objectives', '/objectives');
+      push('Check-ins', '/checkins');
+      break;
+    case 'explain_kpi_metric':
+      push('KPIs', '/kpis');
+      push('Check-ins', '/checkins');
+      break;
     case 'dashboard_summary':
       push('Dashboard Overview', '/dashboard');
       push('Objectives', '/objectives');
@@ -68,7 +97,7 @@ function buildLinks(intent, data) {
     }
   }
 
-  return links;
+  return dedupeBy(links, (link) => `${link.label}:${link.path}`);
 }
 
 function appendLinksToAnswer(answer, links) {
@@ -76,7 +105,9 @@ function appendLinksToAnswer(answer, links) {
     return answer;
   }
 
-  const summary = links.map((link) => `${link.label}: ${link.path}`).join(' | ');
+  const summary = dedupeBy(links, (link) => `${link.label}:${link.path}`)
+    .map((link) => `${link.label}: ${link.path}`)
+    .join(' | ');
   return `${answer}\nSee also: ${summary}`;
 }
 
@@ -108,6 +139,18 @@ function buildDirectAnswer(intent, data) {
         : 'No performer data is available for ranking yet.';
     case 'dashboard_summary':
       return 'Here is the current dashboard overview, including at-risk KPIs, low-progress objectives, and leading departments.';
+    case 'pending_checkins':
+      return data.total > 0
+        ? `There are ${data.total} KR/KPI items missing recent check-ins (>= ${data.threshold_days} days).`
+        : `No pending check-ins were found in the last ${data.threshold_days} days.`;
+    case 'explain_objective_metric':
+      return data.total > 0
+        ? `Objective progress is low mainly due to ${data.total} objectives below ${data.threshold}%, requiring owner follow-up and more frequent check-ins.`
+        : 'Objective progress is stable, with no objective under the configured threshold.';
+    case 'explain_kpi_metric':
+      return data.total > 0
+        ? `KPI risk is driven by ${data.total} KPIs below ${data.threshold}% or marked at_risk. Focus on owner accountability and cycle-level blockers.`
+        : 'KPI metrics are currently stable with no high-risk signal.';
     default:
       return 'Funny has completed the request.';
   }
@@ -119,22 +162,28 @@ function buildChatResponse({
   data,
   sources,
   suggestions,
+  recommendedQuestions,
   chartHint,
   relatedEntityType,
   relatedEntityIds,
   links,
+  quickActions,
+  insights,
   meta
 }) {
   return {
     answer,
     intent,
     data,
-    sources,
+    sources: sources || [],
     suggestions: suggestions || getSuggestions(),
+    recommendedQuestions: recommendedQuestions || [],
     chartHint: chartHint || null,
     relatedEntityType: relatedEntityType || null,
     relatedEntityIds: relatedEntityIds || [],
-    links: links || [],
+    links: dedupeBy(links || [], (link) => `${link.label}:${link.path}`),
+    quickActions: dedupeBy(quickActions || [], (action) => `${action.actionType}:${action.targetRoute}:${action.label}`),
+    insights: dedupeBy(insights || [], (insight) => `${insight.type}:${insight.label}:${insight.value}`),
     meta
   };
 }

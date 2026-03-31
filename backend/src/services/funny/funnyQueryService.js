@@ -151,6 +151,77 @@ async function getRiskyKpis(user) {
   };
 }
 
+async function getPendingCheckins(user) {
+  const params = [14];
+  let ownerFilter = '';
+
+  if (user.role === 'employee') {
+    params.push(user.id);
+    ownerFilter = ` AND owner_user_id = $${params.length}`;
+  }
+
+  const objectiveRows = await query(
+    `SELECT
+       kr.id,
+       kr.code,
+       kr.title,
+       kr.progress_percent,
+       kr.owner_user_id,
+       u.full_name AS owner_name,
+       COALESCE(MAX(krc.checkin_date), DATE '1970-01-01') AS last_checkin_date,
+       CURRENT_DATE - COALESCE(MAX(krc.checkin_date), DATE '1970-01-01') AS stale_days
+     FROM key_results kr
+     JOIN users u ON u.id = kr.owner_user_id
+     LEFT JOIN key_result_checkins krc ON krc.key_result_id = kr.id
+     WHERE kr.status NOT IN ('completed', 'cancelled')
+       ${ownerFilter}
+     GROUP BY kr.id, kr.code, kr.title, kr.progress_percent, kr.owner_user_id, u.full_name
+     HAVING CURRENT_DATE - COALESCE(MAX(krc.checkin_date), DATE '1970-01-01') >= $1
+     ORDER BY stale_days DESC
+     LIMIT 10`,
+    params
+  );
+
+  const kpiRows = await query(
+    `SELECT
+       km.id,
+       km.code,
+       km.name,
+       km.progress_percent,
+       km.owner_user_id,
+       u.full_name AS owner_name,
+       COALESCE(MAX(kc.checkin_date), DATE '1970-01-01') AS last_checkin_date,
+       CURRENT_DATE - COALESCE(MAX(kc.checkin_date), DATE '1970-01-01') AS stale_days
+     FROM kpi_metrics km
+     LEFT JOIN users u ON u.id = km.owner_user_id
+     LEFT JOIN kpi_checkins kc ON kc.kpi_metric_id = km.id
+     WHERE km.status NOT IN ('completed', 'cancelled')
+       AND km.owner_user_id IS NOT NULL
+       ${ownerFilter}
+     GROUP BY km.id, km.code, km.name, km.progress_percent, km.owner_user_id, u.full_name
+     HAVING CURRENT_DATE - COALESCE(MAX(kc.checkin_date), DATE '1970-01-01') >= $1
+     ORDER BY stale_days DESC
+     LIMIT 10`,
+    params
+  );
+
+  return {
+    data: {
+      threshold_days: 14,
+      total: objectiveRows.rowCount + kpiRows.rowCount,
+      key_results: objectiveRows.rows,
+      kpis: kpiRows.rows
+    },
+    sources: ['key_results', 'key_result_checkins', 'kpi_metrics', 'kpi_checkins', 'users'],
+    relatedEntityType: 'checkin',
+    relatedEntityIds: [
+      ...objectiveRows.rows.map((row) => row.id),
+      ...kpiRows.rows.map((row) => row.id)
+    ],
+    chartHint: 'table'
+  };
+}
+
 async function getTopDepartments() {
   const result = await query(
     `SELECT
@@ -301,6 +372,50 @@ async function getContextForGenericAnalysis(user) {
   };
 }
 
+async function getRiskSnapshot(user) {
+  const [lowObjectives, riskyKpis, pendingCheckins] = await Promise.all([
+    getLowProgressObjectives(user),
+    getRiskyKpis(user),
+    getPendingCheckins(user)
+  ]);
+
+  return {
+    low_progress_objectives: lowObjectives.data,
+    risky_kpis: riskyKpis.data,
+    pending_checkins: pendingCheckins.data
+  };
+}
+
+async function getFunnySummary(user) {
+  const [dashboard, activeCycles, riskSnapshot] = await Promise.all([
+    getDashboardSummary(),
+    getActiveCycles(),
+    getRiskSnapshot(user)
+  ]);
+
+  return {
+    data: {
+      generated_at: new Date().toISOString(),
+      role: user.role,
+      active_cycles: activeCycles.data,
+      dashboard: dashboard.data.summary,
+      risk_snapshot: {
+        low_objectives: riskSnapshot.low_progress_objectives.total || 0,
+        risky_kpis: riskSnapshot.risky_kpis.total || 0,
+        pending_checkins: riskSnapshot.pending_checkins.total || 0
+      },
+      highlights: {
+        top_low_objective: riskSnapshot.low_progress_objectives.items?.[0] || null,
+        top_risky_kpi: riskSnapshot.risky_kpis.items?.[0] || null
+      }
+    },
+    sources: ['dashboard_summary', 'active_cycles', 'risk_snapshot'],
+    chartHint: 'summary_cards',
+    relatedEntityType: 'dashboard',
+    relatedEntityIds: []
+  };
+}
+
 function buildFallbackGenericAnalysis(context) {
   const summary = context.dashboard.summary || {};
   const topDept = context.dashboard.top_departments?.[0];
@@ -346,6 +461,12 @@ async function executeIntent(intent, user) {
       return getTopPerformers();
     case INTENTS.dashboard_summary:
       return getDashboardSummary();
+    case INTENTS.pending_checkins:
+      return getPendingCheckins(user);
+    case INTENTS.explain_objective_metric:
+      return getLowProgressObjectives(user);
+    case INTENTS.explain_kpi_metric:
+      return getRiskyKpis(user);
     default:
       return {
         data: {},
@@ -363,7 +484,10 @@ module.exports = {
   getActiveCycles,
   getLowProgressObjectives,
   getRiskyKpis,
+  getPendingCheckins,
   getTopDepartments,
   getTopPerformers,
-  getDashboardSummary
+  getDashboardSummary,
+  getRiskSnapshot,
+  getFunnySummary
 };

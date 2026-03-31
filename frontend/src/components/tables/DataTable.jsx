@@ -25,41 +25,42 @@ function maybeBadge(colKey, value) {
 
 export default function DataTable({ columns, data, emptyLabel = 'No records found', actions }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white/95">
+    <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white/95">
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-        <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500">
-            {columns.map((col) => (
-                <th key={col.key} className="px-4 py-3.5 text-xs font-semibold uppercase tracking-[0.12em]">
-                {col.label}
-              </th>
-            ))}
-              {actions ? <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-[0.12em]">Actions</th> : null}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => (
-              <tr key={String(row.id)} className="border-b border-slate-100 align-top transition hover:bg-brand-50/50">
+          <thead className="sticky top-0 z-10">
+            <tr className="border-b border-slate-200 bg-slate-50/90 text-slate-500">
               {columns.map((col) => (
-                  <td key={col.key} className="px-4 py-3.5 text-slate-700">
-                    {col.render
-                      ? col.render(row)
-                      : maybeBadge(col.key, row[col.key]) || formatValue(row[col.key])}
-                </td>
+                <th key={col.key} className="px-4 py-4 text-xs font-semibold uppercase tracking-[0.14em]">
+                  {col.label}
+                </th>
               ))}
-                {actions ? <td className="px-4 py-3.5">{actions(row)}</td> : null}
+              {actions ? <th className="px-4 py-4 text-xs font-semibold uppercase tracking-[0.14em]">Actions</th> : null}
             </tr>
-          ))}
-          {data.length === 0 ? (
-            <tr>
-                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-4 py-10 text-center text-slate-500">
-                {emptyLabel}
-              </td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((row, index) => (
+              <tr key={String(row.id)} className={`border-b border-slate-100 align-top transition hover:bg-brand-50/50 ${index % 2 === 0 ? 'bg-white/95' : 'bg-slate-50/40'}`}>
+                {columns.map((col) => (
+                  <td key={col.key} className="px-4 py-4 text-slate-700">
+                    {col.render ? col.render(row) : maybeBadge(col.key, row[col.key]) || formatValue(row[col.key])}
+                  </td>
+                ))}
+                {actions ? <td className="px-4 py-4">{actions(row)}</td> : null}
+              </tr>
+            ))}
+            {data.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-4 py-14 text-center">
+                  <div className="mx-auto max-w-md rounded-[1.4rem] border border-dashed border-slate-200 bg-slate-50/80 px-6 py-8">
+                    <p className="text-sm font-semibold text-slate-700">{emptyLabel}</p>
+                    <p className="mt-2 text-sm text-slate-500">Try another keyword, refresh the data, or create a new record.</p>
+                  </div>
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
       </div>
     </div>
   );

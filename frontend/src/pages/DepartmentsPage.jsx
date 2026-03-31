@@ -21,7 +21,7 @@ export default function DepartmentsPage() {
   }, []);
 
   return (
-    <AppLayout title="Departments Management">
+    <AppLayout title="Departments Management" description="Organize departments, ownership, and accountability with fewer clicks.">
       <EntityCrudPage
         title="Department"
         description="Create and organize departments"

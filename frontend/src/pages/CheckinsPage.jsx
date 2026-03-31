@@ -15,7 +15,7 @@ export default function CheckinsPage() {
   }, []);
 
   return (
-    <AppLayout title="Check-ins">
+    <AppLayout title="Check-ins" description="Capture progress updates quickly and keep recent activity easy to review.">
       <EntityCrudPage
         title="Check-in"
         description="Submit progress updates and notes"
@@ -35,8 +35,9 @@ export default function CheckinsPage() {
         ]}
         loadItems={checkinsApi.list}
         createItem={checkinsApi.create}
-        updateItem={async () => {}}
-        deleteItem={async () => {}}
+        updateItem={null}
+        deleteItem={null}
+        canUpdate={false}
         canDelete={false}
       />
     </AppLayout>

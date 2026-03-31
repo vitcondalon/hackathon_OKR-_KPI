@@ -1,13 +1,14 @@
 const { verifyToken } = require('../utils/jwt');
 const { query } = require('../config/db');
+const { sendError } = require('../utils/response');
 
 async function authMiddleware(req, res, next) {
   try {
-    const authHeader = req.headers.authorization || '';
+    const authHeader = String(req.headers.authorization || '').trim();
     const [scheme, token] = authHeader.split(' ');
 
     if (scheme?.toLowerCase() !== 'bearer' || !token) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      return sendError(res, 401, 'Unauthorized');
     }
 
     const decoded = verifyToken(token);
@@ -33,13 +34,13 @@ async function authMiddleware(req, res, next) {
 
     const user = userResult.rows[0];
     if (!user || !user.is_active) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      return sendError(res, 401, 'Unauthorized');
     }
 
     req.user = user;
     return next();
   } catch (error) {
-    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    return sendError(res, 401, 'Invalid or expired token');
   }
 }
 

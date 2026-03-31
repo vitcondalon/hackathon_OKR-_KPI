@@ -1,5 +1,7 @@
 # OKR / KPI HR Management System
 
+Detailed usage guide: `USER_GUIDE.md`
+
 Backend-first rebuild using:
 - Node.js + Express.js (JavaScript)
 - PostgreSQL
@@ -188,7 +190,15 @@ This script executes directly:
 - Funny (protected):
   - `POST /api/funny/chat`
   - `GET /api/funny/suggestions`
+  - `GET /api/funny/summary`
+  - `GET /api/funny/insights`
   - `GET /api/funny/health`
+- Insights:
+  - `GET /api/insights/overview`
+- Guides:
+  - `GET /api/guides/user-guide`
+  - `GET /api/guides/user-guide/raw`
+  - `GET /api/guides/user-guide/download`
 
 ## Funny Internal AI Assistant
 

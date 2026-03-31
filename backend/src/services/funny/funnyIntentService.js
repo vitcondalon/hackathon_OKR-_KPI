@@ -4,9 +4,17 @@ const INTENTS = {
   active_cycles: 'active_cycles',
   low_progress_objectives: 'low_progress_objectives',
   risky_kpis: 'risky_kpis',
+  pending_checkins: 'pending_checkins',
   top_departments: 'top_departments',
   top_performers: 'top_performers',
   dashboard_summary: 'dashboard_summary',
+  explain_kpi_progress: 'explain_kpi_progress',
+  explain_objective_progress: 'explain_objective_progress',
+  explain_at_risk: 'explain_at_risk',
+  explain_checkin: 'explain_checkin',
+  explain_dashboard_summary: 'explain_dashboard_summary',
+  explain_objective_metric: 'explain_objective_metric',
+  explain_kpi_metric: 'explain_kpi_metric',
   generic_analysis: 'generic_analysis'
 };
 
@@ -15,9 +23,17 @@ const PRIORITY = [
   INTENTS.count_departments,
   INTENTS.active_cycles,
   INTENTS.risky_kpis,
+  INTENTS.pending_checkins,
   INTENTS.low_progress_objectives,
   INTENTS.top_departments,
   INTENTS.top_performers,
+  INTENTS.explain_kpi_progress,
+  INTENTS.explain_objective_progress,
+  INTENTS.explain_at_risk,
+  INTENTS.explain_checkin,
+  INTENTS.explain_dashboard_summary,
+  INTENTS.explain_objective_metric,
+  INTENTS.explain_kpi_metric,
   INTENTS.dashboard_summary,
   INTENTS.generic_analysis
 ];
@@ -48,6 +64,8 @@ function scoreIntent(text) {
   const hasRiskWord = hasAny(text, ['rui ro', 'at risk', 'risk', 'duoi 50', 'thap']);
   const hasSummaryWord = hasAny(text, ['tom tat', 'tong quan', 'tong hop', 'dashboard']);
   const hasAnalysisWord = hasAny(text, ['phan tich', 'nhan dinh', 'giai thich', 'xu huong', 'analysis']);
+  const hasExplainWord = hasAny(text, ['explain', 'giai thich', 'tai sao', 'why']);
+  const hasPendingWord = hasAny(text, ['pending', 'chua checkin', 'missing checkin', 'not updated', 'chua cap nhat']);
 
   const hasUserWord = hasAny(text, ['user', 'nhan vien', 'nhan su', 'employee']);
   const hasDeptWord = hasAny(text, ['phong ban', 'department', 'dept']);
@@ -70,6 +88,7 @@ function scoreIntent(text) {
 
   if (hasKpiWord && hasRiskWord) scores[INTENTS.risky_kpis] += 5;
   if (hasKpiWord && hasAny(text, ['tinh hinh', 'the nao'])) scores[INTENTS.risky_kpis] += 2;
+  if (hasPendingWord) scores[INTENTS.pending_checkins] += 4;
 
   if (hasTopWord && hasDeptWord) scores[INTENTS.top_departments] += 5;
   if (hasDeptWord && hasAny(text, ['hieu suat', 'performance'])) scores[INTENTS.top_departments] += 2;
@@ -82,6 +101,24 @@ function scoreIntent(text) {
   }
   if (hasSummaryWord && !hasKpiWord && !hasObjectiveWord && !hasCycleWord) {
     scores[INTENTS.dashboard_summary] += 2;
+  }
+
+  if (hasExplainWord && hasObjectiveWord) scores[INTENTS.explain_objective_metric] += 5;
+  if (hasExplainWord && hasKpiWord) scores[INTENTS.explain_kpi_metric] += 5;
+  if (hasAny(text, ['kpi progress la gi', 'kpi progress', 'what is kpi progress'])) {
+    scores[INTENTS.explain_kpi_progress] += 7;
+  }
+  if (hasAny(text, ['objective progress tinh nhu the nao', 'objective progress', 'how objective progress'])) {
+    scores[INTENTS.explain_objective_progress] += 7;
+  }
+  if (hasAny(text, ['at risk la gi', 'at risk nghia la gi', 'what is at risk'])) {
+    scores[INTENTS.explain_at_risk] += 7;
+  }
+  if (hasAny(text, ['check in la gi', 'checkin la gi', 'what is check in'])) {
+    scores[INTENTS.explain_checkin] += 7;
+  }
+  if (hasAny(text, ['dashboard summary la gi', 'what is dashboard summary'])) {
+    scores[INTENTS.explain_dashboard_summary] += 7;
   }
 
   if (hasAnalysisWord) scores[INTENTS.generic_analysis] += 4;

@@ -160,7 +160,114 @@ function buildOpenApiSpec(req) {
           properties: {
             success: { type: 'boolean' },
             message: { type: 'string' },
-            data: {}
+            data: {},
+            meta: { type: 'object', nullable: true, additionalProperties: true },
+            errors: {
+              type: 'array',
+              nullable: true,
+              items: {
+                type: 'object',
+                properties: {
+                  path: { type: 'string', nullable: true },
+                  message: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        FunnyLink: {
+          type: 'object',
+          properties: {
+            label: { type: 'string', example: 'Dashboard' },
+            path: { type: 'string', example: '/dashboard' }
+          }
+        },
+        FunnyQuickAction: {
+          type: 'object',
+          properties: {
+            label: { type: 'string', example: 'Open dashboard' },
+            actionType: { type: 'string', example: 'navigate' },
+            targetRoute: { type: 'string', example: '/dashboard' },
+            sourceQuestionId: { type: 'string', nullable: true, example: 'q28' }
+          }
+        },
+        FunnyInsight: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', example: 'risk' },
+            label: { type: 'string', example: 'Risky KPIs' },
+            value: { oneOf: [{ type: 'number' }, { type: 'string' }], example: 2 },
+            severity: { type: 'string', nullable: true, example: 'warning' }
+          }
+        },
+        FunnyQuestion: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: 'q17' },
+            text: { type: 'string', example: 'Which KPIs are at risk?' },
+            intent: { type: 'string', example: 'risky_kpis' },
+            category: { type: 'string', example: 'risk' },
+            targetRoute: { type: 'string', example: '/kpis' },
+            roleVisibility: {
+              type: 'array',
+              items: { type: 'string', example: 'manager' }
+            },
+            quickActions: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/FunnyQuickAction' }
+            },
+            reason: { type: 'string', nullable: true, example: '2 KPI(s) need attention.' },
+            priority: { type: 'number', nullable: true, example: 85 }
+          }
+        },
+        FunnyChatRequest: {
+          type: 'object',
+          properties: {
+            questionId: { type: 'string', example: 'q17' },
+            message: { type: 'string', example: 'Which KPIs are at risk?' },
+            conversationId: { type: 'string', example: 'thread-01' }
+          }
+        },
+        FunnyChatResponse: {
+          type: 'object',
+          properties: {
+            answer: { type: 'string' },
+            intent: { type: 'string', example: 'risky_kpis' },
+            data: { type: 'object', additionalProperties: true },
+            sources: {
+              type: 'array',
+              items: { type: 'string' }
+            },
+            suggestions: {
+              type: 'array',
+              items: { type: 'string' }
+            },
+            recommendedQuestions: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/FunnyQuestion' }
+            },
+            chartHint: { type: 'string', nullable: true, example: 'table' },
+            relatedEntityType: { type: 'string', nullable: true, example: 'kpi' },
+            relatedEntityIds: {
+              type: 'array',
+              items: { type: 'integer' }
+            },
+            links: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/FunnyLink' }
+            },
+            quickActions: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/FunnyQuickAction' }
+            },
+            insights: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/FunnyInsight' }
+            },
+            meta: {
+              type: 'object',
+              additionalProperties: true
+            }
           }
         }
       }
@@ -174,7 +281,10 @@ function buildOpenApiSpec(req) {
       { name: 'Key Results' },
       { name: 'Check-ins' },
       { name: 'KPIs' },
-      { name: 'Dashboard' }
+      { name: 'Dashboard' },
+      { name: 'Funny' },
+      { name: 'Insights' },
+      { name: 'Guides' }
     ],
     paths: {
       '/auth/login': {
@@ -482,7 +592,158 @@ function buildOpenApiSpec(req) {
       '/dashboard/progress': { get: { tags: ['Dashboard'], summary: 'Progress', security: [{ bearerAuth: [] }], responses: { 200: { description: 'OK' } } } },
       '/dashboard/risks': { get: { tags: ['Dashboard'], summary: 'Risks', security: [{ bearerAuth: [] }], responses: { 200: { description: 'OK' } } } },
       '/dashboard/top-performers': { get: { tags: ['Dashboard'], summary: 'Top performers', security: [{ bearerAuth: [] }], responses: { 200: { description: 'OK' } } } },
-      '/dashboard/charts': { get: { tags: ['Dashboard'], summary: 'Charts', security: [{ bearerAuth: [] }], responses: { 200: { description: 'OK' } } } }
+      '/dashboard/charts': { get: { tags: ['Dashboard'], summary: 'Charts', security: [{ bearerAuth: [] }], responses: { 200: { description: 'OK' } } } },
+      '/guides/user-guide': { get: { tags: ['Guides'], summary: 'User guide info', responses: { 200: { description: 'OK' } } } },
+      '/guides/user-guide/raw': { get: { tags: ['Guides'], summary: 'User guide raw markdown', responses: { 200: { description: 'OK' } } } },
+      '/guides/user-guide/download': { get: { tags: ['Guides'], summary: 'Download user guide markdown', responses: { 200: { description: 'OK' } } } },
+      '/funny/health': { get: { tags: ['Funny'], summary: 'Funny health', security: [{ bearerAuth: [] }], responses: { 200: { description: 'OK' } } } },
+      '/funny/questions': {
+        get: {
+          tags: ['Funny'],
+          summary: 'Funny question bank',
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      total: { type: 'integer' },
+                      categories: {
+                        type: 'array',
+                        items: { type: 'string' }
+                      },
+                      items: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/FunnyQuestion' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      '/funny/suggestions': {
+        get: {
+          tags: ['Funny'],
+          summary: 'Funny contextual suggestions',
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      suggestions: {
+                        type: 'array',
+                        items: { type: 'string' }
+                      },
+                      recommendedQuestions: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/FunnyQuestion' }
+                      },
+                      quickActions: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/FunnyQuickAction' }
+                      },
+                      insights: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/FunnyInsight' }
+                      },
+                      summary: {
+                        type: 'object',
+                        additionalProperties: true
+                      },
+                      meta: {
+                        type: 'object',
+                        additionalProperties: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      '/funny/summary': {
+        get: {
+          tags: ['Funny'],
+          summary: 'Funny role-based summary (employee/manager/admin)',
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      summary: {
+                        type: 'object',
+                        additionalProperties: true
+                      },
+                      insights: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/FunnyInsight' }
+                      },
+                      suggestions: {
+                        type: 'array',
+                        items: { type: 'string' }
+                      },
+                      recommendedQuestions: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/FunnyQuestion' }
+                      },
+                      quickActions: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/FunnyQuickAction' }
+                      },
+                      meta: {
+                        type: 'object',
+                        additionalProperties: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      '/funny/insights': { get: { tags: ['Funny'], summary: 'Funny insight feed', security: [{ bearerAuth: [] }], responses: { 200: { description: 'OK' } } } },
+      '/funny/chat': {
+        post: {
+          tags: ['Funny'],
+          summary: 'Funny chat',
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/FunnyChatRequest' }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/FunnyChatResponse' }
+                }
+              }
+            }
+          }
+        }
+      },
+      '/insights/overview': { get: { tags: ['Insights'], summary: 'Insights overview feed', security: [{ bearerAuth: [] }], responses: { 200: { description: 'OK' } } } }
     }
   };
 }

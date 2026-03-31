@@ -6,7 +6,11 @@ export default function ProtectedRoute({ children, roles }) {
   const location = useLocation();
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-slate-600">Loading...</div>;
+    return (
+      <div className="ui-shell flex min-h-screen items-center justify-center">
+        <div className="ui-surface rounded-[1.8rem] px-6 py-5 text-sm font-semibold text-slate-600">Loading workspace...</div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
