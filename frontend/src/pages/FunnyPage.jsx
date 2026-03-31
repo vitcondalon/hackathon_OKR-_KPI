@@ -324,7 +324,7 @@ export default function FunnyPage() {
       <div className="space-y-5 ui-page-enter">
         <Card className="overflow-hidden">
           <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
-            <div className="rounded-[1.9rem] border border-brand-100 bg-[radial-gradient(circle_at_top_left,_rgba(36,107,255,0.2),_transparent_35%),linear-gradient(135deg,_rgba(255,255,255,0.97),_rgba(240,247,255,0.96))] p-5 sm:p-6">
+            <div className="ui-highlight rounded-[1.9rem] p-5 sm:p-6">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`status-badge ${roleBadgeTone(summary?.role || 'employee')}`}>{summary?.role || 'employee'}</span>
                 <span className="status-badge border-slate-200 bg-white text-slate-600">{health?.dbConnected ? 'Database ready' : 'Checking database'}</span>

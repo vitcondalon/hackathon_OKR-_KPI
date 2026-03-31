@@ -6,10 +6,7 @@ function resolveGuideBase() {
 
 export const guideApi = {
   viewUrl() {
-    return resolveGuideBase();
-  },
-  rawUrl() {
-    return `${resolveGuideBase()}/raw`;
+    return `${resolveGuideBase()}/view`;
   },
   downloadUrl() {
     return `${resolveGuideBase()}/download`;

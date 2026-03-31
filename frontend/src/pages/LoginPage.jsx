@@ -79,14 +79,11 @@ export default function LoginPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-700">Need a quick walkthrough?</p>
-                <p className="mt-2 text-sm text-slate-700">Open the user guide before the demo to see the main workflows and role-based experience.</p>
+                <p className="mt-2 text-sm text-slate-700">Open the user guide to read online, then download PDF directly inside the guide page if needed.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <a href={guideApi.viewUrl()} target="_blank" rel="noreferrer" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+                <a href={guideApi.viewUrl()} target="_blank" rel="noreferrer" className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
                   Open guide
-                </a>
-                <a href={guideApi.downloadUrl()} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
-                  Download guide
                 </a>
               </div>
             </div>

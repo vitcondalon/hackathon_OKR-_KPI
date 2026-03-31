@@ -140,7 +140,7 @@ export default function DashboardPage() {
 
         <Card className="overflow-hidden">
           <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
-            <div className="rounded-[1.8rem] border border-brand-100 bg-[radial-gradient(circle_at_top_left,_rgba(36,107,255,0.2),_transparent_34%),linear-gradient(135deg,_rgba(255,255,255,0.96),_rgba(239,246,255,0.96))] p-5 sm:p-6">
+            <div className="ui-highlight rounded-[1.8rem] p-5 sm:p-6">
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-brand-700">{user?.role || 'employee'} workspace</p>
               <h3 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-950">See what matters first, then act fast.</h3>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">This dashboard blends live OKR/KPI data, risks, and assistant context so each role lands on the right starting point without extra clicks.</p>

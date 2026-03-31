@@ -20,6 +20,10 @@
   --surface-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
   --input-bg: rgba(255, 255, 255, 0.96);
   --input-text: #0f172a;
+  --highlight-border: #d9e6ff;
+  --highlight-bg:
+    radial-gradient(circle at top left, rgba(36, 107, 255, 0.2), transparent 35%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(240, 247, 255, 0.96));
 }
 
 :root[data-theme='dark'] {
@@ -35,6 +39,10 @@
   --surface-shadow: 0 26px 66px rgba(2, 6, 23, 0.48);
   --input-bg: rgba(15, 23, 42, 0.92);
   --input-text: #e2e8f0;
+  --highlight-border: rgba(59, 130, 246, 0.34);
+  --highlight-bg:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.35), transparent 40%),
+    linear-gradient(135deg, rgba(10, 25, 52, 0.94), rgba(12, 20, 42, 0.96));
 }
 
 html {
@@ -125,6 +133,11 @@ textarea::placeholder {
 
   .status-badge {
     @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold capitalize;
+  }
+
+  .ui-highlight {
+    border: 1px solid var(--highlight-border);
+    background: var(--highlight-bg);
   }
 }
 

@@ -594,8 +594,8 @@ function buildOpenApiSpec(req) {
       '/dashboard/top-performers': { get: { tags: ['Dashboard'], summary: 'Top performers', security: [{ bearerAuth: [] }], responses: { 200: { description: 'OK' } } } },
       '/dashboard/charts': { get: { tags: ['Dashboard'], summary: 'Charts', security: [{ bearerAuth: [] }], responses: { 200: { description: 'OK' } } } },
       '/guides/user-guide': { get: { tags: ['Guides'], summary: 'User guide info', responses: { 200: { description: 'OK' } } } },
-      '/guides/user-guide/raw': { get: { tags: ['Guides'], summary: 'User guide raw markdown', responses: { 200: { description: 'OK' } } } },
-      '/guides/user-guide/download': { get: { tags: ['Guides'], summary: 'Download user guide markdown', responses: { 200: { description: 'OK' } } } },
+      '/guides/user-guide/view': { get: { tags: ['Guides'], summary: 'User guide HTML view', responses: { 200: { description: 'OK' } } } },
+      '/guides/user-guide/download': { get: { tags: ['Guides'], summary: 'Download user guide PDF', responses: { 200: { description: 'OK' } } } },
       '/funny/health': { get: { tags: ['Funny'], summary: 'Funny health', security: [{ bearerAuth: [] }], responses: { 200: { description: 'OK' } } } },
       '/funny/questions': {
         get: {

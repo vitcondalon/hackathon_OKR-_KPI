@@ -120,8 +120,6 @@ function NavSection({ section }) {
               `group block rounded-[1.35rem] border px-3 py-3 transition ${
                 isActive
                   ? 'border-brand-200 bg-brand-500 text-white shadow-[0_16px_34px_rgba(36,107,255,0.24)]'
-                  : item.featured
-                  ? 'border-brand-100 bg-brand-50/90 text-slate-800 hover:border-brand-200 hover:bg-white'
                   : 'border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-white/90'
               }`
             }
@@ -165,7 +163,7 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
     <div className="ui-shell">
       <div className="mx-auto grid w-full max-w-[1500px] gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="ui-surface flex flex-col rounded-[2rem] p-5 xl:sticky xl:top-6 xl:h-[calc(100vh-3rem)]">
-          <div className="rounded-[1.8rem] border border-brand-100 bg-[radial-gradient(circle_at_top_left,_rgba(36,107,255,0.18),_transparent_35%),linear-gradient(135deg,_rgba(255,255,255,0.98),_rgba(240,247,255,0.96))] p-5">
+          <div className="ui-highlight rounded-[1.8rem] p-5">
             <p className="text-[11px] font-bold uppercase tracking-[0.32em] text-brand-700">OKR/KPI HR</p>
             <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950">Performance Workspace</h1>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">A cleaner operating system for objectives, KPI tracking, check-ins, and guided follow-up.</p>
@@ -198,7 +196,7 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
 
             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-900 p-4 text-white">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-300">Need help?</p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-100">Open the user guide or jump into Funny for a guided demo flow.</p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-100">Open the user guide to read, then use the download button inside the guide page if needed.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <a href={guideApi.viewUrl()} target="_blank" rel="noreferrer" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-900">
                   Open guide
@@ -242,12 +240,6 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
                 >
                   Open guide
                 </button>
-                <a
-                  href={guideApi.downloadUrl()}
-                  className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
-                >
-                  Download guide
-                </a>
                 <button
                   type="button"
                   onClick={toggleTheme}

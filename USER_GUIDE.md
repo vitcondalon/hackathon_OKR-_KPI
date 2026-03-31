@@ -1,16 +1,16 @@
-# OKR/KPI HR Management System - User Guide
+# OKR/KPI HR MANAGEMENT SYSTEM - USER GUIDE
 
 ## 1. Introduction
 
-OKR/KPI HR Management System helps teams manage:
+This website helps teams manage:
 - objectives
 - key results
 - KPIs
 - check-ins
-- role-based dashboard views
-- Funny Assistant for guided questions and insights
+- role-based dashboards
+- Funny Assistant for insights and guided questions
 
-The system is designed for 3 main roles:
+The system is designed for three main roles:
 - `admin`
 - `manager`
 - `employee`
@@ -33,132 +33,38 @@ Demo accounts:
 - `nam@okr.local / Employee@123`
 - `ha@okr.local / Employee@123`
 
+After successful sign-in, the system redirects you to the dashboard.
+
 ---
 
-## 3. Role Overview
+## 3. User Roles
 
 ### Admin
-- View the full system dashboard
-- Manage users and departments
-- Review top performers and departments needing attention
-- Use Funny Assistant for global summary and insights
+- view the full system overview
+- manage users and departments
+- review top performers
+- track departments that need attention
+- use Funny Assistant for global summary and insights
 
 ### Manager
-- Review team risks
-- Track low progress objectives
-- Monitor risky KPIs
-- Follow up on pending check-ins
+- monitor team progress
+- review low-progress objectives
+- monitor risky KPIs
+- follow up on missing check-ins
+- use Funny Assistant for team-level summary
 
 ### Employee
-- View personal objectives and KPIs
-- Submit check-ins
-- See what needs attention next
-- Use Funny Assistant for personal summary and explanations
+- view personal objectives and KPIs
+- submit check-ins
+- see what to focus on next
+- use Funny Assistant for quick explanations and guidance
 
 ---
 
-## 4. Main Navigation
-
-### Dashboard
-The dashboard shows:
-- key summary cards
-- progress charts
-- risks and alerts
-- top performers
-- recommended next actions
-
-### Objectives
-Use this page to:
-- create objectives
-- assign owners
-- link objectives to cycles
-- monitor progress and status
-
-### Key Results
-Use this page to:
-- define measurable outcomes under objectives
-- update current values
-- review progress and status
-
-### KPIs
-Use this page to:
-- track operational metrics
-- compare target and current values
-- identify risky KPIs quickly
-
-### Check-ins
-Use this page to:
-- submit progress updates
-- add notes
-- keep objective and KPI reporting current
-
-### Users
-Available for admin and manager scope.
-
-Use this page to:
-- create users
-- assign roles
-- manage activation and departments
-
-### Departments
-Use this page to:
-- create departments
-- assign department managers
-- organize ownership cleanly
-
-### Cycles
-Use this page to:
-- create planning cycles
-- manage active and closed cycles
-
-### Profile
-Use this page to review:
-- your account info
-- your role
-- your current workspace context
-
----
-
-## 5. Funny Assistant
-
-Funny Assistant is a guided assistant workspace for OKR/KPI operations.
-
-You can use it to:
-- ask preset questions
-- ask your own question
-- open recommended questions
-- review insights
-- follow quick actions
-- read role-based summary
-- open explain/help cards
-
-### What Funny can return
-- `answer`
-- related links
-- quick actions
-- suggestions
-- insights
-- role-based summary
-- explain/help responses
-
-### Typical questions
-- Which KPIs are at risk?
-- What should I focus on next?
-- Explain KPI progress
-- Explain objective progress
-- Show my summary
-- Show team risks
-
-### Notes
-- If AI narrative is available, Funny may generate a richer summary.
-- If AI is unavailable, Funny still works with deterministic fallback responses.
-
----
-
-## 6. How To Use The New UI
+## 4. Main Interface
 
 ### Sidebar
-Use the sidebar to move quickly between:
+The left sidebar provides quick access to:
 - Dashboard
 - Funny Assistant
 - Objectives
@@ -171,127 +77,272 @@ Use the sidebar to move quickly between:
 - Profile
 
 ### Topbar
-The topbar includes:
-- breadcrumbs
-- page context
-- open guide button
-- download guide button
+The top section displays:
+- breadcrumb navigation
+- page title
+- short page description
+- guide download button
 - theme toggle
-- sign out
+- sign out button
 
-### Tables and Forms
-Most management pages now include:
-- a creation or edit form
-- search
-- live data table
-- empty states
-- faster visual scanning
+### Main Content Area
+The main area shows:
+- tables
+- forms
+- charts
+- insight sections
+- action-focused summaries
 
 ---
 
-## 7. Open Or Download This Guide
+## 5. Dashboard
 
-You can access this guide directly from the frontend:
-- `Open guide`
-- `Download guide`
+The dashboard is the best place to start after sign-in.
 
-These buttons are available in:
+It helps users:
+- see summary cards
+- review progress charts
+- monitor risks and alerts
+- check top performers
+- understand recommended next actions
+
+Role-based usage:
+- admins should use it for the full system view
+- managers should focus on risk and follow-up areas
+- employees should focus on progress and next actions
+
+---
+
+## 6. Objectives
+
+The Objectives page is used to:
+- create objectives
+- update objectives
+- assign owners
+- link objectives to cycles
+- monitor progress
+- manage status
+
+Best practice:
+- define objectives clearly
+- attach them to the correct cycle
+- review progress regularly
+
+---
+
+## 7. Key Results
+
+The Key Results page is used to:
+- create measurable results under objectives
+- update start, current, and target values
+- monitor progress
+- review execution status
+
+Best practice:
+- use clear measurable numbers whenever possible
+
+---
+
+## 8. KPIs
+
+The KPI page is used to:
+- create and manage KPIs
+- compare target and current values
+- monitor progress
+- identify risky KPIs
+
+Best practice:
+- keep KPI values updated so dashboard and assistant insights stay accurate
+
+---
+
+## 9. Check-ins
+
+The Check-ins page is used to:
+- submit regular updates
+- add notes
+- record the latest execution status
+
+Check-ins help:
+- managers track follow-up rhythm
+- employees update ongoing work
+- the system generate better insights and summaries
+
+---
+
+## 10. Users
+
+The Users page is used to:
+- create users
+- edit users
+- assign roles
+- assign departments
+- enable or disable active status
+
+Notes:
+- user role directly affects access level
+- this page is mainly for admin and manager workflows
+
+---
+
+## 11. Departments
+
+The Departments page is used to:
+- create departments
+- update department details
+- assign department managers
+
+Departments are important for:
+- ownership
+- KPI grouping
+- performance reporting
+
+---
+
+## 12. Cycles
+
+The Cycles page is used to:
+- create OKR cycles
+- update start and end dates
+- manage `planning`, `active`, and `closed` status
+
+Recommendation:
+- keep only the necessary cycles active at the same time
+
+---
+
+## 13. Profile
+
+The Profile page allows users to:
+- view current account details
+- verify role
+- review current department or employee code
+
+---
+
+## 14. Funny Assistant
+
+Funny Assistant is the built-in guided assistant workspace.
+
+Funny can help users:
+- use preset questions
+- ask free-form questions
+- review recommended questions
+- use quick actions
+- review insight cards
+- read role-based summary
+- open explain/help responses
+
+### Typical use flow
+1. Open `Funny Assistant`.
+2. Pick a preset question or type your own question.
+3. Submit the question.
+4. Review:
+- answer
+- links
+- quick actions
+- suggestions
+- insights
+- role-based summary
+
+### Example questions
+- Which KPIs are at risk?
+- Which objectives are low progress?
+- What should I focus on next?
+- Explain KPI progress.
+- Summarize the current situation.
+
+Note:
+- if AI narrative is unavailable, Funny still works with deterministic fallback responses
+
+---
+
+## 15. Download the User Guide
+
+The website includes a `Download guide` button.
+
+It is available from:
 - the login page
-- the main layout topbar
-- the sidebar help section
+- the main application topbar
 
-Backend guide endpoints:
-- `GET /api/guides/user-guide`
-- `GET /api/guides/user-guide/raw`
-- `GET /api/guides/user-guide/download`
+The guide is downloaded as a PDF file for easy sharing and presentation.
 
 ---
 
-## 8. Quick Demo Flow
+## 16. Switch Theme
 
-Recommended hackathon demo flow:
-
-1. Sign in with `admin@okr.local`
-2. Open `Dashboard`
-3. Show summary cards, charts, and risk section
-4. Open `Funny Assistant`
-5. Show recommended questions, insights, and role summary
-6. Ask:
-   - `Which KPIs are at risk?`
-   - `Explain KPI progress`
-7. Open `Objectives` or `KPIs`
-8. Show search, progress bars, and cleaner table layout
-9. Open `Check-ins`
-10. End by showing `Open guide` or `Download guide`
+Users can switch between light and dark mode:
+1. Click the theme toggle button.
+2. The interface changes immediately.
+3. The selected theme is saved for the next visit.
 
 ---
 
-## 9. Troubleshooting
+## 17. Search and Fast Actions
+
+On pages such as Users, Objectives, and KPIs:
+- use the search field to filter visible data
+- review clean status badges
+- use progress bars where available
+- work faster with simplified actions
+
+---
+
+## 18. Recommended Daily Flow
+
+### For Admin
+1. Sign in
+2. Open Dashboard
+3. Review risks and top performers
+4. Open Funny Assistant
+5. Ask for a system summary
+6. Review Users or Departments if needed
+
+### For Manager
+1. Sign in
+2. Open Dashboard
+3. Review low-progress objectives
+4. Review pending check-ins
+5. Use Funny Assistant for team risks
+
+### For Employee
+1. Sign in
+2. Open Dashboard
+3. Review personal objectives and KPIs
+4. Submit check-ins
+5. Use Funny Assistant for priorities and explanations
+
+---
+
+## 19. Common Issues
 
 ### Cannot sign in
-Check:
-- backend is running
-- database is running
-- credentials are correct
+- verify email or username
+- verify password
+- refresh the page and try again
 
-### Dashboard does not load
-Check:
-- backend API is reachable
-- frontend `VITE_API_BASE_URL` is correct
-- token is still valid
+### Cannot see expected data
+- check filters or search keywords
+- confirm your role has access to that data
+- refresh the page
 
-### Funny Assistant has no AI narrative
-This is acceptable.
+### Funny has no AI narrative
+- this is not a critical problem
+- the system still works with deterministic fallback responses
 
-Funny still works in fallback mode if:
-- Gemini is not configured
-- AI request fails
-- timeout happens
-
-### Data looks empty for a role
-This may be caused by current seeded data.
-
-Example:
-- a manager account may have limited team data in the demo seed
+### A role appears to have limited data
+- this may come from the current seeded demo dataset
+- it does not necessarily mean the system is broken
 
 ---
 
-## 10. Technical Notes
+## 20. Suggested Demo Flow
 
-Frontend:
-- React + Vite
-
-Backend:
-- Node.js + Express
-
-Database:
-- PostgreSQL
-
-API prefix:
-- `/api`
-
-Core modules:
-- auth
-- users
-- departments
-- cycles
-- objectives
-- key results
-- check-ins
-- KPIs
-- dashboard
-- Funny Assistant
-
----
-
-## 11. Release Checklist
-
-Before demo or release:
-1. Start database
-2. Start backend
-3. Start frontend or serve built frontend
-4. Verify login
-5. Verify dashboard loads
-6. Verify Funny Assistant loads
-7. Verify one CRUD page
-8. Verify guide buttons open correctly
+1. Sign in as admin
+2. Open Dashboard
+3. Open Funny Assistant
+4. Ask about risky KPIs
+5. Ask for an explanation of KPI progress
+6. Open Objectives or KPIs
+7. Open Check-ins
+8. Download the guide PDF
