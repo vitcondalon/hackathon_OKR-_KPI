@@ -146,9 +146,9 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
       <div className="mx-auto grid w-full max-w-[1500px] gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="ui-surface flex flex-col rounded-[2rem] p-5 xl:sticky xl:top-6 xl:h-[calc(100vh-3rem)]">
           <div className="ui-highlight rounded-[1.8rem] p-5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.32em] text-brand-700">OKR/KPI HR</p>
-            <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950">Không gian hiệu suất</h1>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">Hệ thống gọn gàng cho objectives, KPI tracking, check-ins và các bước theo dõi.</p>
+            <p className="ui-eyebrow">OKR/KPI HR</p>
+            <h1 className="ui-card-title mt-3 text-[2rem]">Không gian hiệu suất</h1>
+            <p className="ui-body-copy mt-3">Hệ thống gọn gàng cho objectives, KPI tracking, check-ins và các bước theo dõi.</p>
           </div>
 
           <div ref={sidebarScrollRef} className="mt-5 flex-1 space-y-5 overflow-y-auto pr-1">
@@ -168,9 +168,9 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
                     </span>
                   ))}
                 </div>
-                <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.3em] text-brand-700">{eyebrow || meta.eyebrow || 'Không gian'}</p>
-                <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950 md:text-[2.4rem]">{title}</h2>
-                <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600">{description || meta.description || 'Không gian tập trung để ra quyết định nhanh và thực thi gọn gàng.'}</p>
+                <p className="ui-eyebrow mt-3">{eyebrow || meta.eyebrow || 'Không gian'}</p>
+                <h2 className="ui-page-title mt-2">{title}</h2>
+                <p className="ui-body-copy mt-4 max-w-3xl">{description || meta.description || 'Không gian tập trung để ra quyết định nhanh và thực thi gọn gàng.'}</p>
               </div>
 
               <div className="w-full space-y-3 xl:w-[340px]">

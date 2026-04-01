@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import DataTable from '../tables/DataTable';
@@ -88,9 +88,9 @@ export default function EntityCrudPage({
 
   const stats = useMemo(
     () => [
-      { label: `T?ng ${title}`, value: items.length, tone: 'text-slate-900' },
-      { label: '�ang hi?n th?', value: filteredItems.length, tone: 'text-brand-600' },
-      { label: 'Tr?ng th�i s?ng', value: inferHighlightValue(items, columns), tone: 'text-emerald-600' }
+      { label: `Tổng ${title}`, value: items.length, tone: 'text-slate-900' },
+      { label: 'Đang hiển thị', value: filteredItems.length, tone: 'text-brand-600' },
+      { label: 'Đang hoạt động', value: inferHighlightValue(items, columns), tone: 'text-emerald-600' }
     ],
     [columns, filteredItems.length, items, title]
   );
@@ -104,7 +104,7 @@ export default function EntityCrudPage({
       const data = await loadItems();
       setItems(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(apiErrorMessage(err, `Kh�ng th? t?i d? li?u ${title}`));
+      setError(apiErrorMessage(err, `Không thể tải dữ liệu ${title}`));
     } finally {
       setLoading(false);
     }
@@ -157,20 +157,20 @@ export default function EntityCrudPage({
       resetForm();
       await refresh();
     } catch (err) {
-      setError(apiErrorMessage(err, 'Kh�ng th? luu d? li?u'));
+      setError(apiErrorMessage(err, 'Không thể lưu dữ liệu'));
     } finally {
       setSaving(false);
     }
   }
 
   async function remove(id) {
-    if (!window.confirm('B?n c� ch?c ch?n mu?n x�a b?n ghi n�y?')) return;
+    if (!window.confirm('Bạn có chắc chắn muốn xóa bản ghi này?')) return;
     try {
       await deleteItem(id);
       if (editingId === id) resetForm();
       await refresh();
     } catch (err) {
-      setError(apiErrorMessage(err, 'Kh�ng th? x�a b?n ghi'));
+      setError(apiErrorMessage(err, 'Không thể xóa bản ghi'));
     }
   }
 
@@ -188,10 +188,10 @@ export default function EntityCrudPage({
 
       <div className="grid gap-5 xl:grid-cols-[400px_minmax(0,1fr)]">
         <Card
-          title={editingId ? `C?p nh?t ${title}` : `T?o ${title}`}
+          title={editingId ? `Cập nhật ${title}` : `Tạo ${title}`}
           subtitle={description}
           className="h-fit"
-          actions={editingId ? <span className="status-badge border-amber-200 bg-amber-50 text-amber-700">�ang s?a</span> : null}
+          actions={editingId ? <span className="status-badge border-amber-200 bg-amber-50 text-amber-700">Đang sửa</span> : null}
         >
           {canCreate || canUpdate ? (
             <form onSubmit={submit} className="space-y-4">
@@ -211,7 +211,7 @@ export default function EntityCrudPage({
                       required={Boolean(field.required && !editingId)}
                       onChange={(event) => setForm((prev) => ({ ...prev, [field.name]: event.target.value }))}
                     >
-                      <option value="">Ch?n {field.label}</option>
+                      <option value="">Chọn {field.label}</option>
                       {(field.options || []).map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
@@ -220,7 +220,7 @@ export default function EntityCrudPage({
                     </select>
                   ) : field.type === 'checkbox' ? (
                     <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                      <span className="text-sm text-slate-600">B?t tru?ng n�y</span>
+                      <span className="text-sm text-slate-600">Bật trường này</span>
                       <input
                         type="checkbox"
                         checked={Boolean(form[field.name])}
@@ -254,36 +254,36 @@ export default function EntityCrudPage({
 
               <div className="flex flex-wrap gap-2 pt-1">
                 <Button type="submit" disabled={saving}>
-                  {saving ? '�ang luu...' : editingId ? 'C?p nh?t' : 'T?o m?i'}
+                  {saving ? 'Đang lưu...' : editingId ? 'Cập nhật' : 'Tạo mới'}
                 </Button>
                 <Button type="button" variant="ghost" onClick={resetForm}>
-                  X�a form
+                  Xóa form
                 </Button>
               </div>
             </form>
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-600">
-              Vai tr� hi?n t?i ch? c� quy?n xem.
+              Vai trò hiện tại chỉ có quyền xem.
             </div>
           )}
         </Card>
 
         <Card
-          title={`Danh s�ch ${title}`}
-          subtitle="D? li?u API th?c t? d? theo d�i v� thao t�c nhanh"
+          title={`Danh sách ${title}`}
+          subtitle="Dữ liệu API thực tế để theo dõi và thao tác nhanh"
           actions={
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="ghost" onClick={refresh}>
-                T?i l?i
+                Tải lại
               </Button>
-              <span className="status-badge border-slate-200 bg-white text-slate-600">{filteredItems.length} b?n ghi</span>
+              <span className="status-badge border-slate-200 bg-white text-slate-600">{filteredItems.length} bản ghi</span>
             </div>
           }
         >
           <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0 flex-1">
               <input
-                placeholder={`T�m ${title.toLowerCase()} theo c?t dang hi?n th?...`}
+                placeholder={`Tìm ${title.toLowerCase()} theo cột đang hiển thị...`}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 className="max-w-xl"
@@ -308,19 +308,19 @@ export default function EntityCrudPage({
             <DataTable
               columns={columns}
               data={filteredItems}
-              emptyLabel={`Kh�ng c� b?n ghi ${title.toLowerCase()} ph� h?p v?i b? l?c hi?n t?i`}
+              emptyLabel={`Không có bản ghi ${title.toLowerCase()} phù hợp với bộ lọc hiện tại`}
               actions={
                 hasActions
                   ? (row) => (
                       <div className="flex flex-wrap gap-2">
                         {canUpdate ? (
                           <Button type="button" variant="ghost" className="px-3 py-2 text-xs" onClick={() => startEdit(row)}>
-                            S?a
+                            Sửa
                           </Button>
                         ) : null}
                         {canDelete ? (
                           <Button type="button" variant="danger" className="px-3 py-2 text-xs" onClick={() => remove(row.id)}>
-                            X�a
+                            Xóa
                           </Button>
                         ) : null}
                       </div>

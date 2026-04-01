@@ -9,15 +9,15 @@ import { guideApi } from '../api/guideApi';
 const roleCards = [
   {
     title: 'Admin',
-    text: 'Xem tiến trình toàn hệ thống, các phòng ban cần chú ý và những cá nhân nổi bật.'
+    text: 'Xem tiến độ toàn hệ thống, các phòng ban cần chú ý và những cá nhân nổi bật.'
   },
   {
     title: 'Manager',
-    text: 'Tập trung vào rủi ro của đội, objective tiến trình thấp và các check-ins còn thiếu.'
+    text: 'Tập trung vào rủi ro của đội, objective tiến độ thấp và các check-ins còn thiếu.'
   },
   {
     title: 'Employee',
-    text: 'Theo dõi objective của bạn, tiến trình KPI và các hành động cần ưu tiên tiếp theo.'
+    text: 'Theo dõi objective của bạn, tiến độ KPI và các hành động cần ưu tiên tiếp theo.'
   }
 ];
 
@@ -111,4 +111,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
 
