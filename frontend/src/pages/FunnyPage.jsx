@@ -9,7 +9,7 @@ import { apiErrorMessage } from '../api/helpers';
 const TXT = {
   pageTitle: 'Funny Assistant',
   heroTitle: 'Assistant workspace for fast OKR/KPI decisions',
-  heroSubtitle: 'Use preset prompts, free-form questions, explain cards, and role-based recommendations in one place.',
+  heroSubtitle: 'Ask faster with presets, type your own question, and follow role-aware next steps.',
   emptyChat: 'No conversation yet. Start with a preset, type your own question, or pick a recommendation.',
   loadError: 'Failed to load Funny workspace',
   askError: 'Funny request failed',
@@ -247,12 +247,6 @@ export default function FunnyPage() {
 
   const selectedQuestion = questions.find((item) => item.id === selectedId);
   const explainQuestions = questions.filter((item) => item.category === 'help' || String(item.intent || '').startsWith('explain_'));
-  const heroStats = [
-    { label: 'Chat turns', value: chat.filter((item) => item.role === 'assistant').length },
-    { label: 'Recommendations', value: recommended.length },
-    { label: 'Insights', value: insights.length }
-  ];
-
   async function runQuestion({ question, message, fromQuickAction = false }) {
     if ((!question?.id && !message) || loading) return;
 
@@ -320,7 +314,7 @@ export default function FunnyPage() {
   }
 
   return (
-    <AppLayout title={TXT.pageTitle} description="A dedicated assistant workspace for contextual OKR/KPI questions, explainers, insights, and guided follow-up.">
+    <AppLayout title={TXT.pageTitle} description="A simpler assistant view for contextual OKR/KPI questions and guided follow-up.">
       <div className="space-y-5 ui-page-enter">
         <Card className="overflow-hidden">
           <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
@@ -334,13 +328,15 @@ export default function FunnyPage() {
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">{TXT.heroSubtitle}</p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-              {heroStats.map((item) => (
-                <div key={item.label} className="rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{item.label}</p>
-                  <p className="mt-2 text-3xl font-extrabold tracking-tight text-brand-600">{item.value}</p>
-                </div>
-              ))}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <div className="rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Chat turns</p>
+                <p className="mt-2 text-3xl font-extrabold tracking-tight text-brand-600">{chat.filter((item) => item.role === 'assistant').length}</p>
+              </div>
+              <div className="rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Pending check-ins</p>
+                <p className="mt-2 text-3xl font-extrabold tracking-tight text-amber-600">{summary?.risk_snapshot?.pending_checkins ?? 0}</p>
+              </div>
             </div>
           </div>
         </Card>
@@ -419,7 +415,7 @@ export default function FunnyPage() {
           <div className="space-y-5">
             <Card title="Recommended for you" subtitle="Role-aware prompts based on your current context">
               <div className="space-y-3">
-                {recommended.length === 0 ? <p className="text-sm text-slate-500">{TXT.noRecommendations}</p> : recommended.slice(0, 6).map((item) => {
+                {recommended.length === 0 ? <p className="text-sm text-slate-500">{TXT.noRecommendations}</p> : recommended.slice(0, 4).map((item) => {
                   const question = questions.find((entry) => entry.id === item.id);
                   return (
                     <button key={`rec-${item.id}`} type="button" onClick={() => question && runQuestion({ question, fromQuickAction: true })} className="ui-soft-hover w-full rounded-[1.35rem] border border-slate-200 bg-white/95 p-4 text-left">
@@ -436,64 +432,43 @@ export default function FunnyPage() {
               </div>
             </Card>
 
-            <Card title="Quick actions" subtitle="Direct navigation and assistant shortcuts">
-              <div className="flex flex-wrap gap-2.5">
-                {quickActions.length === 0 ? <p className="text-sm text-slate-500">{TXT.noQuickActions}</p> : quickActions.slice(0, 10).map((action, idx) => {
-                  const mapped = normalizeQuickAction(action);
-                  return askableAction(mapped) ? (
-                    <button key={`action-${idx}`} type="button" onClick={() => handleQuickAction(mapped)} className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700">
-                      {mapped.label}
-                    </button>
-                  ) : (
-                    <Link key={`link-${idx}`} to={mapped.targetRoute} className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700">
-                      {mapped.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            </Card>
+            <Card title="Guided actions" subtitle="Shortcuts and insights in one compact area">
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2.5">
+                  {quickActions.length === 0 ? <p className="text-sm text-slate-500">{TXT.noQuickActions}</p> : quickActions.slice(0, 6).map((action, idx) => {
+                    const mapped = normalizeQuickAction(action);
+                    return askableAction(mapped) ? (
+                      <button key={`action-${idx}`} type="button" onClick={() => handleQuickAction(mapped)} className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700">
+                        {mapped.label}
+                      </button>
+                    ) : (
+                      <Link key={`link-${idx}`} to={mapped.targetRoute} className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700">
+                        {mapped.label}
+                      </Link>
+                    );
+                  })}
+                </div>
 
-            <Card title="Insights" subtitle="High-signal cards for risk, follow-up, and performance">
-              <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
-                {insights.length === 0 ? <p className="text-sm text-slate-500">{TXT.noInsights}</p> : insights.slice(0, 6).map((insight) => (
-                  <Link key={insight.id} to={insight.targetRoute} className="ui-soft-hover block rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{insight.type}</p>
-                        <p className="mt-2 text-sm font-semibold text-slate-900">{insight.label}</p>
-                        {insight.message ? <p className="mt-2 text-xs text-slate-500">{insight.message}</p> : null}
+                <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
+                  {insights.length === 0 ? <p className="text-sm text-slate-500">{TXT.noInsights}</p> : insights.slice(0, 4).map((insight) => (
+                    <Link key={insight.id} to={insight.targetRoute} className="ui-soft-hover block rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{insight.type}</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-900">{insight.label}</p>
+                          {insight.message ? <p className="mt-2 text-xs text-slate-500">{insight.message}</p> : null}
+                        </div>
+                        <span className={`status-badge ${insightTone(insight.severity)}`}>{insight.severity}</span>
                       </div>
-                      <span className={`status-badge ${insightTone(insight.severity)}`}>{insight.severity}</span>
-                    </div>
-                    <p className="mt-3 text-3xl font-extrabold tracking-tight text-brand-600">{insight.value}</p>
-                  </Link>
-                ))}
+                      <p className="mt-3 text-3xl font-extrabold tracking-tight text-brand-600">{insight.value}</p>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </Card>
 
             <Card title="Summary by role" subtitle="Short live narrative and priority snapshot">
               <SummaryPanel summary={summary} suggestions={freeSuggestions} />
-            </Card>
-
-            <Card title="Module status" subtitle="Backend readiness and AI fallback status">
-              {health ? (
-                <div className="grid gap-3 sm:grid-cols-3 2xl:grid-cols-1">
-                  <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4">
-                    <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Database</p>
-                    <p className={`mt-2 text-lg font-bold ${health.dbConnected ? 'text-emerald-600' : 'text-red-600'}`}>{health.dbConnected ? 'Connected' : 'Disconnected'}</p>
-                  </div>
-                  <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4">
-                    <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Narrative mode</p>
-                    <p className={`mt-2 text-lg font-bold ${health.geminiConfigured ? 'text-emerald-600' : 'text-amber-600'}`}>{health.geminiConfigured ? 'AI enabled' : 'Deterministic fallback'}</p>
-                  </div>
-                  <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4">
-                    <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Model</p>
-                    <p className="mt-2 text-lg font-bold text-slate-900">{health.model || 'N/A'}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-slate-500">Loading module status...</p>
-              )}
             </Card>
           </div>
         </div>

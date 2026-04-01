@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { guideApi } from '../../api/guideApi';
@@ -25,12 +25,13 @@ const navigationSections = [
   {
     label: 'Workspace',
     items: [
-      { to: '/departments', label: 'Departments', caption: 'Teams and ownership', roles: ['admin', 'manager', 'employee'] },
-      { to: '/cycles', label: 'Cycles', caption: 'Planning windows', roles: ['admin', 'manager', 'employee'] },
+      { to: '/departments', label: 'Departments', caption: 'Teams and ownership', roles: ['admin', 'manager'] },
+      { to: '/cycles', label: 'Cycles', caption: 'Planning windows', roles: ['admin', 'manager'] },
       { to: '/users', label: 'Users', caption: 'People management', roles: ['admin', 'manager'] }
     ]
   }
 ];
+const SIDEBAR_SCROLL_KEY = 'okr_sidebar_scroll_top';
 
 const routeMeta = {
   '/dashboard': {
@@ -107,7 +108,7 @@ function roleTone(role) {
   return 'border-sky-200 bg-sky-50 text-sky-700';
 }
 
-function NavSection({ section }) {
+function NavSection({ section, isDark, onNavigate }) {
   return (
     <div>
       <p className="mb-2 px-2 text-[11px] font-bold uppercase tracking-[0.28em] text-slate-400">{section.label}</p>
@@ -116,21 +117,25 @@ function NavSection({ section }) {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={onNavigate}
+            preventScrollReset
             className={({ isActive }) =>
               `group block rounded-[1.35rem] border px-3 py-3 transition ${
                 isActive
                   ? 'border-brand-200 bg-brand-500 text-white shadow-[0_16px_34px_rgba(36,107,255,0.24)]'
-                  : 'border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-white/90'
+                  : isDark
+                    ? 'border-transparent bg-transparent text-slate-200 hover:border-slate-500/50 hover:bg-slate-800/70'
+                    : 'border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-white/90'
               }`
             }
           >
             {({ isActive }) => (
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className={`text-sm font-semibold ${isActive ? 'text-white' : 'text-slate-900'}`}>{item.label}</p>
-                  <p className={`mt-1 text-xs leading-relaxed ${isActive ? 'text-brand-50' : 'text-slate-500'}`}>{item.caption}</p>
+                  <p className={`text-sm font-semibold ${isActive ? 'text-white' : isDark ? 'text-slate-100' : 'text-slate-900'}`}>{item.label}</p>
+                  <p className={`mt-1 text-xs leading-relaxed ${isActive ? 'text-brand-50' : isDark ? 'text-slate-300' : 'text-slate-500'}`}>{item.caption}</p>
                 </div>
-                <span className={`mt-1 inline-flex h-2.5 w-2.5 rounded-full ${isActive ? 'bg-white' : item.featured ? 'bg-brand-500' : 'bg-slate-300'}`} />
+                <span className={`mt-1 inline-flex h-2.5 w-2.5 rounded-full ${isActive ? 'bg-white' : item.featured ? 'bg-brand-500' : isDark ? 'bg-slate-500' : 'bg-slate-300'}`} />
               </div>
             )}
           </NavLink>
@@ -142,9 +147,10 @@ function NavSection({ section }) {
 
 export default function AppLayout({ title, description, eyebrow, actions, children }) {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const sidebarScrollRef = useRef(null);
 
   const breadcrumbs = useMemo(() => buildBreadcrumbs(location.pathname), [location.pathname]);
   const meta = routeMeta[location.pathname] || {};
@@ -158,6 +164,43 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
         .filter((section) => section.items.length > 0),
     [user?.role]
   );
+  const persistSidebarScroll = () => {
+    const nav = sidebarScrollRef.current;
+    if (!nav) return;
+    window.sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(nav.scrollTop));
+  };
+
+  useEffect(() => {
+    const nav = sidebarScrollRef.current;
+    if (!nav) return;
+
+    const saved = Number(window.sessionStorage.getItem(SIDEBAR_SCROLL_KEY) || '0');
+    if (Number.isFinite(saved) && saved > 0) {
+      nav.scrollTop = saved;
+    }
+
+    const onScroll = () => persistSidebarScroll();
+
+    nav.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      onScroll();
+      nav.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    const nav = sidebarScrollRef.current;
+    if (!nav) return;
+    const saved = Number(window.sessionStorage.getItem(SIDEBAR_SCROLL_KEY) || '0');
+    if (Number.isFinite(saved) && saved >= 0) {
+      window.requestAnimationFrame(() => {
+        nav.scrollTop = saved;
+        window.requestAnimationFrame(() => {
+          nav.scrollTop = saved;
+        });
+      });
+    }
+  }, [location.pathname]);
 
   return (
     <div className="ui-shell">
@@ -169,43 +212,10 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
             <p className="mt-2 text-sm leading-relaxed text-slate-600">A cleaner operating system for objectives, KPI tracking, check-ins, and guided follow-up.</p>
           </div>
 
-          <div className="mt-5 flex-1 space-y-5 overflow-y-auto pr-1">
+          <div ref={sidebarScrollRef} className="mt-5 flex-1 space-y-5 overflow-y-auto pr-1">
             {sections.map((section) => (
-              <NavSection key={section.label} section={section} />
+              <NavSection key={section.label} section={section} isDark={isDark} onNavigate={persistSidebarScroll} />
             ))}
-          </div>
-
-          <div className="mt-5 space-y-3">
-            <div className="rounded-[1.5rem] border border-slate-200 bg-white/90 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-sm font-bold text-white">
-                  {initials(user?.full_name)}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">{user?.full_name || 'Current user'}</p>
-                  <p className="truncate text-xs text-slate-500">{user?.email || user?.username || ''}</p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <span className={`status-badge ${roleTone(user?.role)}`}>{user?.role || 'employee'}</span>
-                <Link to="/profile" className="text-xs font-semibold text-brand-700 hover:text-brand-800">
-                  View profile
-                </Link>
-              </div>
-            </div>
-
-            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-900 p-4 text-white">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-300">Need help?</p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-100">Open the user guide to read, then use the download button inside the guide page if needed.</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <a href={guideApi.viewUrl()} target="_blank" rel="noreferrer" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-900">
-                  Open guide
-                </a>
-                <Link to="/funny" className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold text-white">
-                  Ask Funny
-                </Link>
-              </div>
-            </div>
           </div>
         </aside>
 
@@ -232,31 +242,55 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
                 <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600">{description || meta.description || 'A focused workspace designed for fast decision-making and clean execution.'}</p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => window.open(guideApi.viewUrl(), '_blank', 'noopener,noreferrer')}
-                  className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
-                >
-                  Open guide
-                </button>
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
-                >
-                  {theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout();
-                    navigate('/login');
-                  }}
-                  className="ui-soft-hover rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700"
-                >
-                  Sign out
-                </button>
+              <div className="w-full space-y-3 xl:w-[340px]">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-white/90 p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-sm font-bold text-white">
+                      {initials(user?.full_name)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{user?.full_name || 'Current user'}</p>
+                      <p className="truncate text-xs text-slate-500">{user?.email || user?.username || ''}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <span className={`status-badge ${roleTone(user?.role)}`}>{user?.role || 'employee'}</span>
+                    <Link to="/profile" className="text-xs font-semibold text-brand-700 hover:text-brand-800">
+                      View profile
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="flex w-full justify-center">
+                  <div className="inline-flex flex-col items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => window.open(guideApi.viewUrl(), '_blank', 'noopener,noreferrer')}
+                        className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+                      >
+                        Open guide
+                      </button>
+                      <button
+                        type="button"
+                        onClick={toggleTheme}
+                        className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+                      >
+                        {theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        logout();
+                        navigate('/login');
+                      }}
+                      className="ui-soft-hover rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -33,8 +33,22 @@ export default function AppRouter() {
           </ProtectedRoute>
         )}
       />
-      <Route path="/departments" element={<ProtectedRoute><DepartmentsPage /></ProtectedRoute>} />
-      <Route path="/cycles" element={<ProtectedRoute><CyclesPage /></ProtectedRoute>} />
+      <Route
+        path="/departments"
+        element={(
+          <ProtectedRoute roles={['admin', 'manager']}>
+            <DepartmentsPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/cycles"
+        element={(
+          <ProtectedRoute roles={['admin', 'manager']}>
+            <CyclesPage />
+          </ProtectedRoute>
+        )}
+      />
       <Route path="/objectives" element={<ProtectedRoute><ObjectivesPage /></ProtectedRoute>} />
       <Route path="/key-results" element={<ProtectedRoute><KeyResultsPage /></ProtectedRoute>} />
       <Route path="/checkins" element={<ProtectedRoute><CheckinsPage /></ProtectedRoute>} />
