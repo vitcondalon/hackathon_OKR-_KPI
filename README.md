@@ -1,6 +1,6 @@
 # OKR / KPI HR Management System
 
-Detailed usage guide: `USER_GUIDE.md`
+Detailed usage guide: `USER_GUIDE.md  `
 
 Backend-first rebuild using:
 - Node.js + Express.js (JavaScript)
