@@ -16,21 +16,21 @@ export default function KeyResultsPage() {
   }, []);
 
   return (
-    <AppLayout title="Key Results" description="Keep measurable outcomes visible and update them with less friction.">
+    <AppLayout title="Key Results" description="Theo doi ket qua do luong duoc va cap nhat nhanh hon voi giao dien ro rang.">
       <EntityCrudPage
         title="Key Result"
-        description="Define measurable outcomes under each objective"
+        description="Quan ly ket qua do luong cho tung muc tieu"
         fields={[
-          { name: 'objective_id', label: 'Objective', type: 'select', required: true, options: objectiveOptions },
-          { name: 'title', label: 'Title', required: true },
-          { name: 'description', label: 'Description', type: 'textarea' },
-          { name: 'start_value', label: 'Start value', type: 'number', required: true },
-          { name: 'target_value', label: 'Target value', type: 'number', required: true },
-          { name: 'current_value', label: 'Current value', type: 'number', required: true },
-          { name: 'unit', label: 'Unit' },
+          { name: 'objective_id', label: 'Muc tieu', type: 'select', required: true, options: objectiveOptions },
+          { name: 'title', label: 'Tieu de', required: true },
+          { name: 'description', label: 'Mo ta', type: 'textarea' },
+          { name: 'start_value', label: 'Gia tri bat dau', type: 'number', required: true },
+          { name: 'target_value', label: 'Gia tri muc tieu', type: 'number', required: true },
+          { name: 'current_value', label: 'Gia tri hien tai', type: 'number', required: true },
+          { name: 'unit', label: 'Don vi' },
           {
             name: 'status',
-            label: 'Status',
+            label: 'Trang thai',
             type: 'select',
             required: true,
             options: [
@@ -42,13 +42,13 @@ export default function KeyResultsPage() {
           }
         ]}
         columns={[
-          { key: 'objective_title', label: 'Objective' },
-          { key: 'title', label: 'Title' },
-          { key: 'target_value', label: 'Target' },
-          { key: 'current_value', label: 'Current' },
+          { key: 'objective_title', label: 'Muc tieu' },
+          { key: 'title', label: 'Tieu de' },
+          { key: 'target_value', label: 'Muc tieu' },
+          { key: 'current_value', label: 'Hien tai' },
           {
             key: 'progress',
-            label: 'Progress',
+            label: 'Tien trinh',
             render: (row) => (
               <div className="min-w-[150px]">
                 <div className="flex items-center justify-between gap-2 text-xs">
@@ -60,7 +60,7 @@ export default function KeyResultsPage() {
               </div>
             )
           },
-          { key: 'status', label: 'Status' }
+          { key: 'status', label: 'Trang thai' }
         ]}
         loadItems={keyResultsApi.list}
         createItem={keyResultsApi.create}

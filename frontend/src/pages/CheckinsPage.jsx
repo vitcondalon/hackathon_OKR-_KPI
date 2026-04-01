@@ -1,40 +1,85 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { checkinsApi } from '../api/checkinsApi';
 import { keyResultsApi } from '../api/keyResultsApi';
+import { kpiApi } from '../api/kpiApi';
 
 export default function CheckinsPage() {
   const [keyResultOptions, setKeyResultOptions] = useState([]);
+  const [kpiOptions, setKpiOptions] = useState([]);
 
   useEffect(() => {
-    keyResultsApi
-      .list()
-      .then((data) => setKeyResultOptions((data || []).map((item) => ({ label: item.title, value: String(item.id) }))))
-      .catch(() => setKeyResultOptions([]));
+    Promise.all([keyResultsApi.list(), kpiApi.list()])
+      .then(([keyResults, kpis]) => {
+        setKeyResultOptions((keyResults || []).map((item) => ({ label: item.title, value: String(item.id) })));
+        setKpiOptions((kpis || []).map((item) => ({ label: item.name, value: String(item.id) })));
+      })
+      .catch(() => {
+        setKeyResultOptions([]);
+        setKpiOptions([]);
+      });
   }, []);
 
+  const metricTypeOptions = useMemo(
+    () => [
+      { label: 'Key Result', value: 'key_result' },
+      { label: 'KPI', value: 'kpi' }
+    ],
+    []
+  );
+
+  async function createCheckin(payload) {
+    const metricType = payload.metric_type || 'key_result';
+    const normalized = {
+      ...payload,
+      key_result_id: metricType === 'key_result' ? payload.key_result_id || undefined : undefined,
+      kpi_metric_id: metricType === 'kpi' ? payload.kpi_metric_id || undefined : undefined
+    };
+    delete normalized.metric_type;
+    return checkinsApi.create(normalized);
+  }
+
+  function normalizeRow(item) {
+    return {
+      ...item,
+      value: item.value_after ?? item.value ?? '-',
+      progress: item.progress_percent ?? item.progress ?? '-',
+      metric_name: item.key_result_title || item.kpi_name || '-'
+    };
+  }
+
   return (
-    <AppLayout title="Check-ins" description="Capture progress updates quickly and keep recent activity easy to review.">
+    <AppLayout title="Check-in" description="Cap nhat tien do nhanh va theo doi lich su gan day de de doi chieu.">
       <EntityCrudPage
         title="Check-in"
-        description="Submit progress updates and notes"
+        description="Gui cap nhat tien do va ghi chu"
         fields={[
-          { name: 'key_result_id', label: 'Key result', type: 'select', required: true, options: keyResultOptions },
-          { name: 'value', label: 'Value', type: 'number' },
-          { name: 'progress', label: 'Progress', type: 'number' },
-          { name: 'note', label: 'Note', type: 'textarea' }
+          { name: 'metric_type', label: 'Loai check-in', type: 'select', required: true, options: metricTypeOptions },
+          { name: 'key_result_id', label: 'Key Result', type: 'select', nullable: true, options: keyResultOptions },
+          { name: 'kpi_metric_id', label: 'KPI', type: 'select', nullable: true, options: kpiOptions },
+          { name: 'value', label: 'Gia tri', type: 'number' },
+          { name: 'progress', label: 'Tien trinh (%)', type: 'number' },
+          { name: 'note', label: 'Ghi chu', type: 'textarea', required: true }
         ]}
         columns={[
-          { key: 'key_result_title', label: 'Key result' },
-          { key: 'value', label: 'Value' },
-          { key: 'progress', label: 'Progress' },
-          { key: 'note', label: 'Note' },
-          { key: 'user_name', label: 'Created by' },
-          { key: 'created_at', label: 'Created at' }
+          { key: 'checkin_type', label: 'Loai' },
+          { key: 'metric_name', label: 'Chi so' },
+          { key: 'value', label: 'Gia tri' },
+          { key: 'progress', label: 'Tien trinh' },
+          { key: 'note', label: 'Ghi chu' },
+          { key: 'user_name', label: 'Nguoi tao' },
+          {
+            key: 'created_at',
+            label: 'Thoi gian tao',
+            render: (row) => (row.created_at ? new Date(row.created_at).toLocaleString('vi-VN') : '-')
+          }
         ]}
-        loadItems={checkinsApi.list}
-        createItem={checkinsApi.create}
+        loadItems={async () => {
+          const items = await checkinsApi.list();
+          return (items || []).map(normalizeRow);
+        }}
+        createItem={createCheckin}
         updateItem={null}
         deleteItem={null}
         canUpdate={false}

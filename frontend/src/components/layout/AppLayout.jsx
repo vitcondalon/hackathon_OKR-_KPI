@@ -6,28 +6,28 @@ import { guideApi } from '../../api/guideApi';
 
 const navigationSections = [
   {
-    label: 'Overview',
+    label: 'Tong quan',
     items: [
-      { to: '/dashboard', label: 'Dashboard', caption: 'Overview and priorities', roles: ['admin', 'manager', 'employee'] },
-      { to: '/funny', label: 'Funny Assistant', caption: 'Assistant workspace', roles: ['admin', 'manager', 'employee'], featured: true },
-      { to: '/profile', label: 'Profile', caption: 'Account details', roles: ['admin', 'manager', 'employee'] }
+      { to: '/dashboard', label: 'Dashboard', caption: 'Tong quan va muc uu tien', roles: ['admin', 'manager', 'employee'] },
+      { to: '/funny', label: 'Funny Assistant', caption: 'Khong gian tro ly', roles: ['admin', 'manager', 'employee'], featured: true },
+      { to: '/profile', label: 'Ho so', caption: 'Thong tin tai khoan', roles: ['admin', 'manager', 'employee'] }
     ]
   },
   {
-    label: 'Performance',
+    label: 'Hieu suat',
     items: [
-      { to: '/objectives', label: 'Objectives', caption: 'Goal planning and progress', roles: ['admin', 'manager', 'employee'] },
-      { to: '/key-results', label: 'Key Results', caption: 'Measure outcomes', roles: ['admin', 'manager', 'employee'] },
-      { to: '/kpis', label: 'KPIs', caption: 'Operational metrics', roles: ['admin', 'manager', 'employee'] },
-      { to: '/checkins', label: 'Check-ins', caption: 'Updates and follow-ups', roles: ['admin', 'manager', 'employee'] }
+      { to: '/objectives', label: 'Objectives', caption: 'Lap muc tieu va theo doi tien do', roles: ['admin', 'manager', 'employee'] },
+      { to: '/key-results', label: 'Key Results', caption: 'Do luong ket qua', roles: ['admin', 'manager', 'employee'] },
+      { to: '/kpis', label: 'KPIs', caption: 'Chi so van hanh', roles: ['admin', 'manager', 'employee'] },
+      { to: '/checkins', label: 'Check-ins', caption: 'Cap nhat va theo doi', roles: ['admin', 'manager', 'employee'] }
     ]
   },
   {
-    label: 'Workspace',
+    label: 'He thong',
     items: [
-      { to: '/departments', label: 'Departments', caption: 'Teams and ownership', roles: ['admin', 'manager'] },
-      { to: '/cycles', label: 'Cycles', caption: 'Planning windows', roles: ['admin', 'manager'] },
-      { to: '/users', label: 'Users', caption: 'People management', roles: ['admin', 'manager'] }
+      { to: '/departments', label: 'Phong ban', caption: 'Doi nhom va phu trach', roles: ['admin', 'manager'] },
+      { to: '/cycles', label: 'Chu ky', caption: 'Khung thoi gian lap ke hoach', roles: ['admin', 'manager'] },
+      { to: '/users', label: 'Nguoi dung', caption: 'Quan ly nhan su', roles: ['admin', 'manager'] }
     ]
   }
 ];
@@ -35,44 +35,44 @@ const SIDEBAR_SCROLL_KEY = 'okr_sidebar_scroll_top';
 
 const routeMeta = {
   '/dashboard': {
-    eyebrow: 'Overview',
-    description: 'A role-aware workspace for risk signals, performance, and your next best actions.'
+    eyebrow: 'Tong quan',
+    description: 'Khong gian theo vai tro de theo doi rui ro, hieu suat, va hanh dong uu tien.'
   },
   '/funny': {
-    eyebrow: 'Assistant',
-    description: 'Ask, explain, and follow through with contextual OKR/KPI guidance.'
+    eyebrow: 'Tro ly',
+    description: 'Dat cau hoi, nhan giai thich, va theo doi goi y theo ngu canh OKR/KPI.'
   },
   '/objectives': {
-    eyebrow: 'Planning',
-    description: 'Create and maintain objectives with cleaner scanning, filters, and progress context.'
+    eyebrow: 'Lap ke hoach',
+    description: 'Tao va cap nhat objectives voi bo loc ro rang va theo doi tien trinh de hon.'
   },
   '/key-results': {
-    eyebrow: 'Execution',
-    description: 'Track measurable outcomes and keep delivery moving with current progress at a glance.'
+    eyebrow: 'Thuc thi',
+    description: 'Theo doi ket qua do luong duoc va nam tien trinh hien tai trong mot man hinh.'
   },
   '/kpis': {
-    eyebrow: 'Metrics',
-    description: 'Watch KPI performance, ownership, and status in one operational view.'
+    eyebrow: 'Chi so',
+    description: 'Theo doi KPI, nguoi phu trach, va trang thai trong mot giao dien van hanh.'
   },
   '/checkins': {
-    eyebrow: 'Follow-up',
-    description: 'Capture updates quickly and surface what still needs attention.'
+    eyebrow: 'Theo doi',
+    description: 'Ghi nhan cap nhat nhanh va lam ro cac muc can xu ly tiep.'
   },
   '/departments': {
-    eyebrow: 'Structure',
-    description: 'Organize departments, managers, and operating ownership.'
+    eyebrow: 'Co cau',
+    description: 'Quan ly phong ban, nguoi quan ly, va phan quyen phu trach.'
   },
   '/cycles': {
-    eyebrow: 'Cadence',
-    description: 'Manage planning cycles and keep reporting aligned to the right window.'
+    eyebrow: 'Chu ky',
+    description: 'Quan ly chu ky ke hoach va dong bo bao cao theo dung khung thoi gian.'
   },
   '/users': {
-    eyebrow: 'Administration',
-    description: 'Manage roles, access, and people records without leaving the workspace.'
+    eyebrow: 'Quan tri',
+    description: 'Quan ly vai tro, quyen truy cap, va ho so nhan su ngay trong khong gian lam viec.'
   },
   '/profile': {
-    eyebrow: 'Account',
-    description: 'Your identity, access role, and current workspace context.'
+    eyebrow: 'Tai khoan',
+    description: 'Thong tin dinh danh, vai tro truy cap, va boi canh khong gian hien tai cua ban.'
   }
 };
 
@@ -208,8 +208,8 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
         <aside className="ui-surface flex flex-col rounded-[2rem] p-5 xl:sticky xl:top-6 xl:h-[calc(100vh-3rem)]">
           <div className="ui-highlight rounded-[1.8rem] p-5">
             <p className="text-[11px] font-bold uppercase tracking-[0.32em] text-brand-700">OKR/KPI HR</p>
-            <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950">Performance Workspace</h1>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">A cleaner operating system for objectives, KPI tracking, check-ins, and guided follow-up.</p>
+            <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950">Khong gian hieu suat</h1>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">He thong gon gang cho objectives, KPI tracking, check-ins, va cac buoc theo doi.</p>
           </div>
 
           <div ref={sidebarScrollRef} className="mt-5 flex-1 space-y-5 overflow-y-auto pr-1">
@@ -237,9 +237,9 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
                     </span>
                   ))}
                 </div>
-                <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.3em] text-brand-700">{eyebrow || meta.eyebrow || 'Workspace'}</p>
+                <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.3em] text-brand-700">{eyebrow || meta.eyebrow || 'Khong gian'}</p>
                 <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950 md:text-[2.4rem]">{title}</h2>
-                <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600">{description || meta.description || 'A focused workspace designed for fast decision-making and clean execution.'}</p>
+                <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600">{description || meta.description || 'Khong gian tap trung de ra quyet dinh nhanh va thuc thi gon gang.'}</p>
               </div>
 
               <div className="w-full space-y-3 xl:w-[340px]">
@@ -249,14 +249,14 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
                       {initials(user?.full_name)}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">{user?.full_name || 'Current user'}</p>
+                      <p className="truncate text-sm font-semibold text-slate-900">{user?.full_name || 'Nguoi dung hien tai'}</p>
                       <p className="truncate text-xs text-slate-500">{user?.email || user?.username || ''}</p>
                     </div>
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-3">
                     <span className={`status-badge ${roleTone(user?.role)}`}>{user?.role || 'employee'}</span>
                     <Link to="/profile" className="text-xs font-semibold text-brand-700 hover:text-brand-800">
-                      View profile
+                      Xem ho so
                     </Link>
                   </div>
                 </div>
@@ -269,14 +269,14 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
                         onClick={() => window.open(guideApi.viewUrl(), '_blank', 'noopener,noreferrer')}
                         className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
                       >
-                        Open guide
+                        Mo huong dan
                       </button>
                       <button
                         type="button"
                         onClick={toggleTheme}
                         className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
                       >
-                        {theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
+                        {theme === 'dark' ? 'Dung che do sang' : 'Dung che do toi'}
                       </button>
                     </div>
                     <button
@@ -287,7 +287,7 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
                       }}
                       className="ui-soft-hover rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700"
                     >
-                      Sign out
+                      Dang xuat
                     </button>
                   </div>
                 </div>

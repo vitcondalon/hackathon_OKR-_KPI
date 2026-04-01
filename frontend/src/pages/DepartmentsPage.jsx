@@ -3,9 +3,12 @@ import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { departmentsApi } from '../api/departmentsApi';
 import { usersApi } from '../api/usersApi';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function DepartmentsPage() {
   const [managerOptions, setManagerOptions] = useState([]);
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     usersApi
@@ -21,24 +24,25 @@ export default function DepartmentsPage() {
   }, []);
 
   return (
-    <AppLayout title="Departments Management" description="Organize departments, ownership, and accountability with fewer clicks.">
+    <AppLayout title="Quan ly phong ban" description="Sap xep phong ban, nguoi phu trach, va trach nhiem ro rang hon.">
       <EntityCrudPage
-        title="Department"
-        description="Create and organize departments"
+        title="Phong ban"
+        description="Tao moi va quan ly phong ban"
         fields={[
-          { name: 'name', label: 'Department name', required: true },
-          { name: 'description', label: 'Description', type: 'textarea' },
-          { name: 'manager_id', label: 'Manager', type: 'select', nullable: true, options: managerOptions }
+          { name: 'name', label: 'Ten phong ban', required: true },
+          { name: 'description', label: 'Mo ta', type: 'textarea' },
+          { name: 'manager_id', label: 'Quan ly', type: 'select', nullable: true, options: managerOptions }
         ]}
         columns={[
-          { key: 'name', label: 'Name' },
-          { key: 'description', label: 'Description' },
-          { key: 'manager_name', label: 'Manager' }
+          { key: 'name', label: 'Ten phong ban' },
+          { key: 'description', label: 'Mo ta' },
+          { key: 'manager_name', label: 'Quan ly' }
         ]}
         loadItems={departmentsApi.list}
         createItem={departmentsApi.create}
         updateItem={departmentsApi.update}
         deleteItem={departmentsApi.remove}
+        canDelete={isAdmin}
       />
     </AppLayout>
   );

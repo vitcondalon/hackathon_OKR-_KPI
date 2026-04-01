@@ -1,6 +1,7 @@
 # OKR / KPI HR Management System
 
-Detailed usage guide: `USER_GUIDE.md  `
+Detailed usage guide: `USER_GUIDE.md`
+Role permissions summary: `ROLE_PERMISSIONS.md`
 
 Backend-first rebuild using:
 - Node.js + Express.js (JavaScript)
@@ -261,4 +262,3 @@ If `GEMINI_API_KEY` is empty or Gemini request fails, Funny still answers using 
 
 - UI: http://localhost:8000/api/docs
 - OpenAPI JSON: http://localhost:8000/api/docs/openapi.json
-

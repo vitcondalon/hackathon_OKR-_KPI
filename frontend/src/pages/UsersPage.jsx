@@ -3,9 +3,12 @@ import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { usersApi } from '../api/usersApi';
 import { departmentsApi } from '../api/departmentsApi';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function UsersPage() {
   const [departmentOptions, setDepartmentOptions] = useState([]);
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     departmentsApi
@@ -17,47 +20,59 @@ export default function UsersPage() {
   }, []);
 
   return (
-    <AppLayout title="Users Management" description="Manage roles, activation, and department assignment with a clearer admin workspace.">
+    <AppLayout title="Quan ly nguoi dung" description="Quan ly vai tro, kich hoat tai khoan va phong ban trong mot man hinh ro rang hon.">
       <EntityCrudPage
-        title="User"
-        description="Manage users, role, and department assignment"
+        title="Nguoi dung"
+        description="Quan ly nguoi dung, vai tro, va phong ban"
         fields={[
-          { name: 'full_name', label: 'Full name', required: true },
+          { name: 'full_name', label: 'Ho va ten', required: true },
           { name: 'username', label: 'Username', required: true },
           { name: 'email', label: 'Email', type: 'email', required: true },
-          { name: 'password', label: 'Password', type: 'password', required: true },
+          { name: 'password', label: 'Mat khau', type: 'password', required: true },
           {
             name: 'role',
-            label: 'Role',
+            label: 'Vai tro',
             type: 'select',
             required: true,
             options: [
-              { label: 'Admin', value: 'admin' },
-              { label: 'Manager', value: 'manager' },
-              { label: 'Employee', value: 'employee' }
+              { label: 'Quan tri vien', value: 'admin' },
+              { label: 'Quan ly', value: 'manager' },
+              { label: 'Nhan vien', value: 'employee' }
             ]
           },
           {
             name: 'department_id',
-            label: 'Department',
+            label: 'Phong ban',
             type: 'select',
             nullable: true,
             options: departmentOptions
           },
-          { name: 'is_active', label: 'Active', type: 'checkbox' }
+          { name: 'is_active', label: 'Kich hoat', type: 'checkbox' }
         ]}
         columns={[
-          { key: 'full_name', label: 'Full name' },
+          { key: 'full_name', label: 'Ho va ten' },
           { key: 'username', label: 'Username' },
           { key: 'email', label: 'Email' },
-          { key: 'role', label: 'Role' },
-          { key: 'department_name', label: 'Department' },
-          { key: 'is_active', label: 'Active', render: (row) => (row.is_active ? 'Yes' : 'No') }
+          {
+            key: 'role',
+            label: 'Vai tro',
+            render: (row) => {
+              if (row.role === 'admin') return 'Quan tri vien';
+              if (row.role === 'manager') return 'Quan ly';
+              if (row.role === 'employee') return 'Nhan vien';
+              return row.role;
+            }
+          },
+          { key: 'department_name', label: 'Phong ban' },
+          { key: 'is_active', label: 'Kich hoat', render: (row) => (row.is_active ? 'Co' : 'Khong') }
         ]}
         loadItems={usersApi.list}
         createItem={usersApi.create}
         updateItem={usersApi.update}
         deleteItem={usersApi.remove}
+        canCreate={isAdmin}
+        canUpdate={isAdmin}
+        canDelete={isAdmin}
       />
     </AppLayout>
   );

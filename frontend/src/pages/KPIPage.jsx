@@ -27,33 +27,32 @@ export default function KPIPage() {
   }, []);
 
   return (
-    <AppLayout title="KPI Management" description="Monitor KPI ownership, current values, and status with a cleaner decision-friendly layout.">
+    <AppLayout title="Quan ly KPI" description="Theo doi nguoi phu trach, gia tri hien tai, va trang thai KPI trong mot man hinh de quan sat hon.">
       <EntityCrudPage
         title="KPI"
-        description="Employee and department KPIs with progress tracking"
+        description="Quan ly KPI theo nhan vien va phong ban"
         fields={[
           {
             name: 'type',
-            label: 'Type',
+            label: 'Loai',
             type: 'select',
             required: true,
             options: [
-              { label: 'Employee', value: 'employee' },
-              { label: 'Department', value: 'department' }
+              { label: 'Nhan vien', value: 'employee' },
+              { label: 'Phong ban', value: 'department' }
             ]
           },
-          { name: 'name', label: 'Name', required: true },
-          { name: 'description', label: 'Description', type: 'textarea' },
-          { name: 'target_value', label: 'Target value', type: 'number', required: true },
-          { name: 'current_value', label: 'Current value', type: 'number', required: true },
-          { name: 'weight', label: 'Weight', type: 'number', required: true },
-          { name: 'unit', label: 'Unit' },
-          { name: 'cycle_id', label: 'Cycle', type: 'select', nullable: true, options: cycleOptions },
-          { name: 'owner_id', label: 'Owner', type: 'select', nullable: true, options: ownerOptions },
-          { name: 'department_id', label: 'Department', type: 'select', nullable: true, options: departmentOptions },
+          { name: 'name', label: 'Ten KPI', required: true },
+          { name: 'description', label: 'Mo ta', type: 'textarea' },
+          { name: 'target_value', label: 'Gia tri muc tieu', type: 'number', required: true },
+          { name: 'current_value', label: 'Gia tri hien tai', type: 'number', required: true },
+          { name: 'unit', label: 'Don vi' },
+          { name: 'cycle_id', label: 'Chu ky', type: 'select', nullable: true, options: cycleOptions },
+          { name: 'owner_id', label: 'Nguoi phu trach', type: 'select', nullable: true, options: ownerOptions },
+          { name: 'department_id', label: 'Phong ban', type: 'select', nullable: true, options: departmentOptions },
           {
             name: 'status',
-            label: 'Status',
+            label: 'Trang thai',
             type: 'select',
             required: true,
             options: [
@@ -66,13 +65,17 @@ export default function KPIPage() {
           }
         ]}
         columns={[
-          { key: 'type', label: 'Type' },
-          { key: 'name', label: 'Name' },
-          { key: 'target_value', label: 'Target' },
-          { key: 'current_value', label: 'Current' },
+          {
+            key: 'type',
+            label: 'Loai',
+            render: (row) => (row.type === 'department' ? 'Phong ban' : 'Nhan vien')
+          },
+          { key: 'name', label: 'Ten KPI' },
+          { key: 'target_value', label: 'Muc tieu' },
+          { key: 'current_value', label: 'Hien tai' },
           {
             key: 'progress',
-            label: 'Progress',
+            label: 'Tien trinh',
             render: (row) => (
               <div className="min-w-[150px]">
                 <div className="flex items-center justify-between gap-2 text-xs">
@@ -84,7 +87,7 @@ export default function KPIPage() {
               </div>
             )
           },
-          { key: 'status', label: 'Status' }
+          { key: 'status', label: 'Trang thai' }
         ]}
         loadItems={kpiApi.list}
         createItem={kpiApi.create}

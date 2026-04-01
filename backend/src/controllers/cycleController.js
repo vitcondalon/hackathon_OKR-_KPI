@@ -1,6 +1,6 @@
 const { z } = require('zod');
 const { query } = require('../config/db');
-const { sendSuccess, sendCreated } = require('../utils/response');
+const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
 
 const cycleSchema = z.object({
   code: z.string().trim().min(3).max(30).optional(),
@@ -157,8 +157,46 @@ async function updateCycle(req, res, next) {
   }
 }
 
+async function deleteCycle(req, res, next) {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      const error = new Error('Invalid cycle id');
+      error.status = 400;
+      throw error;
+    }
+
+    const current = await query('SELECT id FROM okr_cycles WHERE id = $1', [id]);
+    if (current.rowCount === 0) {
+      const error = new Error('Cycle not found');
+      error.status = 404;
+      throw error;
+    }
+
+    const [objectiveCount, kpiCount] = await Promise.all([
+      query('SELECT COUNT(*)::int AS total FROM objectives WHERE cycle_id = $1', [id]),
+      query('SELECT COUNT(*)::int AS total FROM kpi_metrics WHERE cycle_id = $1', [id])
+    ]);
+
+    const linkedObjectives = Number(objectiveCount.rows[0]?.total || 0);
+    const linkedKpis = Number(kpiCount.rows[0]?.total || 0);
+
+    if (linkedObjectives > 0 || linkedKpis > 0) {
+      const error = new Error('Cannot delete cycle with linked objectives or KPI metrics');
+      error.status = 400;
+      throw error;
+    }
+
+    await query('DELETE FROM okr_cycles WHERE id = $1', [id]);
+    return sendNoContent(res);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   listCycles,
   createCycle,
-  updateCycle
+  updateCycle,
+  deleteCycle
 };

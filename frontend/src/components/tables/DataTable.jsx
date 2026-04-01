@@ -35,7 +35,7 @@ export default function DataTable({ columns, data, emptyLabel = 'No records foun
                   {col.label}
                 </th>
               ))}
-              {actions ? <th className="px-4 py-4 text-xs font-semibold uppercase tracking-[0.14em]">Actions</th> : null}
+              {actions ? <th className="px-4 py-4 text-xs font-semibold uppercase tracking-[0.14em]">Thao tac</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -54,7 +54,7 @@ export default function DataTable({ columns, data, emptyLabel = 'No records foun
                 <td colSpan={columns.length + (actions ? 1 : 0)} className="px-4 py-14 text-center">
                   <div className="mx-auto max-w-md rounded-[1.4rem] border border-dashed border-slate-200 bg-slate-50/80 px-6 py-8">
                     <p className="text-sm font-semibold text-slate-700">{emptyLabel}</p>
-                    <p className="mt-2 text-sm text-slate-500">Try another keyword, refresh the data, or create a new record.</p>
+                    <p className="mt-2 text-sm text-slate-500">Thu tu khoa khac, tai lai du lieu, hoac tao ban ghi moi.</p>
                   </div>
                 </td>
               </tr>

@@ -27,19 +27,19 @@ export default function ObjectivesPage() {
   }, []);
 
   return (
-    <AppLayout title="Objectives" description="Track ownership, cycle alignment, and progress with a cleaner operational view.">
+    <AppLayout title="Muc tieu" description="Theo doi nguoi phu trach, chu ky, va tien trinh muc tieu trong mot giao dien gon gang hon.">
       <EntityCrudPage
-        title="Objective"
-        description="Track objective owners, cycle, and status"
+        title="Muc tieu"
+        description="Quan ly muc tieu, nguoi phu trach, chu ky, va trang thai"
         fields={[
-          { name: 'title', label: 'Title', required: true },
-          { name: 'description', label: 'Description', type: 'textarea' },
-          { name: 'owner_id', label: 'Owner', type: 'select', required: true, options: ownerOptions },
-          { name: 'department_id', label: 'Department', type: 'select', nullable: true, options: departmentOptions },
-          { name: 'cycle_id', label: 'Cycle', type: 'select', required: true, options: cycleOptions },
+          { name: 'title', label: 'Tieu de', required: true },
+          { name: 'description', label: 'Mo ta', type: 'textarea' },
+          { name: 'owner_id', label: 'Nguoi phu trach', type: 'select', required: true, options: ownerOptions },
+          { name: 'department_id', label: 'Phong ban', type: 'select', nullable: true, options: departmentOptions },
+          { name: 'cycle_id', label: 'Chu ky', type: 'select', required: true, options: cycleOptions },
           {
             name: 'status',
-            label: 'Status',
+            label: 'Trang thai',
             type: 'select',
             required: true,
             options: [
@@ -50,17 +50,17 @@ export default function ObjectivesPage() {
               { label: 'At risk', value: 'at_risk' }
             ]
           },
-          { name: 'progress', label: 'Progress', type: 'number' }
+          { name: 'progress', label: 'Tien trinh', type: 'number' }
         ]}
         columns={[
-          { key: 'title', label: 'Title' },
-          { key: 'owner_name', label: 'Owner' },
-          { key: 'department_name', label: 'Department' },
-          { key: 'cycle_name', label: 'Cycle' },
-          { key: 'status', label: 'Status' },
+          { key: 'title', label: 'Tieu de' },
+          { key: 'owner_name', label: 'Nguoi phu trach' },
+          { key: 'department_name', label: 'Phong ban' },
+          { key: 'cycle_name', label: 'Chu ky' },
+          { key: 'status', label: 'Trang thai' },
           {
             key: 'progress',
-            label: 'Progress',
+            label: 'Tien trinh',
             render: (row) => (
               <div className="min-w-[150px]">
                 <div className="flex items-center justify-between gap-2 text-xs">

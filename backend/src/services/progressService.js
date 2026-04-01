@@ -51,13 +51,20 @@ function deriveStatus(progressPercent, fallbackStatus) {
 
 async function recalculateObjectiveProgress(objectiveId) {
   const result = await query(
-    `SELECT COALESCE(AVG(progress_percent), 0) AS avg_progress
+    `SELECT
+       COUNT(*)::int AS total_key_results,
+       COALESCE(AVG(progress_percent), 0) AS avg_progress
      FROM key_results
      WHERE objective_id = $1`,
     [objectiveId]
   );
 
   const row = result.rows[0];
+  if (!row || Number(row.total_key_results) === 0) {
+    const current = await query('SELECT progress_percent FROM objectives WHERE id = $1', [objectiveId]);
+    if (current.rowCount === 0) return null;
+    return clampProgress(current.rows[0].progress_percent);
+  }
   const progressPercent = clampProgress(row.avg_progress);
 
   await query(

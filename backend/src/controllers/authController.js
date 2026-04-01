@@ -10,7 +10,7 @@ const loginSchema = z
     password: z.string().min(1)
   })
   .refine((value) => Boolean(value.identifier || value.email || value.username), {
-    message: 'identifier, username or email is required',
+    message: 'Can nhap identifier, username hoac email',
     path: ['identifier']
   });
 
@@ -24,7 +24,7 @@ async function login(req, res, next) {
       password: payload.password
     });
 
-    return sendSuccess(res, result, 'Login successful');
+    return sendSuccess(res, result, 'Dang nhap thanh cong');
   } catch (error) {
     return next(error);
   }
