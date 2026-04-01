@@ -1,4 +1,4 @@
-const { query } = require('../config/db');
+﻿const { query } = require('../config/db');
 const { comparePassword } = require('../utils/password');
 const { signToken } = require('../utils/jwt');
 
@@ -55,14 +55,14 @@ async function login({ identifier, password }) {
   const user = await getUserByIdentifier(identifier);
 
   if (!user || !user.is_active) {
-    const error = new Error('Thong tin dang nhap khong hop le');
+    const error = new Error('Thông tin đăng nhập không hợp lệ');
     error.status = 401;
     throw error;
   }
 
   const matched = await comparePassword(password, user.password_hash);
   if (!matched) {
-    const error = new Error('Thong tin dang nhap khong hop le');
+    const error = new Error('Thông tin đăng nhập không hợp lệ');
     error.status = 401;
     throw error;
   }
@@ -107,7 +107,7 @@ async function getCurrentUser(userId) {
   );
 
   if (result.rowCount === 0) {
-    const error = new Error('Xac thuc that bai');
+    const error = new Error('Xác thực thất bại');
     error.status = 401;
     throw error;
   }

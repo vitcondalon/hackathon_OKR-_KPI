@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { objectivesApi } from '../api/objectivesApi';
@@ -27,19 +27,19 @@ export default function ObjectivesPage() {
   }, []);
 
   return (
-    <AppLayout title="Muc tieu" description="Theo doi nguoi phu trach, chu ky, va tien trinh muc tieu trong mot giao dien gon gang hon.">
+    <AppLayout title="Mục tiêu" description="Theo dõi người phụ trách, chu kỳ và tiến trình mục tiêu trong một giao diện gọn gàng hơn.">
       <EntityCrudPage
-        title="Muc tieu"
-        description="Quan ly muc tieu, nguoi phu trach, chu ky, va trang thai"
+        title="Mục tiêu"
+        description="Quản lý mục tiêu, người phụ trách, chu kỳ và trạng thái"
         fields={[
-          { name: 'title', label: 'Tieu de', required: true },
-          { name: 'description', label: 'Mo ta', type: 'textarea' },
-          { name: 'owner_id', label: 'Nguoi phu trach', type: 'select', required: true, options: ownerOptions },
-          { name: 'department_id', label: 'Phong ban', type: 'select', nullable: true, options: departmentOptions },
-          { name: 'cycle_id', label: 'Chu ky', type: 'select', required: true, options: cycleOptions },
+          { name: 'title', label: 'Tiêu đề', required: true },
+          { name: 'description', label: 'Mô tả', type: 'textarea' },
+          { name: 'owner_id', label: 'Người phụ trách', type: 'select', required: true, options: ownerOptions },
+          { name: 'department_id', label: 'Phòng ban', type: 'select', nullable: true, options: departmentOptions },
+          { name: 'cycle_id', label: 'Chu kỳ', type: 'select', required: true, options: cycleOptions },
           {
             name: 'status',
-            label: 'Trang thai',
+            label: 'Trạng thái',
             type: 'select',
             required: true,
             options: [
@@ -50,17 +50,17 @@ export default function ObjectivesPage() {
               { label: 'At risk', value: 'at_risk' }
             ]
           },
-          { name: 'progress', label: 'Tien trinh', type: 'number' }
+          { name: 'progress', label: 'Tiến trình', type: 'number' }
         ]}
         columns={[
-          { key: 'title', label: 'Tieu de' },
-          { key: 'owner_name', label: 'Nguoi phu trach' },
-          { key: 'department_name', label: 'Phong ban' },
-          { key: 'cycle_name', label: 'Chu ky' },
-          { key: 'status', label: 'Trang thai' },
+          { key: 'title', label: 'Tiêu đề' },
+          { key: 'owner_name', label: 'Người phụ trách' },
+          { key: 'department_name', label: 'Phòng ban' },
+          { key: 'cycle_name', label: 'Chu kỳ' },
+          { key: 'status', label: 'Trạng thái' },
           {
             key: 'progress',
-            label: 'Tien trinh',
+            label: 'Tiến trình',
             render: (row) => (
               <div className="min-w-[150px]">
                 <div className="flex items-center justify-between gap-2 text-xs">

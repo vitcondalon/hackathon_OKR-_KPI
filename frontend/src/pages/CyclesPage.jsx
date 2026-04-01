@@ -1,4 +1,4 @@
-import AppLayout from '../components/layout/AppLayout';
+﻿import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { cyclesApi } from '../api/cyclesApi';
 
@@ -11,17 +11,17 @@ function formatDate(value) {
 
 export default function CyclesPage() {
   return (
-    <AppLayout title="Chu ky OKR" description="Quan ly chu ky lap ke hoach va giu tien do bao cao ro rang cho toan bo doi ngu.">
+    <AppLayout title="Chu kỳ OKR" description="Quản lý chu kỳ lập kế hoạch và giữ tiến độ báo cáo rõ ràng cho toàn bộ đội ngũ.">
       <EntityCrudPage
-        title="Chu ky"
-        description="Quan ly chu ky planning, active, closed"
+        title="Chu kỳ"
+        description="Quản lý chu kỳ planning, active, closed"
         fields={[
-          { name: 'name', label: 'Ten chu ky', required: true },
-          { name: 'start_date', label: 'Ngay bat dau', type: 'date', required: true },
-          { name: 'end_date', label: 'Ngay ket thuc', type: 'date', required: true },
+          { name: 'name', label: 'Tên chu kỳ', required: true },
+          { name: 'start_date', label: 'Ngày bắt đầu', type: 'date', required: true },
+          { name: 'end_date', label: 'Ngày kết thúc', type: 'date', required: true },
           {
             name: 'status',
-            label: 'Trang thai',
+            label: 'Trạng thái',
             type: 'select',
             required: true,
             options: [
@@ -32,10 +32,10 @@ export default function CyclesPage() {
           }
         ]}
         columns={[
-          { key: 'name', label: 'Ten chu ky' },
-          { key: 'start_date', label: 'Ngay bat dau', render: (row) => formatDate(row.start_date) },
-          { key: 'end_date', label: 'Ngay ket thuc', render: (row) => formatDate(row.end_date) },
-          { key: 'status', label: 'Trang thai' }
+          { key: 'name', label: 'Tên chu kỳ' },
+          { key: 'start_date', label: 'Ngày bắt đầu', render: (row) => formatDate(row.start_date) },
+          { key: 'end_date', label: 'Ngày kết thúc', render: (row) => formatDate(row.end_date) },
+          { key: 'status', label: 'Trạng thái' }
         ]}
         loadItems={cyclesApi.list}
         createItem={cyclesApi.create}

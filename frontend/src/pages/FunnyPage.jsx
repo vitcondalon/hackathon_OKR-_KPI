@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
 import Card from '../components/common/Card';
@@ -8,16 +8,16 @@ import { apiErrorMessage } from '../api/helpers';
 
 const TXT = {
   pageTitle: 'Funny Assistant',
-  heroTitle: 'Assistant workspace for fast OKR/KPI decisions',
-  heroSubtitle: 'Ask faster with presets, type your own question, and follow role-aware next steps.',
-  emptyChat: 'No conversation yet. Start with a preset, type your own question, or pick a recommendation.',
-  loadError: 'Failed to load Funny workspace',
-  askError: 'Funny request failed',
-  askErrorBubble: 'Funny could not answer that request. Try another question or switch to a preset.',
-  noAnswer: 'Funny has no response yet.',
-  noRecommendations: 'No recommendations available yet.',
-  noQuickActions: 'No quick actions available yet.',
-  noInsights: 'No insights available yet.'
+  heroTitle: 'Không gian trợ lý để ra quyết định OKR/KPI nhanh hơn',
+  heroSubtitle: 'Hỏi nhanh bằng preset, tự nhập câu hỏi của bạn và đi theo các bước gợi ý theo vai trò.',
+  emptyChat: 'Chưa có hội thoại nào. Hãy bắt đầu bằng preset, tự nhập câu hỏi hoặc chọn một gợi ý.',
+  loadError: 'Không thể tải không gian Funny',
+  askError: 'Yêu cầu tới Funny thất bại',
+  askErrorBubble: 'Funny chưa trả lời được yêu cầu này. Hãy thử câu hỏi khác hoặc đổi sang preset.',
+  noAnswer: 'Funny chưa có phản hồi.',
+  noRecommendations: 'Hiện chưa có gợi ý.',
+  noQuickActions: 'Hiện chưa có hành động nhanh.',
+  noInsights: 'Hiện chưa có insight.'
 };
 
 function safeArray(value) {
@@ -28,10 +28,33 @@ function objectOrNull(value) {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
 }
 
+function roleLabel(role) {
+  if (role === 'admin') return 'Quản trị viên';
+  if (role === 'manager') return 'Quản lý';
+  if (role === 'employee') return 'Nhân viên';
+  return role || 'Người dùng';
+}
+
+function categoryLabel(category) {
+  if (category === 'general') return 'Tổng hợp';
+  if (category === 'help') return 'Hỗ trợ';
+  if (category === 'actions') return 'Hành động';
+  if (category === 'insight') return 'Insight';
+  if (category === 'insights') return 'Insight';
+  if (category === 'navigation') return 'Điều hướng';
+  return category || 'Tổng hợp';
+}
+
+function severityLabel(severity) {
+  if (severity === 'critical') return 'Cần gấp';
+  if (severity === 'warning') return 'Cảnh báo';
+  return 'Thông tin';
+}
+
 function normalizeQuickAction(action) {
   const targetRoute = action?.targetRoute || action?.path || action?.target || '/dashboard';
   return {
-    label: action?.label || 'Open',
+    label: action?.label || 'Mở',
     actionType: action?.actionType || 'navigate',
     targetRoute,
     questionId: action?.questionId || action?.sourceQuestionId || null
@@ -41,7 +64,7 @@ function normalizeQuickAction(action) {
 function normalizeRecommended(item) {
   return {
     id: item?.id || '',
-    text: item?.text || 'Suggested question',
+    text: item?.text || 'Câu hỏi gợi ý',
     intent: item?.intent || '',
     category: item?.category || 'general',
     targetRoute: item?.targetRoute || '/dashboard',
@@ -81,7 +104,7 @@ function LinkPills({ links = [] }) {
   if (safeArray(links).length === 0) return null;
   return (
     <div className="rounded-[1.3rem] border border-slate-200 bg-slate-50/80 p-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Related links</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Liên kết liên quan</p>
       <div className="mt-2 flex flex-wrap gap-2">
         {links.map((link) => (
           <Link key={`${link.label}-${link.path}`} to={link.path} className="rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-700">
@@ -106,8 +129,8 @@ function MessageBubble({ item, onAskQuestion }) {
             <p className="whitespace-pre-wrap text-sm leading-relaxed">{item.answer}</p>
             <div className="flex flex-wrap gap-2 text-xs">
               {item.intent ? <span className="status-badge border-slate-200 bg-slate-50 text-slate-700">intent: {item.intent}</span> : null}
-              {item.meta?.fallback ? <span className="status-badge border-amber-200 bg-amber-50 text-amber-700">fallback</span> : null}
-              {item.meta?.usedAI ? <span className="status-badge border-emerald-200 bg-emerald-50 text-emerald-700">AI enabled</span> : null}
+              {item.meta?.fallback ? <span className="status-badge border-amber-200 bg-amber-50 text-amber-700">Dự phòng</span> : null}
+              {item.meta?.usedAI ? <span className="status-badge border-emerald-200 bg-emerald-50 text-emerald-700">Đã bật AI</span> : null}
             </div>
             <LinkPills links={item.links} />
             {safeArray(item.quickActions).length > 0 ? (
@@ -128,7 +151,7 @@ function MessageBubble({ item, onAskQuestion }) {
             ) : null}
             {safeArray(item.suggestions).length > 0 ? (
               <div className="rounded-[1.3rem] border border-brand-100 bg-brand-50/80 p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-700">Suggested follow-ups</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-700">Gợi ý follow-up</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {item.suggestions.slice(0, 4).map((suggestion) => (
                     <span key={`${item.id}-${suggestion}`} className="rounded-full border border-brand-200 bg-white px-3 py-1 text-xs text-slate-700">
@@ -152,8 +175,8 @@ function SummaryPanel({ summary, suggestions }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className={`status-badge ${roleBadgeTone(role)}`}>{role}</span>
-        <span className="status-badge border-slate-200 bg-white text-slate-600">Active cycles: {summary?.active_cycles?.total ?? 0}</span>
+        <span className={`status-badge ${roleBadgeTone(role)}`}>{roleLabel(role)}</span>
+        <span className="status-badge border-slate-200 bg-white text-slate-600">Chu kỳ đang chạy: {summary?.active_cycles?.total ?? 0}</span>
       </div>
 
       {summary?.narrative ? (
@@ -164,18 +187,18 @@ function SummaryPanel({ summary, suggestions }) {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4">
-          <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Pending check-ins</p>
+          <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Check-ins đang chờ</p>
           <p className="mt-2 text-2xl font-extrabold text-amber-600">{summary?.risk_snapshot?.pending_checkins ?? roleSummary.pending_checkins?.total ?? 0}</p>
         </div>
         <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4">
-          <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Risky KPIs</p>
+          <p className="text-xs uppercase tracking-[0.12em] text-slate-500">KPI rủi ro</p>
           <p className="mt-2 text-2xl font-extrabold text-red-600">{summary?.risk_snapshot?.risky_kpis ?? roleSummary.risky_kpis?.total ?? 0}</p>
         </div>
       </div>
 
       {safeArray(roleSummary.priorities || suggestions).length > 0 ? (
         <div className="rounded-[1.35rem] border border-slate-200 bg-slate-50/80 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">What to focus on</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Điều nên tập trung</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {safeArray(roleSummary.priorities || suggestions).slice(0, 5).map((item) => (
               <span key={item} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
@@ -247,6 +270,7 @@ export default function FunnyPage() {
 
   const selectedQuestion = questions.find((item) => item.id === selectedId);
   const explainQuestions = questions.filter((item) => item.category === 'help' || String(item.intent || '').startsWith('explain_'));
+
   async function runQuestion({ question, message, fromQuickAction = false }) {
     if ((!question?.id && !message) || loading) return;
 
@@ -256,11 +280,7 @@ export default function FunnyPage() {
     setChat((prev) => [...prev, { id: `${Date.now()}-user`, role: 'user', text: userText }]);
 
     try {
-      const response = await funnyApi.chat({
-        questionId: question?.id,
-        message,
-        conversationId
-      });
+      const response = await funnyApi.chat({ questionId: question?.id, message, conversationId });
 
       setChat((prev) => [
         ...prev,
@@ -285,10 +305,7 @@ export default function FunnyPage() {
       if (message) setFreeText('');
     } catch (err) {
       setError(apiErrorMessage(err, TXT.askError));
-      setChat((prev) => [
-        ...prev,
-        { id: `${Date.now()}-error`, role: 'assistant', answer: TXT.askErrorBubble, intent: '', links: [], quickActions: [], suggestions: [], insights: [], meta: { fallback: true } }
-      ]);
+      setChat((prev) => [...prev, { id: `${Date.now()}-error`, role: 'assistant', answer: TXT.askErrorBubble, intent: '', links: [], quickActions: [], suggestions: [], insights: [], meta: { fallback: true } }]);
     } finally {
       setLoading(false);
     }
@@ -314,15 +331,15 @@ export default function FunnyPage() {
   }
 
   return (
-    <AppLayout title={TXT.pageTitle} description="A simpler assistant view for contextual OKR/KPI questions and guided follow-up.">
+    <AppLayout title={TXT.pageTitle} description="Giao diện trợ lý gọn hơn cho các câu hỏi OKR/KPI theo ngữ cảnh và bước follow-up có hướng dẫn.">
       <div className="space-y-5 ui-page-enter">
         <Card className="overflow-hidden">
           <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
             <div className="ui-highlight rounded-[1.9rem] p-5 sm:p-6">
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`status-badge ${roleBadgeTone(summary?.role || 'employee')}`}>{summary?.role || 'employee'}</span>
-                <span className="status-badge border-slate-200 bg-white text-slate-600">{health?.dbConnected ? 'Database ready' : 'Checking database'}</span>
-                <span className="status-badge border-slate-200 bg-white text-slate-600">{health?.geminiConfigured ? 'AI enabled' : 'Deterministic fallback'}</span>
+                <span className={`status-badge ${roleBadgeTone(summary?.role || 'employee')}`}>{roleLabel(summary?.role || 'employee')}</span>
+                <span className="status-badge border-slate-200 bg-white text-slate-600">{health?.dbConnected ? 'Database sẵn sàng' : 'Đang kiểm tra database'}</span>
+                <span className="status-badge border-slate-200 bg-white text-slate-600">{health?.geminiConfigured ? 'Đã bật AI' : 'Chế độ dự phòng'}</span>
               </div>
               <h3 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950">{TXT.heroTitle}</h3>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">{TXT.heroSubtitle}</p>
@@ -330,11 +347,11 @@ export default function FunnyPage() {
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               <div className="rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Chat turns</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Lượt chat</p>
                 <p className="mt-2 text-3xl font-extrabold tracking-tight text-brand-600">{chat.filter((item) => item.role === 'assistant').length}</p>
               </div>
               <div className="rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Pending check-ins</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Check-ins đang chờ</p>
                 <p className="mt-2 text-3xl font-extrabold tracking-tight text-amber-600">{summary?.risk_snapshot?.pending_checkins ?? 0}</p>
               </div>
             </div>
@@ -343,20 +360,16 @@ export default function FunnyPage() {
 
         <div className="grid gap-5 2xl:grid-cols-[1.35fr_0.65fr]">
           <div className="space-y-5">
-            <Card title="Conversation" subtitle="Chat history, preset prompts, and free-form questions">
+            <Card title="Hội thoại" subtitle="Lịch sử chat, preset và câu hỏi tự nhập">
               <div className="space-y-4">
                 <div className="rounded-[1.6rem] border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
                   <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: '30rem' }}>
                     {chat.length === 0 ? <p className="text-sm text-slate-500">{TXT.emptyChat}</p> : null}
                     {chat.map((item) => (
-                      <MessageBubble
-                        key={item.id}
-                        item={item}
-                        onAskQuestion={async (questionId) => {
-                          const question = questions.find((entry) => entry.id === questionId);
-                          if (question) await runQuestion({ question, fromQuickAction: true });
-                        }}
-                      />
+                      <MessageBubble key={item.id} item={item} onAskQuestion={async (questionId) => {
+                        const question = questions.find((entry) => entry.id === questionId);
+                        if (question) await runQuestion({ question, fromQuickAction: true });
+                      }} />
                     ))}
                     <div ref={chatEndRef} />
                   </div>
@@ -364,34 +377,30 @@ export default function FunnyPage() {
 
                 <div className="grid gap-4 xl:grid-cols-[1fr_auto]">
                   <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Preset question selector</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chọn câu hỏi preset</p>
                     <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
                       <div className="min-w-0 flex-1">
                         <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
-                          {questions.map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.text}
-                            </option>
-                          ))}
+                          {questions.map((item) => <option key={item.id} value={item.id}>{item.text}</option>)}
                         </select>
                       </div>
                       <Button type="button" onClick={handlePresetAsk} disabled={loading || !selectedId}>
-                        {loading ? 'Funny is thinking...' : 'Ask preset'}
+                        {loading ? 'Funny đang suy nghĩ...' : 'Hỏi bằng preset'}
                       </Button>
                     </div>
                     {selectedQuestion ? (
                       <div className="mt-3 rounded-[1.2rem] border border-brand-100 bg-brand-50/80 px-3 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-700">Selected prompt</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-700">Prompt đang chọn</p>
                         <p className="mt-1 text-sm text-slate-700">{selectedQuestion.text}</p>
                       </div>
                     ) : null}
                   </div>
 
                   <form onSubmit={handleMessageSubmit} className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Ask your own question</p>
-                    <textarea rows={4} value={freeText} onChange={(event) => setFreeText(event.target.value)} placeholder="Example: Which KPIs are at risk this cycle?" className="mt-3" />
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Tự nhập câu hỏi của bạn</p>
+                    <textarea rows={4} value={freeText} onChange={(event) => setFreeText(event.target.value)} placeholder="Ví dụ: KPI nào đang at risk trong chu kỳ này?" className="mt-3" />
                     <Button type="submit" className="mt-3 w-full" disabled={loading || !freeText.trim()}>
-                      {loading ? 'Thinking...' : 'Send question'}
+                      {loading ? 'Đang xử lý...' : 'Gửi câu hỏi'}
                     </Button>
                   </form>
                 </div>
@@ -400,11 +409,11 @@ export default function FunnyPage() {
               </div>
             </Card>
 
-            <Card title="Explain this" subtitle="Short guided explainers for core metrics and concepts">
+            <Card title="Giải thích nhanh" subtitle="Các phần giải thích ngắn cho metric và khái niệm cốt lõi">
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {explainQuestions.length === 0 ? <p className="text-sm text-slate-500">No explain templates available.</p> : explainQuestions.map((item) => (
+                {explainQuestions.length === 0 ? <p className="text-sm text-slate-500">Hiện chưa có mẫu giải thích.</p> : explainQuestions.map((item) => (
                   <button key={`explain-${item.id}`} type="button" onClick={() => runQuestion({ question: item, fromQuickAction: true })} className="ui-soft-hover rounded-[1.35rem] border border-slate-200 bg-white p-4 text-left">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{item.category || 'help'}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{categoryLabel(item.category || 'help')}</p>
                     <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-900">{item.text}</p>
                   </button>
                 ))}
@@ -413,7 +422,7 @@ export default function FunnyPage() {
           </div>
 
           <div className="space-y-5">
-            <Card title="Recommended for you" subtitle="Role-aware prompts based on your current context">
+            <Card title="Gợi ý cho bạn" subtitle="Các prompt theo vai trò dựa trên ngữ cảnh hiện tại">
               <div className="space-y-3">
                 {recommended.length === 0 ? <p className="text-sm text-slate-500">{TXT.noRecommendations}</p> : recommended.slice(0, 4).map((item) => {
                   const question = questions.find((entry) => entry.id === item.id);
@@ -424,7 +433,7 @@ export default function FunnyPage() {
                           <p className="text-sm font-semibold text-slate-900">{item.text}</p>
                           {item.reason ? <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.reason}</p> : null}
                         </div>
-                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{item.category}</span>
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{categoryLabel(item.category)}</span>
                       </div>
                     </button>
                   );
@@ -432,7 +441,7 @@ export default function FunnyPage() {
               </div>
             </Card>
 
-            <Card title="Guided actions" subtitle="Shortcuts and insights in one compact area">
+            <Card title="Hành động gợi ý" subtitle="Shortcut và insight gom trong một khu gọn hơn">
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2.5">
                   {quickActions.length === 0 ? <p className="text-sm text-slate-500">{TXT.noQuickActions}</p> : quickActions.slice(0, 6).map((action, idx) => {
@@ -454,11 +463,11 @@ export default function FunnyPage() {
                     <Link key={insight.id} to={insight.targetRoute} className="ui-soft-hover block rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{insight.type}</p>
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{categoryLabel(insight.type)}</p>
                           <p className="mt-2 text-sm font-semibold text-slate-900">{insight.label}</p>
                           {insight.message ? <p className="mt-2 text-xs text-slate-500">{insight.message}</p> : null}
                         </div>
-                        <span className={`status-badge ${insightTone(insight.severity)}`}>{insight.severity}</span>
+                        <span className={`status-badge ${insightTone(insight.severity)}`}>{severityLabel(insight.severity)}</span>
                       </div>
                       <p className="mt-3 text-3xl font-extrabold tracking-tight text-brand-600">{insight.value}</p>
                     </Link>
@@ -467,7 +476,7 @@ export default function FunnyPage() {
               </div>
             </Card>
 
-            <Card title="Summary by role" subtitle="Short live narrative and priority snapshot">
+            <Card title="Tóm tắt theo vai trò" subtitle="Phần tóm tắt ngắn và ảnh chụp nhanh ưu tiên hiện tại">
               <SummaryPanel summary={summary} suggestions={freeSuggestions} />
             </Card>
           </div>

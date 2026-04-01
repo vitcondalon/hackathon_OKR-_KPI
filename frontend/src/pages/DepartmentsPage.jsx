@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { departmentsApi } from '../api/departmentsApi';
@@ -24,19 +24,19 @@ export default function DepartmentsPage() {
   }, []);
 
   return (
-    <AppLayout title="Quan ly phong ban" description="Sap xep phong ban, nguoi phu trach, va trach nhiem ro rang hon.">
+    <AppLayout title="Quản lý phòng ban" description="Sắp xếp phòng ban, người phụ trách và trách nhiệm rõ ràng hơn.">
       <EntityCrudPage
-        title="Phong ban"
-        description="Tao moi va quan ly phong ban"
+        title="Phòng ban"
+        description="Tạo mới và quản lý phòng ban"
         fields={[
-          { name: 'name', label: 'Ten phong ban', required: true },
-          { name: 'description', label: 'Mo ta', type: 'textarea' },
-          { name: 'manager_id', label: 'Quan ly', type: 'select', nullable: true, options: managerOptions }
+          { name: 'name', label: 'Tên phòng ban', required: true },
+          { name: 'description', label: 'Mô tả', type: 'textarea' },
+          { name: 'manager_id', label: 'Quản lý', type: 'select', nullable: true, options: managerOptions }
         ]}
         columns={[
-          { key: 'name', label: 'Ten phong ban' },
-          { key: 'description', label: 'Mo ta' },
-          { key: 'manager_name', label: 'Quan ly' }
+          { key: 'name', label: 'Tên phòng ban' },
+          { key: 'description', label: 'Mô tả' },
+          { key: 'manager_name', label: 'Quản lý' }
         ]}
         loadItems={departmentsApi.list}
         createItem={departmentsApi.create}

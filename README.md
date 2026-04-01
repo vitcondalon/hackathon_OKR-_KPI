@@ -1,4 +1,4 @@
-# OKR / KPI HR Management System
+﻿# OKR / KPI HR Management System
 
 Detailed usage guide: `USER_GUIDE.md`
 Role permissions summary: `ROLE_PERMISSIONS.md`
@@ -232,7 +232,7 @@ curl -X POST http://localhost:8000/api/auth/login \
 curl -X POST http://localhost:8000/api/funny/chat \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -H "Content-Type: application/json" \
-  -d '{"message":"Hien tai co bao nhieu nhan vien?"}'
+  -d '{"message":"Hiện tại có bao nhiêu nhân viên?"}'
 ```
 
 3. Suggestions:
@@ -262,3 +262,4 @@ If `GEMINI_API_KEY` is empty or Gemini request fails, Funny still answers using 
 
 - UI: http://localhost:8000/api/docs
 - OpenAPI JSON: http://localhost:8000/api/docs/openapi.json
+

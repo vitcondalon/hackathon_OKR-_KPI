@@ -1,4 +1,4 @@
-const INTENTS = {
+﻿const INTENTS = {
   count_users: 'count_users',
   count_departments: 'count_departments',
   active_cycles: 'active_cycles',

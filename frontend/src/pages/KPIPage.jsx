@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { kpiApi } from '../api/kpiApi';
@@ -27,32 +27,32 @@ export default function KPIPage() {
   }, []);
 
   return (
-    <AppLayout title="Quan ly KPI" description="Theo doi nguoi phu trach, gia tri hien tai, va trang thai KPI trong mot man hinh de quan sat hon.">
+    <AppLayout title="Quản lý KPI" description="Theo dõi người phụ trách, giá trị hiện tại và trạng thái KPI trong một màn hình dễ quan sát hơn.">
       <EntityCrudPage
         title="KPI"
-        description="Quan ly KPI theo nhan vien va phong ban"
+        description="Quản lý KPI theo nhân viên và phòng ban"
         fields={[
           {
             name: 'type',
-            label: 'Loai',
+            label: 'Loại',
             type: 'select',
             required: true,
             options: [
-              { label: 'Nhan vien', value: 'employee' },
-              { label: 'Phong ban', value: 'department' }
+              { label: 'Nhân viên', value: 'employee' },
+              { label: 'Phòng ban', value: 'department' }
             ]
           },
-          { name: 'name', label: 'Ten KPI', required: true },
-          { name: 'description', label: 'Mo ta', type: 'textarea' },
-          { name: 'target_value', label: 'Gia tri muc tieu', type: 'number', required: true },
-          { name: 'current_value', label: 'Gia tri hien tai', type: 'number', required: true },
-          { name: 'unit', label: 'Don vi' },
-          { name: 'cycle_id', label: 'Chu ky', type: 'select', nullable: true, options: cycleOptions },
-          { name: 'owner_id', label: 'Nguoi phu trach', type: 'select', nullable: true, options: ownerOptions },
-          { name: 'department_id', label: 'Phong ban', type: 'select', nullable: true, options: departmentOptions },
+          { name: 'name', label: 'Tên KPI', required: true },
+          { name: 'description', label: 'Mô tả', type: 'textarea' },
+          { name: 'target_value', label: 'Giá trị mục tiêu', type: 'number', required: true },
+          { name: 'current_value', label: 'Giá trị hiện tại', type: 'number', required: true },
+          { name: 'unit', label: 'Đơn vị' },
+          { name: 'cycle_id', label: 'Chu kỳ', type: 'select', nullable: true, options: cycleOptions },
+          { name: 'owner_id', label: 'Người phụ trách', type: 'select', nullable: true, options: ownerOptions },
+          { name: 'department_id', label: 'Phòng ban', type: 'select', nullable: true, options: departmentOptions },
           {
             name: 'status',
-            label: 'Trang thai',
+            label: 'Trạng thái',
             type: 'select',
             required: true,
             options: [
@@ -67,15 +67,15 @@ export default function KPIPage() {
         columns={[
           {
             key: 'type',
-            label: 'Loai',
-            render: (row) => (row.type === 'department' ? 'Phong ban' : 'Nhan vien')
+            label: 'Loại',
+            render: (row) => (row.type === 'department' ? 'Phòng ban' : 'Nhân viên')
           },
-          { key: 'name', label: 'Ten KPI' },
-          { key: 'target_value', label: 'Muc tieu' },
-          { key: 'current_value', label: 'Hien tai' },
+          { key: 'name', label: 'Tên KPI' },
+          { key: 'target_value', label: 'Mục tiêu' },
+          { key: 'current_value', label: 'Hiện tại' },
           {
             key: 'progress',
-            label: 'Tien trinh',
+            label: 'Tiến trình',
             render: (row) => (
               <div className="min-w-[150px]">
                 <div className="flex items-center justify-between gap-2 text-xs">
@@ -87,7 +87,7 @@ export default function KPIPage() {
               </div>
             )
           },
-          { key: 'status', label: 'Trang thai' }
+          { key: 'status', label: 'Trạng thái' }
         ]}
         loadItems={kpiApi.list}
         createItem={kpiApi.create}

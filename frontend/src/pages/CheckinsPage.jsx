@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { checkinsApi } from '../api/checkinsApi';
@@ -21,13 +21,10 @@ export default function CheckinsPage() {
       });
   }, []);
 
-  const metricTypeOptions = useMemo(
-    () => [
-      { label: 'Key Result', value: 'key_result' },
-      { label: 'KPI', value: 'kpi' }
-    ],
-    []
-  );
+  const metricTypeOptions = useMemo(() => [
+    { label: 'Key Result', value: 'key_result' },
+    { label: 'KPI', value: 'kpi' }
+  ], []);
 
   async function createCheckin(payload) {
     const metricType = payload.metric_type || 'key_result';
@@ -50,30 +47,26 @@ export default function CheckinsPage() {
   }
 
   return (
-    <AppLayout title="Check-in" description="Cap nhat tien do nhanh va theo doi lich su gan day de de doi chieu.">
+    <AppLayout title="Check-in" description="Cập nhật tiến độ nhanh và theo dõi lịch sử gần đây để dễ đối chiếu.">
       <EntityCrudPage
         title="Check-in"
-        description="Gui cap nhat tien do va ghi chu"
+        description="Gửi cập nhật tiến độ và ghi chú"
         fields={[
-          { name: 'metric_type', label: 'Loai check-in', type: 'select', required: true, options: metricTypeOptions },
+          { name: 'metric_type', label: 'Loại check-in', type: 'select', required: true, options: metricTypeOptions },
           { name: 'key_result_id', label: 'Key Result', type: 'select', nullable: true, options: keyResultOptions },
           { name: 'kpi_metric_id', label: 'KPI', type: 'select', nullable: true, options: kpiOptions },
-          { name: 'value', label: 'Gia tri', type: 'number' },
-          { name: 'progress', label: 'Tien trinh (%)', type: 'number' },
-          { name: 'note', label: 'Ghi chu', type: 'textarea', required: true }
+          { name: 'value', label: 'Giá trị', type: 'number' },
+          { name: 'progress', label: 'Tiến trình (%)', type: 'number' },
+          { name: 'note', label: 'Ghi chú', type: 'textarea', required: true }
         ]}
         columns={[
-          { key: 'checkin_type', label: 'Loai' },
-          { key: 'metric_name', label: 'Chi so' },
-          { key: 'value', label: 'Gia tri' },
-          { key: 'progress', label: 'Tien trinh' },
-          { key: 'note', label: 'Ghi chu' },
-          { key: 'user_name', label: 'Nguoi tao' },
-          {
-            key: 'created_at',
-            label: 'Thoi gian tao',
-            render: (row) => (row.created_at ? new Date(row.created_at).toLocaleString('vi-VN') : '-')
-          }
+          { key: 'checkin_type', label: 'Loại' },
+          { key: 'metric_name', label: 'Chỉ số' },
+          { key: 'value', label: 'Giá trị' },
+          { key: 'progress', label: 'Tiến trình' },
+          { key: 'note', label: 'Ghi chú' },
+          { key: 'user_name', label: 'Người tạo' },
+          { key: 'created_at', label: 'Thời gian tạo', render: (row) => (row.created_at ? new Date(row.created_at).toLocaleString('vi-VN') : '-') }
         ]}
         loadItems={async () => {
           const items = await checkinsApi.list();

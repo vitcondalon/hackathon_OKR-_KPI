@@ -1,4 +1,4 @@
-const { z } = require('zod');
+﻿const { z } = require('zod');
 const authService = require('../services/authService');
 const { sendSuccess } = require('../utils/response');
 
@@ -10,7 +10,7 @@ const loginSchema = z
     password: z.string().min(1)
   })
   .refine((value) => Boolean(value.identifier || value.email || value.username), {
-    message: 'Can nhap identifier, username hoac email',
+    message: 'Cần nhập identifier, username hoặc email',
     path: ['identifier']
   });
 
@@ -24,7 +24,7 @@ async function login(req, res, next) {
       password: payload.password
     });
 
-    return sendSuccess(res, result, 'Dang nhap thanh cong');
+    return sendSuccess(res, result, 'Đăng nhập thành công');
   } catch (error) {
     return next(error);
   }

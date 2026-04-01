@@ -1,7 +1,7 @@
-export function unwrap(response) {
+﻿export function unwrap(response) {
   return response?.data?.data ?? response?.data ?? null;
 }
 
-export function apiErrorMessage(error, fallback = 'Yeu cau that bai') {
+export function apiErrorMessage(error, fallback = 'Yêu cầu thất bại') {
   return error?.response?.data?.message || error?.message || fallback;
 }

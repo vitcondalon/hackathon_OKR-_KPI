@@ -1,4 +1,4 @@
-const base = process.env.TEST_BASE || 'http://localhost:8014/api';
+﻿const base = process.env.TEST_BASE || 'http://localhost:8014/api';
 const failures = [];
 const results = [];
 
@@ -66,16 +66,16 @@ async function main() {
   check(Array.isArray(suggestions.json?.suggestions) && suggestions.json.suggestions.length >= 5, 'funny suggestions has >=5 items', suggestions);
 
   const intentCases = [
-    ['Hien tai co bao nhieu nhan vien?', 'count_users'],
-    ['Co bao nhieu phong ban?', 'count_departments'],
-    ['Chu ky nao dang hoat dong?', 'active_cycles'],
-    ['Objective nao dang co tien do thap nhat?', 'low_progress_objectives'],
-    ['KPI nao dang rui ro?', 'risky_kpis'],
-    ['Phong ban nao dang tot nhat?', 'top_departments'],
-    ['Tom tat tinh hinh he thong hien tai', 'dashboard_summary'],
-    ['Hay cho toi biet nhung muc duoi 50% tien do', 'low_progress_objectives'],
-    ['Nhan su nao dang co hieu suat tot nhat?', 'top_performers'],
-    ['Tinh hinh KPI phong ban the nao?', 'risky_kpis']
+    ['Hiện tại có bao nhiêu nhân viên?', 'count_users'],
+    ['Có bao nhiêu phòng ban?', 'count_departments'],
+    ['Chu kỳ nào đang hoạt động?', 'active_cycles'],
+    ['Objective nào đang có tiến độ thấp nhất?', 'low_progress_objectives'],
+    ['KPI nào đang rủi ro?', 'risky_kpis'],
+    ['Phòng ban nào đang tốt nhất?', 'top_departments'],
+    ['Tóm tắt tình hình hệ thống hiện tại', 'dashboard_summary'],
+    ['Hãy cho tôi biết những mục dưới 50% tiến độ', 'low_progress_objectives'],
+    ['Nhân sự nào đang có hiệu suất tốt nhất?', 'top_performers'],
+    ['Tình hình KPI phòng ban thế nào?', 'risky_kpis']
   ];
 
   for (const [message, expectedIntent] of intentCases) {
@@ -93,7 +93,7 @@ async function main() {
   const generic = await req('/funny/chat', {
     method: 'POST',
     headers: { Authorization: `Bearer ${admin}` },
-    body: JSON.stringify({ message: 'Hay phan tich tong quan va dua ra nhan dinh xu huong cho dashboard hien tai' })
+    body: JSON.stringify({ message: 'Hãy phân tích tổng quan và đưa ra nhận định xu hướng cho dashboard hiện tại' })
   });
 
   check(generic.status === 200, 'generic analysis 200', generic);
@@ -104,14 +104,14 @@ async function main() {
   const employeeAllowed = await req('/funny/chat', {
     method: 'POST',
     headers: { Authorization: `Bearer ${employee}` },
-    body: JSON.stringify({ message: 'Hien tai co bao nhieu nhan vien?' })
+    body: JSON.stringify({ message: 'Hiện tại có bao nhiêu nhân viên?' })
   });
   check(employeeAllowed.status === 200, 'employee allowed count_users', employeeAllowed);
 
   const employeeDenied = await req('/funny/chat', {
     method: 'POST',
     headers: { Authorization: `Bearer ${employee}` },
-    body: JSON.stringify({ message: 'Nhan su nao dang co hieu suat tot nhat?' })
+    body: JSON.stringify({ message: 'Nhân sự nào đang có hiệu suất tốt nhất?' })
   });
   check(employeeDenied.status === 403, 'employee denied top_performers', employeeDenied);
 

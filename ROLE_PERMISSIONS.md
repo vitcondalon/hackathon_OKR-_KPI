@@ -1,31 +1,31 @@
-# ROLE PERMISSIONS (VI)
+﻿# ROLE PERMISSIONS
 
-Bang nay tong hop quyen hien tai cua he thong theo `role`.
+Bảng này tổng hợp quyền hiện tại của hệ thống theo `role`.
 
-## Vai tro
+## Vai trò
 
-- `admin`: quyen cao nhat, quan tri toan he thong.
-- `manager`: quan ly du lieu van hanh va doi nhom.
-- `employee`: thao tac trong pham vi du lieu duoc giao.
+- `admin`: quyền cao nhất, quản trị toàn hệ thống.
+- `manager`: quản lý dữ liệu vận hành và đội nhóm.
+- `employee`: thao tác trong phạm vi dữ liệu được giao.
 
-## Ma tran quyen chinh
+## Ma trận quyền chính
 
 | Module | admin | manager | employee |
 |---|---|---|---|
 | Dashboard | xem | xem | xem |
 | Funny Assistant | xem + chat | xem + chat | xem + chat |
-| Users | xem + tao/sua/xoa | xem | xem |
-| Departments | xem + tao/sua/xoa | xem + tao/sua | xem |
-| Cycles | xem + tao/sua/xoa | xem + tao/sua/xoa* | xem |
-| Objectives | xem + tao/sua/xoa | xem + tao/sua/xoa | chi thao tac trong pham vi owner |
-| Key Results | xem + tao/sua/xoa | xem + tao/sua/xoa | chi thao tac trong pham vi owner |
-| KPIs | xem + tao/sua/xoa | xem + tao/sua/xoa | chi thao tac trong pham vi owner |
-| Check-ins | xem + tao | xem + tao | chi tao/xem cho metric duoc giao |
+| Users | xem + tạo/sửa/xóa | xem | xem |
+| Departments | xem + tạo/sửa/xóa | xem + tạo/sửa | xem |
+| Cycles | xem + tạo/sửa/xóa | xem + tạo/sửa/xóa* | xem |
+| Objectives | xem + tạo/sửa/xóa | xem + tạo/sửa/xóa | chỉ thao tác trong phạm vi owner |
+| Key Results | xem + tạo/sửa/xóa | xem + tạo/sửa/xóa | chỉ thao tác trong phạm vi owner |
+| KPIs | xem + tạo/sửa/xóa | xem + tạo/sửa/xóa | chỉ thao tác trong phạm vi owner |
+| Check-ins | xem + tạo | xem + tạo | chỉ tạo/xem cho metric được giao |
 | Profile | xem | xem | xem |
 
-\*Xoa cycle chi thanh cong khi cycle khong con linked objectives hoac KPI metrics.
+\* Xóa cycle chỉ thành công khi cycle không còn linked objectives hoặc KPI metrics.
 
-## Ghi chu
+## Ghi chú
 
-- Frontend da an cac menu khong phu hop role (vi du: `employee` khong thay `Departments`/`Cycles`/`Users`).
-- Backend van la lop chan cuoi, neu role khong du quyen se tra ve `403`.
+- Frontend đã ẩn các menu không phù hợp role, ví dụ `employee` không thấy `Departments`, `Cycles`, `Users`.
+- Backend vẫn là lớp chặn cuối. Nếu role không đủ quyền, API sẽ trả về `403`.

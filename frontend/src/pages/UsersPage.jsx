@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { usersApi } from '../api/usersApi';
@@ -20,51 +20,51 @@ export default function UsersPage() {
   }, []);
 
   return (
-    <AppLayout title="Quan ly nguoi dung" description="Quan ly vai tro, kich hoat tai khoan va phong ban trong mot man hinh ro rang hon.">
+    <AppLayout title="Quản lý người dùng" description="Quản lý vai trò, kích hoạt tài khoản và phòng ban trong một màn hình rõ ràng hơn.">
       <EntityCrudPage
-        title="Nguoi dung"
-        description="Quan ly nguoi dung, vai tro, va phong ban"
+        title="Người dùng"
+        description="Quản lý người dùng, vai trò và phòng ban"
         fields={[
-          { name: 'full_name', label: 'Ho va ten', required: true },
-          { name: 'username', label: 'Username', required: true },
+          { name: 'full_name', label: 'Họ và tên', required: true },
+          { name: 'username', label: 'Tên đăng nhập', required: true },
           { name: 'email', label: 'Email', type: 'email', required: true },
-          { name: 'password', label: 'Mat khau', type: 'password', required: true },
+          { name: 'password', label: 'Mật khẩu', type: 'password', required: true },
           {
             name: 'role',
-            label: 'Vai tro',
+            label: 'Vai trò',
             type: 'select',
             required: true,
             options: [
-              { label: 'Quan tri vien', value: 'admin' },
-              { label: 'Quan ly', value: 'manager' },
-              { label: 'Nhan vien', value: 'employee' }
+              { label: 'Quản trị viên', value: 'admin' },
+              { label: 'Quản lý', value: 'manager' },
+              { label: 'Nhân viên', value: 'employee' }
             ]
           },
           {
             name: 'department_id',
-            label: 'Phong ban',
+            label: 'Phòng ban',
             type: 'select',
             nullable: true,
             options: departmentOptions
           },
-          { name: 'is_active', label: 'Kich hoat', type: 'checkbox' }
+          { name: 'is_active', label: 'Kích hoạt', type: 'checkbox' }
         ]}
         columns={[
-          { key: 'full_name', label: 'Ho va ten' },
-          { key: 'username', label: 'Username' },
+          { key: 'full_name', label: 'Họ và tên' },
+          { key: 'username', label: 'Tên đăng nhập' },
           { key: 'email', label: 'Email' },
           {
             key: 'role',
-            label: 'Vai tro',
+            label: 'Vai trò',
             render: (row) => {
-              if (row.role === 'admin') return 'Quan tri vien';
-              if (row.role === 'manager') return 'Quan ly';
-              if (row.role === 'employee') return 'Nhan vien';
+              if (row.role === 'admin') return 'Quản trị viên';
+              if (row.role === 'manager') return 'Quản lý';
+              if (row.role === 'employee') return 'Nhân viên';
               return row.role;
             }
           },
-          { key: 'department_name', label: 'Phong ban' },
-          { key: 'is_active', label: 'Kich hoat', render: (row) => (row.is_active ? 'Co' : 'Khong') }
+          { key: 'department_name', label: 'Phòng ban' },
+          { key: 'is_active', label: 'Kích hoạt', render: (row) => (row.is_active ? 'Có' : 'Không') }
         ]}
         loadItems={usersApi.list}
         createItem={usersApi.create}

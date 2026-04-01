@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { keyResultsApi } from '../api/keyResultsApi';
@@ -16,21 +16,21 @@ export default function KeyResultsPage() {
   }, []);
 
   return (
-    <AppLayout title="Key Results" description="Theo doi ket qua do luong duoc va cap nhat nhanh hon voi giao dien ro rang.">
+    <AppLayout title="Key Results" description="Theo dõi kết quả đo lường được và cập nhật nhanh hơn với giao diện rõ ràng.">
       <EntityCrudPage
         title="Key Result"
-        description="Quan ly ket qua do luong cho tung muc tieu"
+        description="Quản lý kết quả đo lường cho từng mục tiêu"
         fields={[
-          { name: 'objective_id', label: 'Muc tieu', type: 'select', required: true, options: objectiveOptions },
-          { name: 'title', label: 'Tieu de', required: true },
-          { name: 'description', label: 'Mo ta', type: 'textarea' },
-          { name: 'start_value', label: 'Gia tri bat dau', type: 'number', required: true },
-          { name: 'target_value', label: 'Gia tri muc tieu', type: 'number', required: true },
-          { name: 'current_value', label: 'Gia tri hien tai', type: 'number', required: true },
-          { name: 'unit', label: 'Don vi' },
+          { name: 'objective_id', label: 'Mục tiêu', type: 'select', required: true, options: objectiveOptions },
+          { name: 'title', label: 'Tiêu đề', required: true },
+          { name: 'description', label: 'Mô tả', type: 'textarea' },
+          { name: 'start_value', label: 'Giá trị bắt đầu', type: 'number', required: true },
+          { name: 'target_value', label: 'Giá trị mục tiêu', type: 'number', required: true },
+          { name: 'current_value', label: 'Giá trị hiện tại', type: 'number', required: true },
+          { name: 'unit', label: 'Đơn vị' },
           {
             name: 'status',
-            label: 'Trang thai',
+            label: 'Trạng thái',
             type: 'select',
             required: true,
             options: [
@@ -42,13 +42,13 @@ export default function KeyResultsPage() {
           }
         ]}
         columns={[
-          { key: 'objective_title', label: 'Muc tieu' },
-          { key: 'title', label: 'Tieu de' },
-          { key: 'target_value', label: 'Muc tieu' },
-          { key: 'current_value', label: 'Hien tai' },
+          { key: 'objective_title', label: 'Mục tiêu' },
+          { key: 'title', label: 'Tiêu đề' },
+          { key: 'target_value', label: 'Mục tiêu' },
+          { key: 'current_value', label: 'Hiện tại' },
           {
             key: 'progress',
-            label: 'Tien trinh',
+            label: 'Tiến trình',
             render: (row) => (
               <div className="min-w-[150px]">
                 <div className="flex items-center justify-between gap-2 text-xs">
@@ -60,7 +60,7 @@ export default function KeyResultsPage() {
               </div>
             )
           },
-          { key: 'status', label: 'Trang thai' }
+          { key: 'status', label: 'Trạng thái' }
         ]}
         loadItems={keyResultsApi.list}
         createItem={keyResultsApi.create}
