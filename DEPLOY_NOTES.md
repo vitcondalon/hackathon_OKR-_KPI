@@ -113,3 +113,28 @@ sudo systemctl reload nginx
 - checks required env files,
 - removes default nginx site on `--init` by default (can disable via `DISABLE_DEFAULT_NGINX_SITE=false`),
 - retries backend health check (`BACKEND_STARTUP_RETRIES`, default `30`) before failing.
+
+## 8. CI/CD Deploy Option
+
+If you want the VPS to update automatically after each push:
+
+1. Keep the project cloned on the VPS at `/var/www/okr-kpi`.
+2. Add GitHub Actions secrets:
+   - `VPS_HOST`
+   - `VPS_PORT`
+   - `VPS_USER`
+   - `VPS_SSH_KEY`
+   - `VPS_KNOWN_HOSTS`
+   - `APP_DIR` (optional)
+3. Push to `main`.
+
+The workflow in `.github/workflows/deploy.yml` will SSH into the VPS and run:
+
+```bash
+bash /var/www/okr-kpi/deploy/update_app.sh
+```
+
+Important:
+- This is CI/CD through GitHub Actions, not a webhook listener running on the VPS.
+- The deploy user should have permission to restart the backend service and reload Nginx.
+- If `package-lock.json` changes, the script already handles reinstalling dependencies with `npm ci`.
