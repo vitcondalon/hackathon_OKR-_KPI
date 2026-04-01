@@ -6,6 +6,7 @@ import { usersApi } from '../api/usersApi';
 import { departmentsApi } from '../api/departmentsApi';
 import { cyclesApi } from '../api/cyclesApi';
 import { percent } from '../utils/format';
+import { KPI_TYPE_OPTIONS, OBJECTIVE_STATUS_OPTIONS, scopeLabel } from '../utils/labels';
 
 export default function KPIPage() {
   const [ownerOptions, setOwnerOptions] = useState([]);
@@ -32,16 +33,7 @@ export default function KPIPage() {
         title="KPI"
         description="Quản lý KPI theo nhân viên và phòng ban"
         fields={[
-          {
-            name: 'type',
-            label: 'Loại',
-            type: 'select',
-            required: true,
-            options: [
-              { label: 'Nhân viên', value: 'employee' },
-              { label: 'Phòng ban', value: 'department' }
-            ]
-          },
+          { name: 'type', label: 'Loại', type: 'select', required: true, options: KPI_TYPE_OPTIONS },
           { name: 'name', label: 'Tên KPI', required: true },
           { name: 'description', label: 'Mô tả', type: 'textarea' },
           { name: 'target_value', label: 'Giá trị mục tiêu', type: 'number', required: true },
@@ -50,26 +42,10 @@ export default function KPIPage() {
           { name: 'cycle_id', label: 'Chu kỳ', type: 'select', nullable: true, options: cycleOptions },
           { name: 'owner_id', label: 'Người phụ trách', type: 'select', nullable: true, options: ownerOptions },
           { name: 'department_id', label: 'Phòng ban', type: 'select', nullable: true, options: departmentOptions },
-          {
-            name: 'status',
-            label: 'Trạng thái',
-            type: 'select',
-            required: true,
-            options: [
-              { label: 'Draft', value: 'draft' },
-              { label: 'Active', value: 'active' },
-              { label: 'Completed', value: 'completed' },
-              { label: 'On track', value: 'on_track' },
-              { label: 'At risk', value: 'at_risk' }
-            ]
-          }
+          { name: 'status', label: 'Trạng thái', type: 'select', required: true, options: OBJECTIVE_STATUS_OPTIONS }
         ]}
         columns={[
-          {
-            key: 'type',
-            label: 'Loại',
-            render: (row) => (row.type === 'department' ? 'Phòng ban' : 'Nhân viên')
-          },
+          { key: 'type', label: 'Loại', render: (row) => scopeLabel(row.type) },
           { key: 'name', label: 'Tên KPI' },
           { key: 'target_value', label: 'Mục tiêu' },
           { key: 'current_value', label: 'Hiện tại' },

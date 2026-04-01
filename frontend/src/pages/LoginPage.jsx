@@ -103,7 +103,7 @@ export default function LoginPage() {
 
             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-600">
               <p className="font-semibold text-slate-800">Lượt demo Hackathon</p>
-              <p className="mt-1 leading-relaxed">Đăng nhập vào dashboard, sau đó mở Funny Assistant để trình bày gợi ý, insight và phần tổng kết theo vai trò.</p>
+              <p className="mt-1 leading-relaxed">Đăng nhập vào dashboard, sau đó mở Funny Assistant để trình bày gợi ý, nhận định và phần tổng kết theo vai trò.</p>
             </div>
           </form>
         </Card>
@@ -111,3 +111,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

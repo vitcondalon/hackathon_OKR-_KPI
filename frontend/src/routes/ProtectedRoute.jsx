@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from 'react-router-dom';
+﻿import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function ProtectedRoute({ children, roles }) {
@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children, roles }) {
   if (loading) {
     return (
       <div className="ui-shell flex min-h-screen items-center justify-center">
-        <div className="ui-surface rounded-[1.8rem] px-6 py-5 text-sm font-semibold text-slate-600">Loading workspace...</div>
+        <div className="ui-surface rounded-[1.8rem] px-6 py-5 text-sm font-semibold text-slate-600">Đang tải không gian làm việc...</div>
       </div>
     );
   }

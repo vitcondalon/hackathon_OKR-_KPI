@@ -4,6 +4,7 @@ import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { keyResultsApi } from '../api/keyResultsApi';
 import { objectivesApi } from '../api/objectivesApi';
 import { percent } from '../utils/format';
+import { KEY_RESULT_STATUS_OPTIONS } from '../utils/labels';
 
 export default function KeyResultsPage() {
   const [objectiveOptions, setObjectiveOptions] = useState([]);
@@ -28,18 +29,7 @@ export default function KeyResultsPage() {
           { name: 'target_value', label: 'Giá trị mục tiêu', type: 'number', required: true },
           { name: 'current_value', label: 'Giá trị hiện tại', type: 'number', required: true },
           { name: 'unit', label: 'Đơn vị' },
-          {
-            name: 'status',
-            label: 'Trạng thái',
-            type: 'select',
-            required: true,
-            options: [
-              { label: 'Draft', value: 'draft' },
-              { label: 'Active', value: 'active' },
-              { label: 'Completed', value: 'completed' },
-              { label: 'At risk', value: 'at_risk' }
-            ]
-          }
+          { name: 'status', label: 'Trạng thái', type: 'select', required: true, options: KEY_RESULT_STATUS_OPTIONS }
         ]}
         columns={[
           { key: 'objective_title', label: 'Mục tiêu' },

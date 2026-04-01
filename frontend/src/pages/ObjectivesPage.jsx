@@ -6,6 +6,7 @@ import { usersApi } from '../api/usersApi';
 import { departmentsApi } from '../api/departmentsApi';
 import { cyclesApi } from '../api/cyclesApi';
 import { percent } from '../utils/format';
+import { OBJECTIVE_STATUS_OPTIONS } from '../utils/labels';
 
 export default function ObjectivesPage() {
   const [ownerOptions, setOwnerOptions] = useState([]);
@@ -37,19 +38,7 @@ export default function ObjectivesPage() {
           { name: 'owner_id', label: 'Người phụ trách', type: 'select', required: true, options: ownerOptions },
           { name: 'department_id', label: 'Phòng ban', type: 'select', nullable: true, options: departmentOptions },
           { name: 'cycle_id', label: 'Chu kỳ', type: 'select', required: true, options: cycleOptions },
-          {
-            name: 'status',
-            label: 'Trạng thái',
-            type: 'select',
-            required: true,
-            options: [
-              { label: 'Draft', value: 'draft' },
-              { label: 'Active', value: 'active' },
-              { label: 'Completed', value: 'completed' },
-              { label: 'On track', value: 'on_track' },
-              { label: 'At risk', value: 'at_risk' }
-            ]
-          },
+          { name: 'status', label: 'Trạng thái', type: 'select', required: true, options: OBJECTIVE_STATUS_OPTIONS },
           { name: 'progress', label: 'Tiến trình', type: 'number' }
         ]}
         columns={[

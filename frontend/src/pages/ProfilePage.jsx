@@ -35,13 +35,13 @@ export default function ProfilePage() {
           </div>
         </Card>
 
-        <Card title="Ghi chú workspace" subtitle="Cách hệ thống điều chỉnh trải nghiệm cho tài khoản này">
+        <Card title="Ghi chú không gian làm việc" subtitle="Cách hệ thống điều chỉnh trải nghiệm cho tài khoản này">
           <div className="space-y-4 text-sm text-slate-600">
             <div className="rounded-[1.4rem] border border-brand-100 bg-brand-50/80 p-4">
-              Điều hướng, phần tóm tắt dashboard và gợi ý từ Funny đều dựa trên role, nên hồ sơ này ảnh hưởng trực tiếp tới những gì bạn nhìn thấy đầu tiên.
+              Điều hướng, phần tóm tắt dashboard và gợi ý từ Funny đều dựa trên vai trò, nên hồ sơ này ảnh hưởng trực tiếp tới những gì bạn nhìn thấy đầu tiên.
             </div>
             <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4">
-              Mở dashboard để xem góc nhìn khởi đầu của bạn, sau đó dùng Funny Assistant để nhận gợi ý và phần giải thích phù hợp với role hiện tại.
+              Mở dashboard để xem góc nhìn khởi đầu của bạn, sau đó dùng Funny Assistant để nhận gợi ý và phần giải thích phù hợp với vai trò hiện tại.
             </div>
           </div>
         </Card>

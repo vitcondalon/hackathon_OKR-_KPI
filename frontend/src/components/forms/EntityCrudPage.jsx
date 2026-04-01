@@ -1,8 +1,9 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import DataTable from '../tables/DataTable';
 import { apiErrorMessage } from '../../api/helpers';
+import { normalizeDateDisplay, toDatePayloadValue } from '../../utils/format';
 
 function toPayload(fields, form, mode) {
   const payload = {};
@@ -22,6 +23,11 @@ function toPayload(fields, form, mode) {
 
     if (field.type === 'number') {
       payload[field.name] = Number(value);
+      return;
+    }
+
+    if (field.type === 'date') {
+      payload[field.name] = toDatePayloadValue(value);
       return;
     }
 
@@ -82,9 +88,9 @@ export default function EntityCrudPage({
 
   const stats = useMemo(
     () => [
-      { label: `Tổng ${title}`, value: items.length, tone: 'text-slate-900' },
-      { label: 'Đang hiển thị', value: filteredItems.length, tone: 'text-brand-600' },
-      { label: 'Trạng thái sống', value: inferHighlightValue(items, columns), tone: 'text-emerald-600' }
+      { label: `T?ng ${title}`, value: items.length, tone: 'text-slate-900' },
+      { label: '�ang hi?n th?', value: filteredItems.length, tone: 'text-brand-600' },
+      { label: 'Tr?ng th�i s?ng', value: inferHighlightValue(items, columns), tone: 'text-emerald-600' }
     ],
     [columns, filteredItems.length, items, title]
   );
@@ -98,7 +104,7 @@ export default function EntityCrudPage({
       const data = await loadItems();
       setItems(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(apiErrorMessage(err, `Không thể tải dữ liệu ${title}`));
+      setError(apiErrorMessage(err, `Kh�ng th? t?i d? li?u ${title}`));
     } finally {
       setLoading(false);
     }
@@ -117,7 +123,17 @@ export default function EntityCrudPage({
     const next = initialState(fields);
     fields.forEach((field) => {
       const value = item[field.name];
-      next[field.name] = field.type === 'checkbox' ? Boolean(value) : value ?? '';
+      if (field.type === 'checkbox') {
+        next[field.name] = Boolean(value);
+        return;
+      }
+
+      if (field.type === 'date') {
+        next[field.name] = normalizeDateDisplay(value);
+        return;
+      }
+
+      next[field.name] = value ?? '';
     });
     if ('password' in next) next.password = '';
     setForm(next);
@@ -141,20 +157,20 @@ export default function EntityCrudPage({
       resetForm();
       await refresh();
     } catch (err) {
-      setError(apiErrorMessage(err, 'Không thể lưu dữ liệu'));
+      setError(apiErrorMessage(err, 'Kh�ng th? luu d? li?u'));
     } finally {
       setSaving(false);
     }
   }
 
   async function remove(id) {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa bản ghi này?')) return;
+    if (!window.confirm('B?n c� ch?c ch?n mu?n x�a b?n ghi n�y?')) return;
     try {
       await deleteItem(id);
       if (editingId === id) resetForm();
       await refresh();
     } catch (err) {
-      setError(apiErrorMessage(err, 'Không thể xóa bản ghi'));
+      setError(apiErrorMessage(err, 'Kh�ng th? x�a b?n ghi'));
     }
   }
 
@@ -172,10 +188,10 @@ export default function EntityCrudPage({
 
       <div className="grid gap-5 xl:grid-cols-[400px_minmax(0,1fr)]">
         <Card
-          title={editingId ? `Cập nhật ${title}` : `Tạo ${title}`}
+          title={editingId ? `C?p nh?t ${title}` : `T?o ${title}`}
           subtitle={description}
           className="h-fit"
-          actions={editingId ? <span className="status-badge border-amber-200 bg-amber-50 text-amber-700">Đang sửa</span> : null}
+          actions={editingId ? <span className="status-badge border-amber-200 bg-amber-50 text-amber-700">�ang s?a</span> : null}
         >
           {canCreate || canUpdate ? (
             <form onSubmit={submit} className="space-y-4">
@@ -195,7 +211,7 @@ export default function EntityCrudPage({
                       required={Boolean(field.required && !editingId)}
                       onChange={(event) => setForm((prev) => ({ ...prev, [field.name]: event.target.value }))}
                     >
-                      <option value="">Chọn {field.label}</option>
+                      <option value="">Ch?n {field.label}</option>
                       {(field.options || []).map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
@@ -204,7 +220,7 @@ export default function EntityCrudPage({
                     </select>
                   ) : field.type === 'checkbox' ? (
                     <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                      <span className="text-sm text-slate-600">Bật trường này</span>
+                      <span className="text-sm text-slate-600">B?t tru?ng n�y</span>
                       <input
                         type="checkbox"
                         checked={Boolean(form[field.name])}
@@ -212,6 +228,16 @@ export default function EntityCrudPage({
                         className="h-4 w-4 rounded border-slate-300 text-brand-500"
                       />
                     </div>
+                  ) : field.type === 'date' ? (
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="dd/mm/yyyy"
+                      value={form[field.name]}
+                      required={Boolean(field.required && !editingId)}
+                      onChange={(event) => setForm((prev) => ({ ...prev, [field.name]: event.target.value }))}
+                      onBlur={(event) => setForm((prev) => ({ ...prev, [field.name]: normalizeDateDisplay(event.target.value) }))}
+                    />
                   ) : (
                     <input
                       type={field.type || 'text'}
@@ -228,36 +254,36 @@ export default function EntityCrudPage({
 
               <div className="flex flex-wrap gap-2 pt-1">
                 <Button type="submit" disabled={saving}>
-                  {saving ? 'Đang lưu...' : editingId ? 'Cập nhật' : 'Tạo mới'}
+                  {saving ? '�ang luu...' : editingId ? 'C?p nh?t' : 'T?o m?i'}
                 </Button>
                 <Button type="button" variant="ghost" onClick={resetForm}>
-                  Xóa form
+                  X�a form
                 </Button>
               </div>
             </form>
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-600">
-              Vai trò hiện tại chỉ có quyền xem.
+              Vai tr� hi?n t?i ch? c� quy?n xem.
             </div>
           )}
         </Card>
 
         <Card
-          title={`Danh sách ${title}`}
-          subtitle="Dữ liệu API thực tế để theo dõi và thao tác nhanh"
+          title={`Danh s�ch ${title}`}
+          subtitle="D? li?u API th?c t? d? theo d�i v� thao t�c nhanh"
           actions={
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="ghost" onClick={refresh}>
-                Tải lại
+                T?i l?i
               </Button>
-              <span className="status-badge border-slate-200 bg-white text-slate-600">{filteredItems.length} bản ghi</span>
+              <span className="status-badge border-slate-200 bg-white text-slate-600">{filteredItems.length} b?n ghi</span>
             </div>
           }
         >
           <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0 flex-1">
               <input
-                placeholder={`Tìm ${title.toLowerCase()} theo cột đang hiển thị...`}
+                placeholder={`T�m ${title.toLowerCase()} theo c?t dang hi?n th?...`}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 className="max-w-xl"
@@ -282,19 +308,19 @@ export default function EntityCrudPage({
             <DataTable
               columns={columns}
               data={filteredItems}
-              emptyLabel={`Không có bản ghi ${title.toLowerCase()} phù hợp với bộ lọc hiện tại`}
+              emptyLabel={`Kh�ng c� b?n ghi ${title.toLowerCase()} ph� h?p v?i b? l?c hi?n t?i`}
               actions={
                 hasActions
                   ? (row) => (
                       <div className="flex flex-wrap gap-2">
                         {canUpdate ? (
                           <Button type="button" variant="ghost" className="px-3 py-2 text-xs" onClick={() => startEdit(row)}>
-                            Sửa
+                            S?a
                           </Button>
                         ) : null}
                         {canDelete ? (
                           <Button type="button" variant="danger" className="px-3 py-2 text-xs" onClick={() => remove(row.id)}>
-                            Xóa
+                            X�a
                           </Button>
                         ) : null}
                       </div>

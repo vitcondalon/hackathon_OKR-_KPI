@@ -1,4 +1,5 @@
 ﻿import { formatValue } from '../../utils/format';
+import { roleLabel, scopeLabel, statusLabel } from '../../utils/labels';
 
 function statusTone(value) {
   const text = String(value || '').toLowerCase();
@@ -11,26 +12,9 @@ function statusTone(value) {
 function mapBadgeLabel(key, value) {
   const raw = String(value ?? '-');
   if (key === 'is_active') return value ? 'Đang hoạt động' : 'Ngừng hoạt động';
-  if (key === 'status') {
-    if (raw === 'completed') return 'Hoàn thành';
-    if (raw === 'active') return 'Đang chạy';
-    if (raw === 'on_track') return 'Đúng tiến độ';
-    if (raw === 'planning') return 'Lên kế hoạch';
-    if (raw === 'draft') return 'Nháp';
-    if (raw === 'pending') return 'Đang chờ';
-    if (raw === 'closed') return 'Đã đóng';
-    if (raw === 'at_risk') return 'Rủi ro';
-    if (raw === 'cancelled') return 'Đã hủy';
-  }
-  if (key === 'role') {
-    if (raw === 'admin') return 'Quản trị viên';
-    if (raw === 'manager') return 'Quản lý';
-    if (raw === 'employee') return 'Nhân viên';
-  }
-  if (key === 'scope_type' || key === 'type') {
-    if (raw === 'department') return 'Phòng ban';
-    if (raw === 'employee') return 'Nhân viên';
-  }
+  if (key === 'status') return statusLabel(raw);
+  if (key === 'role') return roleLabel(raw);
+  if (key === 'scope_type' || key === 'type') return scopeLabel(raw);
   return raw.replaceAll('_', ' ');
 }
 

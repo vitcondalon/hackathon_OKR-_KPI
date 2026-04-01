@@ -4,6 +4,7 @@ import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { checkinsApi } from '../api/checkinsApi';
 import { keyResultsApi } from '../api/keyResultsApi';
 import { kpiApi } from '../api/kpiApi';
+import { formatDateTimeVN } from '../utils/format';
 
 export default function CheckinsPage() {
   const [keyResultOptions, setKeyResultOptions] = useState([]);
@@ -66,7 +67,7 @@ export default function CheckinsPage() {
           { key: 'progress', label: 'Tiến trình' },
           { key: 'note', label: 'Ghi chú' },
           { key: 'user_name', label: 'Người tạo' },
-          { key: 'created_at', label: 'Thời gian tạo', render: (row) => (row.created_at ? new Date(row.created_at).toLocaleString('vi-VN') : '-') }
+          { key: 'created_at', label: 'Thời gian tạo', render: (row) => formatDateTimeVN(row.created_at) }
         ]}
         loadItems={async () => {
           const items = await checkinsApi.list();

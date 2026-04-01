@@ -17,7 +17,7 @@ const TXT = {
   noAnswer: 'Funny chưa có phản hồi.',
   noRecommendations: 'Hiện chưa có gợi ý.',
   noQuickActions: 'Hiện chưa có hành động nhanh.',
-  noInsights: 'Hiện chưa có insight.'
+  noInsights: 'Hiện chưa có nhận định.'
 };
 
 function safeArray(value) {
@@ -39,8 +39,8 @@ function categoryLabel(category) {
   if (category === 'general') return 'Tổng hợp';
   if (category === 'help') return 'Hỗ trợ';
   if (category === 'actions') return 'Hành động';
-  if (category === 'insight') return 'Insight';
-  if (category === 'insights') return 'Insight';
+  if (category === 'insight') return 'Nhận định';
+  if (category === 'insights') return 'Nhận định';
   if (category === 'navigation') return 'Điều hướng';
   return category || 'Tổng hợp';
 }
@@ -76,7 +76,7 @@ function normalizeInsight(item, idx) {
   return {
     id: item?.id || `${item?.type || 'insight'}-${idx}`,
     type: item?.type || 'insight',
-    label: item?.label || item?.title || 'Insight',
+    label: item?.label || item?.title || 'Nhận định',
     message: item?.message || '',
     value: Number.isFinite(Number(item?.value)) ? Number(item.value) : item?.value || 0,
     severity: item?.severity || 'info',
@@ -151,7 +151,7 @@ function MessageBubble({ item, onAskQuestion }) {
             ) : null}
             {safeArray(item.suggestions).length > 0 ? (
               <div className="rounded-[1.3rem] border border-brand-100 bg-brand-50/80 p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-700">Gợi ý follow-up</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-700">Gợi ý bước tiếp theo</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {item.suggestions.slice(0, 4).map((suggestion) => (
                     <span key={`${item.id}-${suggestion}`} className="rounded-full border border-brand-200 bg-white px-3 py-1 text-xs text-slate-700">
@@ -331,7 +331,7 @@ export default function FunnyPage() {
   }
 
   return (
-    <AppLayout title={TXT.pageTitle} description="Giao diện trợ lý gọn hơn cho các câu hỏi OKR/KPI theo ngữ cảnh và bước follow-up có hướng dẫn.">
+    <AppLayout title={TXT.pageTitle} description="Giao diện trợ lý gọn hơn cho các câu hỏi OKR/KPI theo ngữ cảnh và bước tiếp theo có hướng dẫn.">
       <div className="space-y-5 ui-page-enter">
         <Card className="overflow-hidden">
           <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
@@ -398,7 +398,7 @@ export default function FunnyPage() {
 
                   <form onSubmit={handleMessageSubmit} className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
                     <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Tự nhập câu hỏi của bạn</p>
-                    <textarea rows={4} value={freeText} onChange={(event) => setFreeText(event.target.value)} placeholder="Ví dụ: KPI nào đang at risk trong chu kỳ này?" className="mt-3" />
+                    <textarea rows={4} value={freeText} onChange={(event) => setFreeText(event.target.value)} placeholder="Ví dụ: KPI nào đang gặp rủi ro trong chu kỳ này?" className="mt-3" />
                     <Button type="submit" className="mt-3 w-full" disabled={loading || !freeText.trim()}>
                       {loading ? 'Đang xử lý...' : 'Gửi câu hỏi'}
                     </Button>
@@ -441,7 +441,7 @@ export default function FunnyPage() {
               </div>
             </Card>
 
-            <Card title="Hành động gợi ý" subtitle="Shortcut và insight gom trong một khu gọn hơn">
+            <Card title="Hành động gợi ý" subtitle="Lối tắt và nhận định gom trong một khu gọn hơn">
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2.5">
                   {quickActions.length === 0 ? <p className="text-sm text-slate-500">{TXT.noQuickActions}</p> : quickActions.slice(0, 6).map((action, idx) => {
@@ -485,3 +485,4 @@ export default function FunnyPage() {
     </AppLayout>
   );
 }
+

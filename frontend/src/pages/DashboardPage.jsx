@@ -19,6 +19,7 @@ import { dashboardApi } from '../api/dashboardApi';
 import { funnyApi } from '../api/funnyApi';
 import { useAuth } from '../contexts/AuthContext';
 import { percent } from '../utils/format';
+import { scopeLabel, statusLabel } from '../utils/labels';
 
 const COLORS = ['#246bff', '#16a34a', '#f59e0b', '#ef4444', '#0ea5e9', '#7c3aed'];
 
@@ -33,7 +34,7 @@ function summaryCards(summary, role) {
   }
 
   return [
-      { label: 'Tổng người dùng', value: summary.total_users ?? 0, note: 'Số người trong không gian làm việc' },
+    { label: 'Tổng người dùng', value: summary.total_users ?? 0, note: 'Số người trong không gian làm việc' },
     { label: 'Phòng ban', value: summary.total_departments ?? 0, note: 'Các đơn vị đang theo dõi' },
     { label: 'Chu kỳ đang chạy', value: summary.active_cycles ?? 0, note: 'Các khung kế hoạch hiện tại' },
     { label: 'Trung bình objective', value: percent(summary.objective_avg_progress ?? summary.average_progress ?? 0), note: 'Mức tiến độ objective tổng thể' }
@@ -59,6 +60,12 @@ function roleLabel(role) {
   return role || 'Người dùng';
 }
 
+function itemTypeLabel(kind) {
+  if (kind === 'key_result') return 'Key Result';
+  if (kind === 'kpi') return 'KPI';
+  return kind || 'Mục rủi ro';
+}
+
 function toTodoCards(role, summaryData, suggestionData) {
   const suggestions = suggestionData?.suggestions || [];
   if (suggestions.length > 0) {
@@ -67,7 +74,7 @@ function toTodoCards(role, summaryData, suggestionData) {
 
   if (role === 'admin') {
     return [
-      { id: 'admin-1', title: 'Rà lại các nhóm rủi ro và KPI đang at risk trước mốc kiểm tra tiếp theo.', route: '/funny', kind: 'critical' },
+      { id: 'admin-1', title: 'Rà lại các nhóm rủi ro và KPI đang gặp rủi ro trước mốc kiểm tra tiếp theo.', route: '/funny', kind: 'critical' },
       { id: 'admin-2', title: 'Mở phần tóm tắt của trợ lý để nêu bật các cá nhân nổi bật cho phần demo.', route: '/funny', kind: 'info' }
     ];
   }
@@ -125,7 +132,7 @@ export default function DashboardPage() {
 
   const cards = useMemo(() => summaryCards(summary, user?.role || 'employee'), [summary, user?.role]);
   const objectiveCycleData = charts.objective_by_cycle || [];
-  const kpiDistributionData = (charts.kpi_distribution || []).map((item, idx) => ({ ...item, label: `${item.scope_type || 'unknown'} - ${item.status || 'n/a'}`, color: COLORS[idx % COLORS.length] }));
+  const kpiDistributionData = (charts.kpi_distribution || []).map((item, idx) => ({ ...item, label: `${scopeLabel(item.scope_type)} - ${statusLabel(item.status)}`, color: COLORS[idx % COLORS.length] }));
   const departmentPerformance = charts.department_performance || [];
   const riskItems = [...(risks.key_results || []), ...(risks.kpis || [])].slice(0, 6);
   const todoCards = toTodoCards(user?.role || 'employee', funnySummary, funnySuggestions);
@@ -204,7 +211,7 @@ export default function DashboardPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-slate-900">{item.key_result_title || item.kpi_name}</p>
-                          <p className="mt-1 text-xs uppercase tracking-[0.12em] text-red-700">{item.item_type || 'tín hiệu rủi ro'}</p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.12em] text-red-700">{itemTypeLabel(item.item_type)}</p>
                         </div>
                         <span className="status-badge border-red-200 bg-white text-red-700">{percent(item.progress_percent || 0)}</span>
                       </div>
@@ -213,7 +220,7 @@ export default function DashboardPage() {
                 </div>
               </Card>
 
-              <Card title="Nên làm gì tiếp theo?" subtitle="Các bước follow-up được gợi ý">
+              <Card title="Nên làm gì tiếp theo?" subtitle="Các bước tiếp theo được gợi ý">
                 <div className="space-y-3">
                   {todoCards.map((item) => (
                     <Link key={item.id} to={item.route} className="ui-soft-hover block rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
@@ -294,7 +301,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-slate-900">{item.department_name}</p>
-                        <p className="mt-1 text-xs text-slate-500">{item.active_member_count} thành viên đang active</p>
+                        <p className="mt-1 text-xs text-slate-500">{item.active_member_count} thành viên đang hoạt động</p>
                       </div>
                       <span className="text-sm font-bold text-emerald-600">{percent(item.avg_objective_progress || 0)}</span>
                     </div>
@@ -314,7 +321,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-semibold text-slate-900">{group}</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {rows.length === 0 ? <span className="text-sm text-slate-500">Chưa có dữ liệu</span> : null}
-                      {rows.map((row) => <span key={`${group}-${row.status}`} className="status-badge border-slate-200 bg-slate-50 text-slate-700">{row.status}: {row.count}</span>)}
+                      {rows.map((row) => <span key={`${group}-${row.status}`} className="status-badge border-slate-200 bg-slate-50 text-slate-700">{statusLabel(row.status)}: {row.count}</span>)}
                     </div>
                   </div>
                 ))}
