@@ -105,7 +105,7 @@ textarea::placeholder {
 
 @layer components {
   .ui-shell {
-    @apply min-h-screen p-3 sm:p-4 xl:p-6;
+    @apply min-h-screen p-2.5 pb-24 sm:p-4 sm:pb-4 xl:p-6;
   }
 
   .ui-surface {
@@ -169,6 +169,19 @@ textarea::placeholder {
 
   .ui-body-copy {
     @apply text-[15px] leading-7 text-slate-600;
+  }
+
+  .ui-mobile-bottom {
+    @apply fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[720px] px-3 pb-3;
+  }
+
+  .ui-mobile-bottom > div {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 251, 255, 0.98) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
+    backdrop-filter: blur(16px);
+    border-radius: 1.5rem;
+    padding: 0.4rem;
   }
 }
 
@@ -265,6 +278,12 @@ textarea::placeholder {
   background-color: rgba(36, 107, 255, 0.1) !important;
 }
 
+:root[data-theme='dark'] .ui-mobile-bottom > div {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(7, 17, 31, 0.96) 100%);
+  border-color: rgba(148, 163, 184, 0.24);
+  box-shadow: 0 24px 48px rgba(2, 6, 23, 0.42);
+}
+
 @keyframes uiPageEnter {
   0% {
     opacity: 0;
@@ -306,10 +325,54 @@ textarea::placeholder {
 
 @media (max-width: 768px) {
   .ui-page-title {
-    font-size: 2rem;
+    font-size: 1.75rem;
+    line-height: 1.08;
   }
 
   .ui-card-title {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
+  }
+
+  .ui-body-copy {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .status-badge {
+    padding: 0.38rem 0.72rem;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    padding-top: 0.9rem;
+    padding-bottom: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ui-shell {
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+    padding-bottom: 6.3rem;
+  }
+
+  .ui-page-title {
+    font-size: 1.58rem;
+  }
+
+  .ui-card-title {
+    font-size: 1.08rem;
+  }
+
+  .ui-body-copy {
+    font-size: 13.5px;
+    line-height: 1.65;
+  }
+
+  .status-badge {
+    font-size: 10px;
+    padding: 0.34rem 0.62rem;
   }
 }

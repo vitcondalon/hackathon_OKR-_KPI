@@ -28,7 +28,30 @@ function maybeBadge(colKey, value) {
 export default function DataTable({ columns, data, emptyLabel = 'Không tìm thấy bản ghi nào', actions }) {
   return (
     <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white/95">
-      <div className="overflow-x-auto">
+      <div className="space-y-3 p-3 md:hidden">
+        {data.length === 0 ? (
+          <div className="rounded-[1.4rem] border border-dashed border-slate-200 bg-slate-50/80 px-5 py-7 text-center">
+            <p className="text-sm font-semibold text-slate-700">{emptyLabel}</p>
+            <p className="mt-2 text-sm text-slate-500">Thử từ khóa khác, tải lại dữ liệu hoặc tạo bản ghi mới.</p>
+          </div>
+        ) : data.map((row) => (
+          <article key={String(row.id)} className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
+            <div className="space-y-3">
+              {columns.map((col) => (
+                <div key={col.key} className="space-y-1.5">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">{col.label}</p>
+                  <div className="text-sm text-slate-700 break-words">
+                    {col.render ? col.render(row) : maybeBadge(col.key, row[col.key]) || formatValue(row[col.key])}
+                  </div>
+                </div>
+              ))}
+              {actions ? <div className="flex flex-wrap gap-2 pt-2">{actions(row)}</div> : null}
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="min-w-full text-left text-sm">
           <thead className="sticky top-0 z-10">
             <tr className="border-b border-slate-200 bg-slate-50/90 text-slate-500">

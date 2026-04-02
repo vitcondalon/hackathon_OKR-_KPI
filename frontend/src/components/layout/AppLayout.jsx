@@ -97,6 +97,35 @@ function NavSection({ section, isDark, onNavigate }) {
   );
 }
 
+function MobileBottomNav({ items, pathname }) {
+  const primaryItems = items.filter((item) => ['/dashboard', '/objectives', '/checkins', '/funny', '/profile'].includes(item.to));
+
+  return (
+    <nav className="ui-mobile-bottom xl:hidden">
+      <div className="grid grid-cols-5 gap-1">
+        {primaryItems.map((item) => {
+          const isActive = pathname === item.to;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={`flex min-w-0 flex-col items-center gap-1 rounded-[1rem] px-2 py-2.5 text-center transition ${
+                isActive
+                  ? 'bg-brand-500 text-white shadow-[0_12px_24px_rgba(36,107,255,0.26)]'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <span className="text-[11px] font-bold uppercase tracking-[0.08em]">
+                {item.label === 'Funny Assistant' ? 'Funny' : item.label}
+              </span>
+            </NavLink>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
 export default function AppLayout({ title, description, eyebrow, actions, children }) {
   const { user, logout } = useAuth();
   const { theme, isDark, toggleTheme } = useTheme();
@@ -144,7 +173,7 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
   return (
     <div className="ui-shell">
       <div className="mx-auto grid w-full max-w-[1500px] gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="ui-surface flex flex-col rounded-[2rem] p-5 xl:sticky xl:top-6 xl:h-[calc(100vh-3rem)]">
+        <aside className="ui-surface hidden xl:flex xl:flex-col rounded-[2rem] p-5 xl:sticky xl:top-6 xl:h-[calc(100vh-3rem)]">
           <div className="ui-highlight rounded-[1.8rem] p-5">
             <p className="ui-eyebrow">OKR/KPI HR</p>
             <h1 className="ui-card-title mt-3 text-[2rem]">Không gian hiệu suất</h1>
@@ -156,11 +185,11 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
           </div>
         </aside>
 
-        <main className="min-w-0 space-y-5 ui-page-enter">
-          <header className="ui-surface rounded-[2rem] p-5 md:p-6">
+        <main className="min-w-0 space-y-4 sm:space-y-5 ui-page-enter">
+          <header className="ui-surface rounded-[1.7rem] p-4 sm:rounded-[2rem] sm:p-5 md:p-6">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2 text-xs">
+                <div className="hidden flex-wrap items-center gap-2 text-xs sm:flex">
                   {breadcrumbs.map((item, index) => (
                     <span key={item.to} className="flex items-center gap-2">
                       {index > 0 ? <span className="text-slate-300">/</span> : null}
@@ -189,8 +218,8 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
                 </div>
 
                 <div className="flex w-full justify-center">
-                  <div className="inline-flex flex-col items-center gap-2">
-                    <div className="flex flex-wrap items-center justify-center gap-2">
+                  <div className="flex w-full flex-col items-stretch gap-2 sm:inline-flex sm:w-auto sm:items-center">
+                    <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center">
                       <button type="button" onClick={() => window.open(guideApi.viewUrl(), '_blank', 'noopener,noreferrer')} className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">Mở hướng dẫn</button>
                       <button type="button" onClick={toggleTheme} className="ui-soft-hover rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">{theme === 'dark' ? 'Dùng chế độ sáng' : 'Dùng chế độ tối'}</button>
                     </div>
@@ -200,9 +229,9 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
               </div>
             </div>
 
-            <div className="mt-5 flex gap-3 overflow-x-auto pb-1 xl:hidden">
+            <div className="mt-4 hidden gap-2 overflow-x-auto pb-1 sm:flex xl:hidden">
               {sections.flatMap((section) => section.items).map((item) => (
-                <NavLink key={item.to} to={item.to} className={({ isActive }) => `whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold ${isActive ? 'border-brand-200 bg-brand-500 text-white' : 'border-slate-200 bg-white text-slate-700'}`}>
+                <NavLink key={item.to} to={item.to} className={({ isActive }) => `whitespace-nowrap rounded-full border px-3 py-2 text-sm font-semibold ${isActive ? 'border-brand-200 bg-brand-500 text-white' : 'border-slate-200 bg-white text-slate-700'}`}>
                   {item.label}
                 </NavLink>
               ))}
@@ -214,6 +243,8 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
           {children}
         </main>
       </div>
+
+      <MobileBottomNav items={sections.flatMap((section) => section.items)} pathname={location.pathname} />
     </div>
   );
 }

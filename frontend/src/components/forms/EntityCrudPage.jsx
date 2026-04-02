@@ -176,11 +176,11 @@ export default function EntityCrudPage({
 
   return (
     <div className="space-y-5 ui-page-enter">
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
         {stats.map((item) => (
           <Card key={item.label} className="rounded-[1.6rem]">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{item.label}</p>
-            <p className={`mt-3 text-3xl font-extrabold tracking-tight ${item.tone}`}>{item.value}</p>
+            <p className={`mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl ${item.tone}`}>{item.value}</p>
             <p className="mt-2 text-sm text-slate-500">{description}</p>
           </Card>
         ))}
@@ -286,7 +286,7 @@ export default function EntityCrudPage({
                 placeholder={`Tìm ${title.toLowerCase()} theo cột đang hiển thị...`}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="max-w-xl"
+                className="max-w-xl w-full"
               />
             </div>
             <div className="flex flex-wrap gap-2">

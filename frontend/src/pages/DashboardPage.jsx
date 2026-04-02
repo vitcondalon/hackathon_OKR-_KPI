@@ -147,7 +147,7 @@ export default function DashboardPage() {
           <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
             <div className="ui-highlight rounded-[1.8rem] p-5 sm:p-6">
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-brand-700">{roleLabel(user?.role)} trong không gian làm việc</p>
-              <h3 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-950">Xem điều quan trọng trước, rồi hành động nhanh.</h3>
+              <h3 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">Xem điều quan trọng trước, rồi hành động nhanh.</h3>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">Dashboard này kết hợp dữ liệu OKR/KPI đang chạy, rủi ro và ngữ cảnh từ trợ lý để mỗi vai trò vào đúng điểm bắt đầu mà không cần bấm nhiều.</p>
               <div className="mt-5 flex flex-wrap gap-2">
                 <Link to="/funny" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Mở Funny Assistant</Link>
@@ -155,11 +155,11 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-1">
               {cards.map((item) => (
                 <div key={item.label} className="rounded-[1.4rem] border border-slate-200 bg-white/95 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{item.label}</p>
-                  <p className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">{item.value}</p>
+                  <p className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{item.value}</p>
                   <p className="mt-2 text-sm text-slate-500">{item.note}</p>
                 </div>
               ))}
@@ -171,7 +171,7 @@ export default function DashboardPage() {
           <div className="space-y-5">
             <section className="grid gap-5 xl:grid-cols-2">
               <Card title="Tiến độ objective theo chu kỳ" subtitle="Xu hướng và mức độ hoàn thành">
-                <div className="h-80">
+                <div className="h-72 sm:h-80">
                   {objectiveCycleData.length === 0 ? <EmptyChartState label="Chưa có dữ liệu objective theo chu kỳ" /> : (
                     <ResponsiveContainer>
                       <BarChart data={objectiveCycleData}>
@@ -187,7 +187,7 @@ export default function DashboardPage() {
               </Card>
 
               <Card title="Phân bổ KPI" subtitle="Theo phạm vi và trạng thái">
-                <div className="h-80">
+                <div className="h-72 sm:h-80">
                   {kpiDistributionData.length === 0 ? <EmptyChartState label="Chưa có dữ liệu phân bổ KPI" /> : (
                     <ResponsiveContainer>
                       <PieChart>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
             </section>
 
             <Card title="Hiệu suất phòng ban" subtitle="So sánh giữa các đơn vị">
-              <div className="h-80">
+              <div className="h-72 sm:h-80">
                 {departmentPerformance.length === 0 ? <EmptyChartState label="Chưa có dữ liệu hiệu suất phòng ban" /> : (
                   <ResponsiveContainer>
                     <BarChart data={departmentPerformance}>

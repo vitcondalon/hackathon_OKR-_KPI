@@ -341,18 +341,18 @@ export default function FunnyPage() {
                 <span className="status-badge border-slate-200 bg-white text-slate-600">{health?.dbConnected ? 'Database sẵn sàng' : 'Đang kiểm tra database'}</span>
                 <span className="status-badge border-slate-200 bg-white text-slate-600">{health?.geminiConfigured ? 'Đã bật AI' : 'Chế độ dự phòng'}</span>
               </div>
-              <h3 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950">{TXT.heroTitle}</h3>
+              <h3 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{TXT.heroTitle}</h3>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">{TXT.heroSubtitle}</p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               <div className="rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Lượt chat</p>
-                <p className="mt-2 text-3xl font-extrabold tracking-tight text-brand-600">{chat.filter((item) => item.role === 'assistant').length}</p>
+                <p className="mt-2 text-2xl font-extrabold tracking-tight text-brand-600 sm:text-3xl">{chat.filter((item) => item.role === 'assistant').length}</p>
               </div>
               <div className="rounded-[1.35rem] border border-slate-200 bg-white/95 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Check-ins đang chờ</p>
-                <p className="mt-2 text-3xl font-extrabold tracking-tight text-amber-600">{summary?.risk_snapshot?.pending_checkins ?? 0}</p>
+                <p className="mt-2 text-2xl font-extrabold tracking-tight text-amber-600 sm:text-3xl">{summary?.risk_snapshot?.pending_checkins ?? 0}</p>
               </div>
             </div>
           </div>
@@ -363,7 +363,7 @@ export default function FunnyPage() {
             <Card title="Hội thoại" subtitle="Lịch sử chat, preset và câu hỏi tự nhập">
               <div className="space-y-4">
                 <div className="rounded-[1.6rem] border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
-                  <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: '30rem' }}>
+                  <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: '26rem' }}>
                     {chat.length === 0 ? <p className="text-sm text-slate-500">{TXT.emptyChat}</p> : null}
                     {chat.map((item) => (
                       <MessageBubble key={item.id} item={item} onAskQuestion={async (questionId) => {
