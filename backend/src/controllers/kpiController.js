@@ -205,9 +205,11 @@ async function createKpi(req, res, next) {
   try {
     const payload = kpiSchema.parse(req.body);
 
-    const scopeType = resolveScope(payload);
-    const ownerUserId = payload.owner_user_id ?? payload.owner_id ?? null;
-    const departmentId = payload.department_id ?? null;
+    const scopeType = req.user.role === 'employee' ? 'employee' : resolveScope(payload);
+    const ownerUserId = req.user.role === 'employee'
+      ? req.user.id
+      : payload.owner_user_id ?? payload.owner_id ?? null;
+    const departmentId = scopeType === 'employee' ? null : payload.department_id ?? null;
 
     await assertCycle(payload.cycle_id);
 
@@ -218,11 +220,6 @@ async function createKpi(req, res, next) {
         throw error;
       }
       await assertOwner(ownerUserId);
-      if (departmentId) {
-        const error = new Error('department_id must be null for employee KPI');
-        error.status = 400;
-        throw error;
-      }
     } else {
       if (!departmentId) {
         const error = new Error('department_id is required for department KPI');
@@ -230,11 +227,6 @@ async function createKpi(req, res, next) {
         throw error;
       }
       await assertDepartment(departmentId);
-      if (ownerUserId) {
-        const error = new Error('owner_id must be null for department KPI');
-        error.status = 400;
-        throw error;
-      }
     }
 
     const startValue = Object.prototype.hasOwnProperty.call(payload, 'start_value') ? payload.start_value : 0;
@@ -350,16 +342,19 @@ async function updateKpi(req, res, next) {
     const cycleId = Object.prototype.hasOwnProperty.call(payload, 'cycle_id') ? payload.cycle_id : current.cycle_id;
     await assertCycle(cycleId);
 
-    const scopeType = resolveScope(payload, current.scope_type);
-    const ownerUserId = Object.prototype.hasOwnProperty.call(payload, 'owner_user_id')
+    const requestedScopeType = resolveScope(payload, current.scope_type);
+    const scopeType = req.user.role === 'employee' ? 'employee' : requestedScopeType;
+    const requestedOwnerUserId = Object.prototype.hasOwnProperty.call(payload, 'owner_user_id')
       ? payload.owner_user_id
       : Object.prototype.hasOwnProperty.call(payload, 'owner_id')
       ? payload.owner_id
       : current.owner_user_id;
+    const ownerUserId = req.user.role === 'employee' ? req.user.id : requestedOwnerUserId;
 
-    const departmentId = Object.prototype.hasOwnProperty.call(payload, 'department_id')
+    const requestedDepartmentId = Object.prototype.hasOwnProperty.call(payload, 'department_id')
       ? payload.department_id
       : current.department_id;
+    const departmentId = scopeType === 'employee' ? null : requestedDepartmentId;
 
     if (scopeType === 'employee') {
       if (!ownerUserId) {
@@ -368,11 +363,6 @@ async function updateKpi(req, res, next) {
         throw error;
       }
       await assertOwner(ownerUserId);
-      if (departmentId) {
-        const error = new Error('department_id must be null for employee KPI');
-        error.status = 400;
-        throw error;
-      }
     } else {
       if (!departmentId) {
         const error = new Error('department_id is required for department KPI');
@@ -380,11 +370,6 @@ async function updateKpi(req, res, next) {
         throw error;
       }
       await assertDepartment(departmentId);
-      if (ownerUserId) {
-        const error = new Error('owner_id must be null for department KPI');
-        error.status = 400;
-        throw error;
-      }
     }
 
     const direction = payload.direction || current.direction;

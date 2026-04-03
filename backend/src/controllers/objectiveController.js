@@ -273,11 +273,15 @@ async function createObjective(req, res, next) {
   try {
     const payload = objectiveSchema.parse(req.body);
 
-    const ownerUserId = payload.owner_user_id || payload.owner_id || req.user.id;
+    const ownerUserId = req.user.role === 'employee'
+      ? req.user.id
+      : payload.owner_user_id || payload.owner_id || req.user.id;
     const owner = await assertOwner(ownerUserId);
     const cycle = await assertCycle(payload.cycle_id);
 
-    const departmentId = Object.prototype.hasOwnProperty.call(payload, 'department_id')
+    const departmentId = req.user.role === 'employee'
+      ? owner.department_id
+      : Object.prototype.hasOwnProperty.call(payload, 'department_id')
       ? payload.department_id
       : owner.department_id;
 
@@ -398,18 +402,21 @@ async function updateObjective(req, res, next) {
       throw error;
     }
 
-    const ownerUserId = Object.prototype.hasOwnProperty.call(payload, 'owner_user_id')
+    const requestedOwnerUserId = Object.prototype.hasOwnProperty.call(payload, 'owner_user_id')
       ? payload.owner_user_id
       : Object.prototype.hasOwnProperty.call(payload, 'owner_id')
       ? payload.owner_id
       : current.owner_user_id;
+    const ownerUserId = req.user.role === 'employee' ? req.user.id : requestedOwnerUserId;
 
     const cycleId = Object.prototype.hasOwnProperty.call(payload, 'cycle_id') ? payload.cycle_id : current.cycle_id;
 
     const owner = await assertOwner(ownerUserId);
     const cycle = await assertCycle(cycleId);
 
-    const departmentId = Object.prototype.hasOwnProperty.call(payload, 'department_id')
+    const departmentId = req.user.role === 'employee'
+      ? owner.department_id
+      : Object.prototype.hasOwnProperty.call(payload, 'department_id')
       ? payload.department_id
       : current.department_id;
 

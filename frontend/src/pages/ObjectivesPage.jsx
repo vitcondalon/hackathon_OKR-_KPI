@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 import EntityCrudPage from '../components/forms/EntityCrudPage';
 import { objectivesApi } from '../api/objectivesApi';
@@ -7,14 +7,19 @@ import { departmentsApi } from '../api/departmentsApi';
 import { cyclesApi } from '../api/cyclesApi';
 import { percent } from '../utils/format';
 import { OBJECTIVE_STATUS_OPTIONS } from '../utils/labels';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ObjectivesPage() {
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'employee';
   const [ownerOptions, setOwnerOptions] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [cycleOptions, setCycleOptions] = useState([]);
 
   useEffect(() => {
-    Promise.all([usersApi.list(), departmentsApi.list(), cyclesApi.list()])
+    const ownerPromise = isEmployee ? Promise.resolve([]) : usersApi.list();
+
+    Promise.all([ownerPromise, departmentsApi.list(), cyclesApi.list()])
       .then(([users, departments, cycles]) => {
         setOwnerOptions((users || []).map((item) => ({ label: item.full_name, value: String(item.id) })));
         setDepartmentOptions((departments || []).map((item) => ({ label: item.name, value: String(item.id) })));
@@ -25,22 +30,31 @@ export default function ObjectivesPage() {
         setDepartmentOptions([]);
         setCycleOptions([]);
       });
-  }, []);
+  }, [isEmployee]);
+
+  const fields = [
+    { name: 'title', label: 'Tiêu đề', required: true },
+    { name: 'description', label: 'Mô tả', type: 'textarea' },
+    ...(isEmployee ? [] : [{ name: 'owner_id', label: 'Người phụ trách', type: 'select', required: true, options: ownerOptions }]),
+    ...(isEmployee ? [] : [{ name: 'department_id', label: 'Phòng ban', type: 'select', nullable: true, options: departmentOptions }]),
+    { name: 'cycle_id', label: 'Chu kỳ', type: 'select', required: true, options: cycleOptions },
+    { name: 'status', label: 'Trạng thái', type: 'select', required: true, options: OBJECTIVE_STATUS_OPTIONS },
+    { name: 'progress', label: 'Tiến trình', type: 'number' }
+  ];
 
   return (
-    <AppLayout title="Mục tiêu" description="Theo dõi người phụ trách, chu kỳ và tiến trình mục tiêu trong một giao diện gọn gàng hơn.">
+    <AppLayout
+      title="Mục tiêu"
+      description={
+        isEmployee
+          ? 'Theo dõi mục tiêu cá nhân theo chu kỳ, trạng thái và tiến trình.'
+          : 'Theo dõi người phụ trách, chu kỳ và tiến trình mục tiêu trong một giao diện gọn gàng hơn.'
+      }
+    >
       <EntityCrudPage
         title="Mục tiêu"
         description="Quản lý mục tiêu, người phụ trách, chu kỳ và trạng thái"
-        fields={[
-          { name: 'title', label: 'Tiêu đề', required: true },
-          { name: 'description', label: 'Mô tả', type: 'textarea' },
-          { name: 'owner_id', label: 'Người phụ trách', type: 'select', required: true, options: ownerOptions },
-          { name: 'department_id', label: 'Phòng ban', type: 'select', nullable: true, options: departmentOptions },
-          { name: 'cycle_id', label: 'Chu kỳ', type: 'select', required: true, options: cycleOptions },
-          { name: 'status', label: 'Trạng thái', type: 'select', required: true, options: OBJECTIVE_STATUS_OPTIONS },
-          { name: 'progress', label: 'Tiến trình', type: 'number' }
-        ]}
+        fields={fields}
         columns={[
           { key: 'title', label: 'Tiêu đề' },
           { key: 'owner_name', label: 'Người phụ trách' },
