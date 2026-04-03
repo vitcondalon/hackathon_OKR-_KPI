@@ -99,6 +99,13 @@ function NavSection({ section, isDark, onNavigate }) {
 
 function MobileBottomNav({ items, pathname }) {
   const primaryItems = items.filter((item) => ['/dashboard', '/objectives', '/checkins', '/funny', '/profile'].includes(item.to));
+  const mobileLabel = {
+    '/dashboard': 'Home',
+    '/objectives': 'OKRs',
+    '/checkins': 'Check-in',
+    '/funny': 'Funny',
+    '/profile': 'Hồ sơ'
+  };
 
   return (
     <nav className="ui-mobile-bottom xl:hidden">
@@ -115,8 +122,8 @@ function MobileBottomNav({ items, pathname }) {
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <span className="text-[11px] font-bold uppercase tracking-[0.08em]">
-                {item.label === 'Funny Assistant' ? 'Funny' : item.label}
+              <span className="text-[12px] font-semibold tracking-[0.01em]">
+                {mobileLabel[item.to] || item.label}
               </span>
             </NavLink>
           );
@@ -229,9 +236,9 @@ export default function AppLayout({ title, description, eyebrow, actions, childr
               </div>
             </div>
 
-            <div className="mt-4 hidden gap-2 overflow-x-auto pb-1 sm:flex xl:hidden">
+            <div className="mt-4 flex gap-2 overflow-x-auto pb-1 xl:hidden">
               {sections.flatMap((section) => section.items).map((item) => (
-                <NavLink key={item.to} to={item.to} className={({ isActive }) => `whitespace-nowrap rounded-full border px-3 py-2 text-sm font-semibold ${isActive ? 'border-brand-200 bg-brand-500 text-white' : 'border-slate-200 bg-white text-slate-700'}`}>
+                <NavLink key={item.to} to={item.to} className={({ isActive }) => `whitespace-nowrap rounded-full border px-3.5 py-2.5 text-[13px] font-semibold ${isActive ? 'border-brand-200 bg-brand-500 text-white' : 'border-slate-200 bg-white text-slate-700'}`}>
                   {item.label}
                 </NavLink>
               ))}
