@@ -12,9 +12,9 @@ const {
 const router = express.Router();
 
 router.use(authMiddleware);
-router.get('/', listUsers);
+router.get('/', roleMiddleware('admin'), listUsers);
 router.post('/', roleMiddleware('admin'), createUser);
-router.get('/:id', getUserById);
+router.get('/:id', roleMiddleware('admin'), getUserById);
 router.put('/:id', roleMiddleware('admin'), updateUser);
 router.delete('/:id', roleMiddleware('admin'), deleteUser);
 

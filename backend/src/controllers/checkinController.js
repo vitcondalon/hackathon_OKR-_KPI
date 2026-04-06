@@ -2,6 +2,7 @@ const { z } = require('zod');
 const { query } = require('../config/db');
 const { sendSuccess, sendCreated } = require('../utils/response');
 const { calculateProgress, recalculateKeyResultProgress, recalculateKpiProgress } = require('../services/progressService');
+const { mapDateOnlyFields, mapDateOnlyFieldsInList } = require('../utils/dateOnly');
 const { assertEnglishBusinessPayload } = require('../utils/englishValidation');
 
 const nullablePositiveInt = z.preprocess((value) => {
@@ -130,7 +131,7 @@ async function listCheckins(req, res, next) {
 
     checkins.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    return sendSuccess(res, checkins);
+    return sendSuccess(res, mapDateOnlyFieldsInList(checkins, ['checkin_date']));
   } catch (error) {
     return next(error);
   }
@@ -242,7 +243,7 @@ async function createCheckin(req, res, next) {
       return sendCreated(
         res,
         {
-          ...inserted.rows[0],
+          ...mapDateOnlyFields(inserted.rows[0], ['checkin_date']),
           checkin_type: 'key_result',
           note,
           value: Number(inserted.rows[0].value_after),
@@ -328,7 +329,7 @@ async function createCheckin(req, res, next) {
     return sendCreated(
       res,
       {
-        ...inserted.rows[0],
+        ...mapDateOnlyFields(inserted.rows[0], ['checkin_date']),
         checkin_type: 'kpi',
         value: Number(inserted.rows[0].value_after),
         progress: Number(inserted.rows[0].progress_percent)

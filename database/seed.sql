@@ -55,7 +55,7 @@ VALUES
     '$2a$10$XumuU9xUyrfe64B65bWb7O4wRsaK0WwEO/8eZI7f7g6k.3TlwNICO',
     (SELECT id FROM roles WHERE code = 'manager'),
     (SELECT id FROM departments WHERE code = 'ENG'),
-    (SELECT id FROM users WHERE username = 'admin'),
+    NULL,
     TRUE
   ),
   (
@@ -66,7 +66,7 @@ VALUES
     '$2a$10$XumuU9xUyrfe64B65bWb7O4wRsaK0WwEO/8eZI7f7g6k.3TlwNICO',
     (SELECT id FROM roles WHERE code = 'manager'),
     (SELECT id FROM departments WHERE code = 'SAL'),
-    (SELECT id FROM users WHERE username = 'admin'),
+    NULL,
     TRUE
   ),
   (
@@ -77,7 +77,7 @@ VALUES
     '$2a$10$XumuU9xUyrfe64B65bWb7O4wRsaK0WwEO/8eZI7f7g6k.3TlwNICO',
     (SELECT id FROM roles WHERE code = 'manager'),
     (SELECT id FROM departments WHERE code = 'HR'),
-    (SELECT id FROM users WHERE username = 'admin'),
+    NULL,
     TRUE
   ),
   (
@@ -88,7 +88,7 @@ VALUES
     '$2a$10$XumuU9xUyrfe64B65bWb7O4wRsaK0WwEO/8eZI7f7g6k.3TlwNICO',
     (SELECT id FROM roles WHERE code = 'hr'),
     (SELECT id FROM departments WHERE code = 'HR'),
-    (SELECT id FROM users WHERE username = 'admin'),
+    NULL,
     TRUE
   ),
   (
@@ -99,7 +99,7 @@ VALUES
     '$2a$10$00HJFUwuTJv24hVu2.8ulehRAadYi/T/vWmL9k9FJYWD4AxHVqK3C',
     (SELECT id FROM roles WHERE code = 'employee'),
     (SELECT id FROM departments WHERE code = 'ENG'),
-    (SELECT id FROM users WHERE username = 'manager.eng'),
+    NULL,
     TRUE
   ),
   (
@@ -110,7 +110,7 @@ VALUES
     '$2a$10$00HJFUwuTJv24hVu2.8ulehRAadYi/T/vWmL9k9FJYWD4AxHVqK3C',
     (SELECT id FROM roles WHERE code = 'employee'),
     (SELECT id FROM departments WHERE code = 'SAL'),
-    (SELECT id FROM users WHERE username = 'manager.sales'),
+    NULL,
     TRUE
   ),
   (
@@ -121,9 +121,25 @@ VALUES
     '$2a$10$00HJFUwuTJv24hVu2.8ulehRAadYi/T/vWmL9k9FJYWD4AxHVqK3C',
     (SELECT id FROM roles WHERE code = 'employee'),
     (SELECT id FROM departments WHERE code = 'HR'),
-    (SELECT id FROM users WHERE username = 'manager.hr'),
+    NULL,
     TRUE
   );
+
+UPDATE users
+SET manager_user_id = (SELECT id FROM users WHERE username = 'admin')
+WHERE username IN ('manager.eng', 'manager.sales', 'manager.hr', 'hr.lead');
+
+UPDATE users
+SET manager_user_id = (SELECT id FROM users WHERE username = 'manager.eng')
+WHERE username = 'lan';
+
+UPDATE users
+SET manager_user_id = (SELECT id FROM users WHERE username = 'manager.sales')
+WHERE username = 'nam';
+
+UPDATE users
+SET manager_user_id = (SELECT id FROM users WHERE username = 'manager.hr')
+WHERE username = 'ha';
 
 UPDATE departments
 SET manager_user_id = (SELECT id FROM users WHERE username = 'manager.eng')

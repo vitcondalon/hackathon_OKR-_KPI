@@ -524,113 +524,51 @@ function formatDisplayDateTime(value, locale) {
   }).format(parsed);
 }
 
-function normalizeLookupKey(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
-
-const localizedDbTerms = {
-  departments: {
-    engineering: { vi: 'Kỹ thuật', en: 'Engineering' },
-    'ky thuat': { vi: 'Kỹ thuật', en: 'Engineering' },
-    sales: { vi: 'Kinh doanh', en: 'Sales' },
-    'kinh doanh': { vi: 'Kinh doanh', en: 'Sales' },
-    'human resources': { vi: 'Nhân sự', en: 'Human Resources' },
-    hr: { vi: 'Nhân sự', en: 'HR' },
-    'nhan su': { vi: 'Nhân sự', en: 'Human Resources' }
-  },
-  ratings: {
-    'xuat sac': { vi: 'Xuất sắc', en: 'Excellent' },
-    xuat_sac: { vi: 'Xuất sắc', en: 'Excellent' },
-    excellent: { vi: 'Xuất sắc', en: 'Excellent' },
-    tot: { vi: 'Tốt', en: 'Good' },
-    good: { vi: 'Tốt', en: 'Good' },
-    dat: { vi: 'Đạt', en: 'Meets expectations' },
-    'meets expectations': { vi: 'Đạt', en: 'Meets expectations' },
-    'can cai thien': { vi: 'Cần cải thiện', en: 'Needs improvement' },
-    can_cai_thien: { vi: 'Cần cải thiện', en: 'Needs improvement' },
-    'needs improvement': { vi: 'Cần cải thiện', en: 'Needs improvement' },
-    'khong dat': { vi: 'Không đạt', en: 'Does not meet expectations' },
-    khong_dat: { vi: 'Không đạt', en: 'Does not meet expectations' },
-    'does not meet expectations': { vi: 'Không đạt', en: 'Does not meet expectations' },
-    'chua xep loai': { vi: 'Chưa xếp loại', en: 'Not rated' },
-    not_rated: { vi: 'Chưa xếp loại', en: 'Not rated' },
-    'not rated': { vi: 'Chưa xếp loại', en: 'Not rated' }
-  },
-  categories: {
-    'kpi du an': { vi: 'KPI dự án', en: 'Project KPI' },
-    'project kpi': { vi: 'KPI dự án', en: 'Project KPI' },
-    'chat luong cong viec': { vi: 'Chất lượng công việc', en: 'Work quality' },
-    'work quality': { vi: 'Chất lượng công việc', en: 'Work quality' },
-    'ky luat va phoi hop': { vi: 'Kỷ luật và phối hợp', en: 'Discipline and collaboration' },
-    'discipline and collaboration': { vi: 'Kỷ luật và phối hợp', en: 'Discipline and collaboration' },
-    'sang kien cai tien': { vi: 'Sáng kiến cải tiến', en: 'Improvement initiative' },
-    'improvement initiative': { vi: 'Sáng kiến cải tiến', en: 'Improvement initiative' }
-  }
-};
-
-function localizeMappedValue(value, locale, group) {
-  if (!value) return value || '-';
-  const key = normalizeLookupKey(value);
-  return localizedDbTerms[group]?.[key]?.[locale] || String(value);
-}
-
 function localizeDepartmentName(value, locale) {
-  return localizeMappedValue(value, locale, 'departments');
+  return value || '-';
 }
 
 function localizeRatingLabel(value, locale) {
-  return localizeMappedValue(value, locale, 'ratings');
+  return value || '-';
 }
 
 function localizeCategoryName(value, locale) {
-  return localizeMappedValue(value, locale, 'categories');
+  return value || '-';
+}
+
+function localizeBusinessText(value, locale) {
+  return value || '';
+}
+
+function canonicalBusinessText(value) {
+  return value || '';
+}
+
+function buildItemDrafts(items, locale) {
+  const drafts = {};
+
+  (items || []).forEach((item) => {
+    drafts[item.id] = {
+      category: item.category || '',
+      project_code: item.project_code || '',
+      project_name: item.project_name || '',
+      description: item.description || '',
+      weight: item.weight ?? '',
+      plan_percent: item.plan_percent ?? '',
+      actual_percent: item.actual_percent ?? '',
+      evidence_note: item.evidence_note || '',
+      manager_note: item.manager_note || '',
+      is_required: Boolean(item.is_required),
+      is_locked: Boolean(item.is_locked)
+    };
+  });
+
+  return drafts;
 }
 
 function buildPeriodDisplayName(period, locale) {
   if (!period) return '-';
-
-  const periodType = period.period_type || '';
-  const periodCode = period.period_code || period.code || '';
-  const fallbackName = period.period_name || period.name || '';
-  const startDate = period.start_date ? new Date(period.start_date) : null;
-
-  let year = startDate && !Number.isNaN(startDate.getTime()) ? startDate.getFullYear() : null;
-  let quarter = null;
-  let month = startDate && !Number.isNaN(startDate.getTime()) ? startDate.getMonth() + 1 : null;
-
-  const quarterMatch = String(periodCode).match(/Q(\d)/i);
-  if (quarterMatch) {
-    quarter = Number(quarterMatch[1]);
-  }
-
-  const monthMatch = String(periodCode).match(/M(\d{1,2})/i);
-  if (monthMatch) {
-    month = Number(monthMatch[1]);
-  }
-
-  const yearMatch = String(periodCode).match(/(20\d{2})/);
-  if (yearMatch) {
-    year = Number(yearMatch[1]);
-  }
-
-  if (periodType === 'quarterly' && year && quarter) {
-    return locale === 'en' ? `Quarter ${quarter} / ${year}` : `Quý ${quarter} năm ${year}`;
-  }
-
-  if (periodType === 'monthly' && year && month) {
-    return locale === 'en' ? `Month ${pad2(month)} / ${year}` : `Tháng ${pad2(month)} năm ${year}`;
-  }
-
-  if (periodType === 'yearly' && year) {
-    return locale === 'en' ? `Year ${year}` : `Năm ${year}`;
-  }
-
-  return fallbackName || periodCode || '-';
+  return period.period_name || period.name || period.period_code || period.code || '-';
 }
 
 function getWindowState(startDate, endDate) {
@@ -684,23 +622,7 @@ function WorkspacePage() {
       setBootstrap(data);
       setSelectedEmployeeId(data?.selected?.employee_user_id ? String(data.selected.employee_user_id) : '');
       setSelectedPeriodId(data?.selected?.period_id ? String(data.selected.period_id) : '');
-      const drafts = {};
-      (data?.review?.items || []).forEach((item) => {
-        drafts[item.id] = {
-          category: item.category || '',
-          project_code: item.project_code || '',
-          project_name: item.project_name || '',
-          description: item.description || '',
-          weight: item.weight ?? '',
-          plan_percent: item.plan_percent ?? '',
-          actual_percent: item.actual_percent ?? '',
-          evidence_note: item.evidence_note || '',
-          manager_note: item.manager_note || '',
-          is_required: Boolean(item.is_required),
-          is_locked: Boolean(item.is_locked)
-        };
-      });
-      setItemDrafts(drafts);
+      setItemDrafts(buildItemDrafts(data?.review?.items || [], locale));
     } catch (err) {
       setError(apiErrorMessage(err, t.fallback.loadWorkspace));
     } finally {
@@ -726,6 +648,15 @@ function WorkspacePage() {
   useEffect(() => {
     loadAdminData();
   }, [isAdmin]);
+
+  useEffect(() => {
+    if (!review) {
+      setItemDrafts({});
+      return;
+    }
+
+    setItemDrafts(buildItemDrafts(review.items || [], locale));
+  }, [review]);
 
   useEffect(() => {
     const suggestion = buildPeriodSuggestion(newPeriod.period_type, newPeriod.start_date || currentDateInput(), locale);
@@ -855,9 +786,9 @@ function WorkspacePage() {
     setError('');
     try {
       await workspaceApi.addItem(review.id, {
-        category: newItem.category,
+        category: canonicalBusinessText(newItem.category),
         weight: Number(newItem.weight || 1),
-        description: newItem.description || ''
+        description: canonicalBusinessText(newItem.description || '')
       });
       setNewItem({ category: '', weight: '1', description: '' });
       await refreshCurrent();
@@ -874,15 +805,15 @@ function WorkspacePage() {
     if (!draft) return;
 
     const payload = {
-      category: draft.category,
+      category: canonicalBusinessText(draft.category),
       project_code: draft.project_code || null,
-      project_name: draft.project_name || null,
-      description: draft.description || null,
+      project_name: canonicalBusinessText(draft.project_name || '') || null,
+      description: canonicalBusinessText(draft.description || '') || null,
       weight: toNumberOrNull(draft.weight),
       plan_percent: toNumberOrNull(draft.plan_percent),
       actual_percent: toNumberOrNull(draft.actual_percent),
-      evidence_note: draft.evidence_note || null,
-      manager_note: draft.manager_note || null,
+      evidence_note: canonicalBusinessText(draft.evidence_note || '') || null,
+      manager_note: canonicalBusinessText(draft.manager_note || '') || null,
       is_required: Boolean(draft.is_required),
       is_locked: Boolean(draft.is_locked)
     };
@@ -913,7 +844,7 @@ function WorkspacePage() {
     setBusy(true);
     setError('');
     try {
-      await workspaceApi.addComment(review.id, { content: commentText.trim() });
+      await workspaceApi.addComment(review.id, { content: canonicalBusinessText(commentText.trim()) });
       setCommentText('');
       await refreshCurrent();
     } catch (err) {
@@ -1193,7 +1124,7 @@ function WorkspacePage() {
                 </div>
                 <div className="ui-metric">
                   <p className="ui-metric-label">{t.profileRating}</p>
-                  <p className="ui-metric-value">{localizeRatingLabel(review.rating_level || review.rating_label, locale)}</p>
+                  <p className="ui-metric-value">{localizeRatingLabel(review.rating_label || review.rating_level, locale)}</p>
                 </div>
                 <div className="ui-metric flex items-center">{review.status === 'locked' ? <LockBadge label={t.reviewLocked} /> : <StatusBadge status={review.status} labels={t.statuses} />}</div>
               </div>
@@ -1339,7 +1270,7 @@ function WorkspacePage() {
                     {(review.comments || []).map((item) => (
                       <div key={item.id} className="ui-note-card bg-white">
                         <p className="font-semibold">{t.commentTypes[item.comment_type] || item.comment_type} - {item.author_name || t.unknownAuthor}</p>
-                        <p className="text-slate-700">{item.content}</p>
+                        <p className="text-slate-700">{localizeBusinessText(item.content, locale)}</p>
                       </div>
                     ))}
                     {review.comments?.length === 0 ? <p className="text-slate-500">{t.noComments}</p> : null}
@@ -1374,8 +1305,8 @@ function WorkspacePage() {
                   <div className="space-y-2 text-sm">
                     {(review.project_history || []).map((item) => (
                       <div key={`${item.project_code}-${item.assigned_at}`} className="ui-note-card">
-                        <p className="font-semibold">{item.project_code} - {item.project_name}</p>
-                        <p className="text-slate-600">{item.role_name || '-'}</p>
+                        <p className="font-semibold">{item.project_code} - {localizeBusinessText(item.project_name, locale)}</p>
+                        <p className="text-slate-600">{localizeBusinessText(item.role_name, locale) || '-'}</p>
                       </div>
                     ))}
                     {review.project_history?.length === 0 ? <p className="text-slate-500">{t.noProjects}</p> : null}

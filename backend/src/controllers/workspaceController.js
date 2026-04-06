@@ -1,14 +1,15 @@
 const { z } = require('zod');
 const { query } = require('../config/db');
 const { sendSuccess, sendCreated } = require('../utils/response');
+const { mapDateOnlyFields, mapDateOnlyFieldsInList } = require('../utils/dateOnly');
 const { assertEnglishBusinessPayload } = require('../utils/englishValidation');
 
 const ratingLegend = [
-  { min: 90, max: 100, code: 'xuat_sac', label: 'Xuất sắc' },
-  { min: 80, max: 89.99, code: 'tot', label: 'Tốt' },
-  { min: 65, max: 79.99, code: 'dat', label: 'Đạt' },
-  { min: 50, max: 64.99, code: 'can_cai_thien', label: 'Cần cải thiện' },
-  { min: 0, max: 49.99, code: 'khong_dat', label: 'Không đạt' }
+  { min: 90, max: 100, code: 'xuat_sac', label: 'Excellent' },
+  { min: 80, max: 89.99, code: 'tot', label: 'Good' },
+  { min: 65, max: 79.99, code: 'dat', label: 'Meets expectations' },
+  { min: 50, max: 64.99, code: 'can_cai_thien', label: 'Needs improvement' },
+  { min: 0, max: 49.99, code: 'khong_dat', label: 'Does not meet expectations' }
 ];
 
 const createPeriodSchema = z.object({
@@ -157,13 +158,13 @@ function assertEmployeeEditWindow(user, review) {
 
 function ratingForScore(score) {
   const safe = clamp(Number(score), 0, 100);
-  if (safe === null) return { code: 'not_rated', label: 'Chưa xếp loại' };
+  if (safe === null) return { code: 'not_rated', label: 'Not rated' };
   for (const item of ratingLegend) {
     if (safe >= item.min && safe <= item.max) {
       return { code: item.code, label: item.label };
     }
   }
-  return { code: 'not_rated', label: 'Chưa xếp loại' };
+  return { code: 'not_rated', label: 'Not rated' };
 }
 
 function buildPeriodCode(periodType, startDate) {
@@ -234,13 +235,38 @@ async function visibleEmployees(user) {
        r.code AS role,
        u.department_id,
        d.name AS department_name,
-       u.manager_user_id,
-       m.full_name AS manager_name,
+       COALESCE(
+         u.manager_user_id,
+         CASE
+           WHEN r.code = 'employee' THEN d.manager_user_id
+           WHEN r.code IN ('manager', 'hr') THEN admin_user.id
+           ELSE NULL
+         END
+       ) AS manager_user_id,
+       COALESCE(
+         m.full_name,
+         CASE
+           WHEN r.code = 'employee' THEN dm.full_name
+           WHEN r.code IN ('manager', 'hr') THEN admin_user.full_name
+           ELSE NULL
+         END
+       ) AS manager_name,
        u.created_at
      FROM users u
      JOIN roles r ON r.id = u.role_id
      LEFT JOIN departments d ON d.id = u.department_id
      LEFT JOIN users m ON m.id = u.manager_user_id
+     LEFT JOIN users dm ON dm.id = d.manager_user_id
+     LEFT JOIN LATERAL (
+       SELECT admin_u.id, admin_u.full_name
+       FROM users admin_u
+       JOIN roles admin_r ON admin_r.id = admin_u.role_id
+       WHERE admin_u.deleted_at IS NULL
+         AND admin_u.is_active = TRUE
+         AND admin_r.code = 'admin'
+       ORDER BY admin_u.id ASC
+       LIMIT 1
+     ) admin_user ON TRUE
      WHERE ${where}
      ORDER BY d.name NULLS LAST, u.full_name`,
     params
@@ -281,7 +307,7 @@ async function getReviewSummary(reviewId) {
      WHERE er.id = $1`,
     [reviewId]
   );
-  return result.rows[0] || null;
+  return result.rows[0] ? mapDateOnlyFields(result.rows[0], ['start_date', 'end_date']) : null;
 }
 
 async function getReviewByScope(employeeUserId, periodId) {
@@ -421,7 +447,7 @@ async function buildReviewPayload(reviewId) {
     comments: comments.rows,
     approvals: approvals.rows,
     period_history: periodHistory.rows,
-    project_history: projectHistory.rows
+    project_history: mapDateOnlyFieldsInList(projectHistory.rows, ['assigned_at', 'released_at'])
   };
 }
 
@@ -463,7 +489,7 @@ async function bootstrap(req, res, next) {
         period_id: selectedPeriodId
       },
       employees,
-      periods: periods.rows,
+      periods: mapDateOnlyFieldsInList(periods.rows, ['start_date', 'end_date']),
       departments: departments.rows,
       rating_legend: ratingLegend,
       review
@@ -511,7 +537,7 @@ async function createPeriod(req, res, next) {
        RETURNING *`,
       [code, payload.name, payload.period_type, startDate, endDate, payload.status, req.user.id]
     );
-    return sendCreated(res, result.rows[0], 'Đã khởi tạo chu kỳ đánh giá');
+    return sendCreated(res, mapDateOnlyFields(result.rows[0], ['start_date', 'end_date']), 'Đã khởi tạo chu kỳ đánh giá');
   } catch (error) {
     return next(error);
   }
@@ -547,11 +573,33 @@ async function createReview(req, res, next) {
     }
 
     const owner = await query(
-      `SELECT id, department_id, manager_user_id
-       FROM users
-       WHERE id = $1
-         AND deleted_at IS NULL
-         AND is_active = TRUE`,
+      `SELECT
+         u.id,
+         u.department_id,
+         COALESCE(
+           u.manager_user_id,
+           CASE
+             WHEN r.code = 'employee' THEN d.manager_user_id
+             WHEN r.code IN ('manager', 'hr') THEN admin_user.id
+             ELSE NULL
+           END
+         ) AS manager_user_id
+       FROM users u
+       JOIN roles r ON r.id = u.role_id
+       LEFT JOIN departments d ON d.id = u.department_id
+       LEFT JOIN LATERAL (
+         SELECT admin_u.id
+         FROM users admin_u
+         JOIN roles admin_r ON admin_r.id = admin_u.role_id
+         WHERE admin_u.deleted_at IS NULL
+           AND admin_u.is_active = TRUE
+           AND admin_r.code = 'admin'
+         ORDER BY admin_u.id ASC
+         LIMIT 1
+       ) admin_user ON TRUE
+       WHERE u.id = $1
+         AND u.deleted_at IS NULL
+         AND u.is_active = TRUE`,
       [payload.employee_user_id]
     );
     if (owner.rowCount === 0) {

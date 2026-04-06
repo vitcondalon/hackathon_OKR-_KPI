@@ -1,6 +1,7 @@
 const { z } = require('zod');
 const { query } = require('../config/db');
 const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
+const { mapDateOnlyFields, mapDateOnlyFieldsInList } = require('../utils/dateOnly');
 const { assertEnglishBusinessPayload } = require('../utils/englishValidation');
 
 const cycleSchema = z.object({
@@ -70,7 +71,7 @@ async function listCycles(req, res, next) {
        ORDER BY c.start_date DESC, c.id DESC`
     );
 
-    return sendSuccess(res, result.rows);
+    return sendSuccess(res, mapDateOnlyFieldsInList(result.rows, ['start_date', 'end_date']));
   } catch (error) {
     return next(error);
   }
@@ -102,7 +103,7 @@ async function createCycle(req, res, next) {
       [cycleCode, payload.name, startDate, endDate, payload.status, req.user.id]
     );
 
-    return sendCreated(res, result.rows[0], 'Cycle created');
+    return sendCreated(res, mapDateOnlyFields(result.rows[0], ['start_date', 'end_date']), 'Cycle created');
   } catch (error) {
     return next(error);
   }
@@ -160,7 +161,7 @@ async function updateCycle(req, res, next) {
       [nextCode, payload.name || current.name, startDate, endDate, payload.status || current.status, id]
     );
 
-    return sendSuccess(res, result.rows[0], 'Cycle updated');
+    return sendSuccess(res, mapDateOnlyFields(result.rows[0], ['start_date', 'end_date']), 'Cycle updated');
   } catch (error) {
     return next(error);
   }

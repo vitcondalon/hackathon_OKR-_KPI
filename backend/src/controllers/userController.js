@@ -61,6 +61,16 @@ function buildEmailFromEmployeeCode(employeeCode) {
   return `${buildUsernameFromEmployeeCode(employeeCode)}@company`;
 }
 
+function assertAdminUserAccess(user) {
+  if (user?.role === 'admin') {
+    return;
+  }
+
+  const error = new Error('Forbidden');
+  error.status = 403;
+  throw error;
+}
+
 async function getRoleIdByCode(roleCode) {
   const result = await query('SELECT id FROM roles WHERE code = $1', [roleCode]);
   if (result.rowCount === 0) {
@@ -104,6 +114,8 @@ async function assertManager(managerUserId) {
 
 async function listUsers(req, res, next) {
   try {
+    assertAdminUserAccess(req.user);
+
     const result = await query(
       `SELECT
          u.id,
@@ -136,6 +148,8 @@ async function listUsers(req, res, next) {
 
 async function createUser(req, res, next) {
   try {
+    assertAdminUserAccess(req.user);
+
     const payload = createUserSchema.parse(req.body);
     const employeeCode = normalizeEmployeeCode(payload.employee_code || `${payload.role.toUpperCase().slice(0, 3)}-${Date.now()}`);
     const username = payload.username || buildUsernameFromEmployeeCode(employeeCode);
@@ -218,16 +232,12 @@ async function createUser(req, res, next) {
 
 async function getUserById(req, res, next) {
   try {
+    assertAdminUserAccess(req.user);
+
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       const error = new Error('Invalid user id');
       error.status = 400;
-      throw error;
-    }
-
-    if (req.user.role === 'employee' && req.user.id !== id) {
-      const error = new Error('Forbidden');
-      error.status = 403;
       throw error;
     }
 
@@ -270,6 +280,8 @@ async function getUserById(req, res, next) {
 
 async function updateUser(req, res, next) {
   try {
+    assertAdminUserAccess(req.user);
+
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       const error = new Error('Invalid user id');
@@ -399,6 +411,8 @@ async function updateUser(req, res, next) {
 
 async function deleteUser(req, res, next) {
   try {
+    assertAdminUserAccess(req.user);
+
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       const error = new Error('Invalid user id');

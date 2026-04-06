@@ -2,6 +2,7 @@ const { z } = require('zod');
 const { query } = require('../config/db');
 const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
 const { recalculateObjectiveProgress } = require('../services/progressService');
+const { mapDateOnlyFields } = require('../utils/dateOnly');
 const { assertEnglishBusinessPayload } = require('../utils/englishValidation');
 
 const objectiveStatusSchema = z.enum(['draft', 'on_track', 'at_risk', 'completed', 'cancelled', 'active']);
@@ -119,29 +120,30 @@ async function uniqueObjectiveCode(cycleId, candidateCode, excludeId = null) {
 }
 
 function mapObjectiveRow(row) {
+  const normalized = mapDateOnlyFields(row, ['start_date', 'due_date']);
   return {
-    id: row.id,
-    cycle_id: row.cycle_id,
-    cycle_code: row.cycle_code,
-    cycle_name: row.cycle_name,
-    code: row.code,
-    title: row.title,
-    description: row.description,
-    owner_id: row.owner_user_id,
-    owner_user_id: row.owner_user_id,
-    owner_name: row.owner_name,
-    department_id: row.department_id,
-    department_name: row.department_name,
-    parent_objective_id: row.parent_objective_id,
-    objective_type: row.objective_type,
-    status: row.status,
-    priority: row.priority,
-    progress: Number(row.progress_percent),
-    progress_percent: Number(row.progress_percent),
-    start_date: row.start_date,
-    due_date: row.due_date,
-    created_at: row.created_at,
-    updated_at: row.updated_at
+    id: normalized.id,
+    cycle_id: normalized.cycle_id,
+    cycle_code: normalized.cycle_code,
+    cycle_name: normalized.cycle_name,
+    code: normalized.code,
+    title: normalized.title,
+    description: normalized.description,
+    owner_id: normalized.owner_user_id,
+    owner_user_id: normalized.owner_user_id,
+    owner_name: normalized.owner_name,
+    department_id: normalized.department_id,
+    department_name: normalized.department_name,
+    parent_objective_id: normalized.parent_objective_id,
+    objective_type: normalized.objective_type,
+    status: normalized.status,
+    priority: normalized.priority,
+    progress: Number(normalized.progress_percent),
+    progress_percent: Number(normalized.progress_percent),
+    start_date: normalized.start_date,
+    due_date: normalized.due_date,
+    created_at: normalized.created_at,
+    updated_at: normalized.updated_at
   };
 }
 
