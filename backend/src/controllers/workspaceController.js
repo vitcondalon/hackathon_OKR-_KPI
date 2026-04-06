@@ -5,12 +5,30 @@ const { mapDateOnlyFields, mapDateOnlyFieldsInList } = require('../utils/dateOnl
 const { assertEnglishBusinessPayload } = require('../utils/englishValidation');
 
 const ratingLegend = [
-  { min: 90, max: 100, code: 'xuat_sac', label: 'Excellent' },
-  { min: 80, max: 89.99, code: 'tot', label: 'Good' },
-  { min: 65, max: 79.99, code: 'dat', label: 'Meets expectations' },
-  { min: 50, max: 64.99, code: 'can_cai_thien', label: 'Needs improvement' },
-  { min: 0, max: 49.99, code: 'khong_dat', label: 'Does not meet expectations' }
+  { min: 90, max: 100, code: 'excellent', label: 'Excellent' },
+  { min: 80, max: 89.99, code: 'good', label: 'Good' },
+  { min: 65, max: 79.99, code: 'meets_expectations', label: 'Meets expectations' },
+  { min: 50, max: 64.99, code: 'needs_improvement', label: 'Needs improvement' },
+  { min: 0, max: 49.99, code: 'does_not_meet_expectations', label: 'Does not meet expectations' }
 ];
+
+const legacyRatingCodeMap = {
+  xuat_sac: 'excellent',
+  tot: 'good',
+  dat: 'meets_expectations',
+  can_cai_thien: 'needs_improvement',
+  khong_dat: 'does_not_meet_expectations',
+  not_rated: 'not_rated'
+};
+
+const ratingLabelByCode = {
+  excellent: 'Excellent',
+  good: 'Good',
+  meets_expectations: 'Meets expectations',
+  needs_improvement: 'Needs improvement',
+  does_not_meet_expectations: 'Does not meet expectations',
+  not_rated: 'Not rated'
+};
 
 const createPeriodSchema = z.object({
   code: z.string().trim().min(2).max(40).optional(),
@@ -83,6 +101,33 @@ function clamp(value, min, max) {
   if (value < min) return min;
   if (value > max) return max;
   return value;
+}
+
+function normalizeRatingCode(value) {
+  if (value === null || value === undefined) return 'not_rated';
+  const raw = String(value).trim();
+  if (!raw) return 'not_rated';
+  return legacyRatingCodeMap[raw] || raw;
+}
+
+function labelForRatingCode(value) {
+  return ratingLabelByCode[normalizeRatingCode(value)] || 'Not rated';
+}
+
+function mapRatingFields(row) {
+  if (!row) return row;
+  const next = { ...row };
+  if (Object.prototype.hasOwnProperty.call(next, 'rating_level')) {
+    next.rating_level = normalizeRatingCode(next.rating_level);
+  }
+  if (Object.prototype.hasOwnProperty.call(next, 'rating_label') || Object.prototype.hasOwnProperty.call(next, 'rating_level')) {
+    next.rating_label = labelForRatingCode(next.rating_label || next.rating_level);
+  }
+  return next;
+}
+
+function mapRatingFieldsInList(rows) {
+  return rows.map((row) => mapRatingFields(row));
 }
 
 function normalizeDate(value) {
@@ -307,7 +352,7 @@ async function getReviewSummary(reviewId) {
      WHERE er.id = $1`,
     [reviewId]
   );
-  return result.rows[0] ? mapDateOnlyFields(result.rows[0], ['start_date', 'end_date']) : null;
+  return result.rows[0] ? mapRatingFields(mapDateOnlyFields(result.rows[0], ['start_date', 'end_date'])) : null;
 }
 
 async function getReviewByScope(employeeUserId, periodId) {
@@ -446,7 +491,7 @@ async function buildReviewPayload(reviewId) {
     items: items.rows,
     comments: comments.rows,
     approvals: approvals.rows,
-    period_history: periodHistory.rows,
+    period_history: mapRatingFieldsInList(periodHistory.rows),
     project_history: mapDateOnlyFieldsInList(projectHistory.rows, ['assigned_at', 'released_at'])
   };
 }

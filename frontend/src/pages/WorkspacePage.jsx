@@ -529,7 +529,24 @@ function localizeDepartmentName(value, locale) {
 }
 
 function localizeRatingLabel(value, locale) {
-  return value || '-';
+  const raw = String(value || '').trim();
+  if (!raw) return '-';
+
+  const ratingMap = {
+    excellent: 'Excellent',
+    good: 'Good',
+    meets_expectations: 'Meets expectations',
+    needs_improvement: 'Needs improvement',
+    does_not_meet_expectations: 'Does not meet expectations',
+    not_rated: 'Not rated',
+    xuat_sac: 'Excellent',
+    tot: 'Good',
+    dat: 'Meets expectations',
+    can_cai_thien: 'Needs improvement',
+    khong_dat: 'Does not meet expectations'
+  };
+
+  return ratingMap[raw] || raw;
 }
 
 function localizeCategoryName(value, locale) {

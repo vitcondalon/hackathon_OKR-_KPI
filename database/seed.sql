@@ -628,7 +628,7 @@ VALUES
     'employee_submitted',
     7.00,
     83.57,
-    'tot',
+    'good',
     (SELECT id FROM users WHERE username = 'manager.eng')
   ),
   (
@@ -639,7 +639,7 @@ VALUES
     'manager_reviewed',
     7.00,
     78.21,
-    'dat',
+    'meets_expectations',
     (SELECT id FROM users WHERE username = 'manager.sales')
   ),
   (
@@ -650,7 +650,7 @@ VALUES
     'approved',
     7.00,
     87.14,
-    'tot',
+    'good',
     (SELECT id FROM users WHERE username = 'hr.lead')
   );
 
