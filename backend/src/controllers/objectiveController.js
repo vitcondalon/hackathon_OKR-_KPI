@@ -2,6 +2,7 @@ const { z } = require('zod');
 const { query } = require('../config/db');
 const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
 const { recalculateObjectiveProgress } = require('../services/progressService');
+const { assertEnglishBusinessPayload } = require('../utils/englishValidation');
 
 const objectiveStatusSchema = z.enum(['draft', 'on_track', 'at_risk', 'completed', 'cancelled', 'active']);
 
@@ -272,6 +273,11 @@ async function getObjectiveById(req, res, next) {
 async function createObjective(req, res, next) {
   try {
     const payload = objectiveSchema.parse(req.body);
+    assertEnglishBusinessPayload(payload, {
+      code: 'Objective code',
+      title: 'Objective title',
+      description: 'Objective description'
+    });
 
     const ownerUserId = req.user.role === 'employee'
       ? req.user.id
@@ -387,6 +393,11 @@ async function updateObjective(req, res, next) {
   try {
     const id = Number(req.params.id);
     const payload = updateObjectiveSchema.parse(req.body);
+    assertEnglishBusinessPayload(payload, {
+      code: 'Objective code',
+      title: 'Objective title',
+      description: 'Objective description'
+    });
 
     const currentResult = await query('SELECT * FROM objectives WHERE id = $1', [id]);
     if (currentResult.rowCount === 0) {

@@ -2,6 +2,7 @@ const { z } = require('zod');
 const { query } = require('../config/db');
 const { sendSuccess, sendCreated } = require('../utils/response');
 const { calculateProgress, recalculateKeyResultProgress, recalculateKpiProgress } = require('../services/progressService');
+const { assertEnglishBusinessPayload } = require('../utils/englishValidation');
 
 const nullablePositiveInt = z.preprocess((value) => {
   if (value === null || value === undefined || value === '') return undefined;
@@ -138,6 +139,11 @@ async function listCheckins(req, res, next) {
 async function createCheckin(req, res, next) {
   try {
     const payload = checkinSchema.parse(req.body);
+    assertEnglishBusinessPayload(payload, {
+      note: 'Check-in note',
+      update_note: 'Update note',
+      blocker_note: 'Blocker note'
+    });
 
     if (payload.key_result_id) {
       const keyResultResult = await query(

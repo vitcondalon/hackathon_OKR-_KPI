@@ -3,13 +3,13 @@ const { query } = require('../config/db');
 const { hashPassword } = require('../utils/password');
 const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
 
-const roleEnum = z.enum(['admin', 'manager', 'employee']);
+const roleEnum = z.enum(['admin', 'hr', 'manager', 'employee']);
 
 const createUserSchema = z.object({
   employee_code: z.string().trim().min(2).max(30).optional(),
   full_name: z.string().trim().min(2),
-  username: z.string().trim().min(3).max(100),
-  email: z.string().trim().email(),
+  username: z.string().trim().min(3).max(100).optional(),
+  email: z.string().trim().email().optional(),
   password: z.string().min(6),
   role: roleEnum.default('employee'),
   department_id: z.coerce.number().int().positive().nullable().optional(),
@@ -42,6 +42,25 @@ function mapUser(row) {
   };
 }
 
+function normalizeEmployeeCode(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9-_]/g, '')
+    .toUpperCase();
+}
+
+function buildUsernameFromEmployeeCode(employeeCode) {
+  return String(employeeCode || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, '-');
+}
+
+function buildEmailFromEmployeeCode(employeeCode) {
+  return `${buildUsernameFromEmployeeCode(employeeCode)}@company`;
+}
+
 async function getRoleIdByCode(roleCode) {
   const result = await query('SELECT id FROM roles WHERE code = $1', [roleCode]);
   if (result.rowCount === 0) {
@@ -72,7 +91,7 @@ async function assertManager(managerUserId) {
     `SELECT u.id
      FROM users u
      JOIN roles r ON r.id = u.role_id
-     WHERE u.id = $1 AND u.deleted_at IS NULL AND r.code IN ('admin', 'manager')`,
+     WHERE u.id = $1 AND u.deleted_at IS NULL AND r.code IN ('admin', 'hr', 'manager')`,
     [managerUserId]
   );
 
@@ -118,12 +137,15 @@ async function listUsers(req, res, next) {
 async function createUser(req, res, next) {
   try {
     const payload = createUserSchema.parse(req.body);
+    const employeeCode = normalizeEmployeeCode(payload.employee_code || `${payload.role.toUpperCase().slice(0, 3)}-${Date.now()}`);
+    const username = payload.username || buildUsernameFromEmployeeCode(employeeCode);
+    const email = payload.email || buildEmailFromEmployeeCode(employeeCode);
 
     const duplicate = await query(
       `SELECT id FROM users
        WHERE deleted_at IS NULL
          AND (username = $1 OR email = $2)`,
-      [payload.username, payload.email]
+      [username, email]
     );
 
     if (duplicate.rowCount > 0) {
@@ -137,8 +159,6 @@ async function createUser(req, res, next) {
 
     const roleId = await getRoleIdByCode(payload.role);
     const passwordHash = await hashPassword(payload.password);
-
-    const employeeCode = payload.employee_code || `${payload.role.toUpperCase().slice(0, 3)}-${Date.now()}`;
 
     const created = await query(
       `INSERT INTO users (
@@ -156,8 +176,8 @@ async function createUser(req, res, next) {
       [
         employeeCode,
         payload.full_name,
-        payload.username,
-        payload.email,
+        username,
+        email,
         passwordHash,
         roleId,
         payload.department_id || null,

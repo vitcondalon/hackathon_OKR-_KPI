@@ -33,17 +33,10 @@ backend/
       checkinController.js
       kpiController.js
       dashboardController.js
-      funnyController.js
     services/
       authService.js
       progressService.js
       dashboardService.js
-      funny/
-        funnyIntentService.js
-        funnyQueryService.js
-        funnyPromptService.js
-        funnyGeminiService.js
-        funnyResponseService.js
     routes/
       authRoutes.js
       userRoutes.js
@@ -54,7 +47,6 @@ backend/
       checkinRoutes.js
       kpiRoutes.js
       dashboardRoutes.js
-      funnyRoutes.js
     utils/
       jwt.js
       password.js
@@ -96,10 +88,6 @@ HOST=0.0.0.0
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/okr_kpi_db
 JWT_SECRET=change_me_to_a_long_random_secret
 JWT_EXPIRES_IN=1d
-FUNNY_ENABLED=true
-GEMINI_API_KEY=
-GEMINI_MODEL=gemini-1.5-flash
-GEMINI_TIMEOUT_MS=8000
 ```
 
 ## Run PostgreSQL (Docker)
@@ -149,6 +137,9 @@ Health:
 API prefix:
 - `http://localhost:8000/api`
 
+Primary frontend route:
+- `http://localhost:5173/workspace`
+
 ## Seed Script
 
 If DB already running, you can reseed from backend:
@@ -164,13 +155,16 @@ This script executes directly:
 
 ## Demo Accounts
 
-- `admin@okr.local / Admin@123`
-- `manager.eng@okr.local / Manager@123`
-- `manager.sales@okr.local / Manager@123`
-- `manager.hr@okr.local / Manager@123`
-- `lan@okr.local / Employee@123`
-- `nam@okr.local / Employee@123`
-- `ha@okr.local / Employee@123`
+- `ADM-001@company / Admin@123`
+- `MGR-ENG-001@company / Manager@123`
+- `MGR-SAL-001@company / Manager@123`
+- `MGR-HR-001@company / Manager@123`
+- `HR-001@company / Manager@123`
+- `EMP-ENG-001@company / Employee@123`
+- `EMP-SAL-001@company / Employee@123`
+- `EMP-HR-001@company / Employee@123`
+
+You can also login using `employee_code` directly (for example `EMP-ENG-001`).
 
 ## API Coverage
 
@@ -188,68 +182,18 @@ This script executes directly:
   - `/api/dashboard/risks`
   - `/api/dashboard/top-performers`
   - `/api/dashboard/charts`
-- Funny (protected):
-  - `POST /api/funny/chat`
-  - `GET /api/funny/suggestions`
-  - `GET /api/funny/summary`
-  - `GET /api/funny/insights`
-  - `GET /api/funny/health`
-- Insights:
-  - `GET /api/insights/overview`
+- Workspace (single-page flow):
+  - `GET /api/workspace/bootstrap`
+  - `POST /api/workspace/periods`
+  - `POST /api/workspace/reviews`
+  - `POST /api/workspace/reviews/:reviewId/items`
+  - `PUT /api/workspace/reviews/:reviewId/items/:itemId`
+  - `POST /api/workspace/reviews/:reviewId/comments`
+  - `POST /api/workspace/reviews/:reviewId/actions`
 - Guides:
   - `GET /api/guides/user-guide`
   - `GET /api/guides/user-guide/view`
   - `GET /api/guides/user-guide/download`
-
-## Funny Internal AI Assistant
-
-`Funny` is an internal AI assistant module for OKR/KPI analytics.
-
-- Safe architecture:
-  - Intent classification with whitelist (`count_users`, `risky_kpis`, `dashboard_summary`, ...)
-  - Fixed backend query functions only (no LLM-generated SQL execution)
-  - Optional Gemini summarization for `generic_analysis`
-  - Fallback to direct DB-based summary when Gemini is not configured or fails
-- Security:
-  - Auth required (`/api/funny/*`)
-  - Zod validation for chat payload
-  - Input sanitization and prompt-injection signal guard
-  - Employee role is limited for broader management analytics intents
-
-### Quick Test (Postman/curl)
-
-1. Login and get token:
-
-```bash
-curl -X POST http://localhost:8000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"identifier":"admin@okr.local","password":"Admin@123"}'
-```
-
-2. Ask Funny:
-
-```bash
-curl -X POST http://localhost:8000/api/funny/chat \
-  -H "Authorization: Bearer <ACCESS_TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Hiện tại có bao nhiêu nhân viên?"}'
-```
-
-3. Suggestions:
-
-```bash
-curl -X GET http://localhost:8000/api/funny/suggestions \
-  -H "Authorization: Bearer <ACCESS_TOKEN>"
-```
-
-4. Health:
-
-```bash
-curl -X GET http://localhost:8000/api/funny/health \
-  -H "Authorization: Bearer <ACCESS_TOKEN>"
-```
-
-If `GEMINI_API_KEY` is empty or Gemini request fails, Funny still answers using direct DB queries for standard statistical intents and uses deterministic fallback summary for generic analysis.
 
 ## Notes
 

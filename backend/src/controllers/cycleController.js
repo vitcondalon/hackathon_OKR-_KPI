@@ -1,6 +1,7 @@
 const { z } = require('zod');
 const { query } = require('../config/db');
 const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
+const { assertEnglishBusinessPayload } = require('../utils/englishValidation');
 
 const cycleSchema = z.object({
   code: z.string().trim().min(3).max(30).optional(),
@@ -78,6 +79,10 @@ async function listCycles(req, res, next) {
 async function createCycle(req, res, next) {
   try {
     const payload = cycleSchema.parse(req.body);
+    assertEnglishBusinessPayload(payload, {
+      code: 'Cycle code',
+      name: 'Cycle name'
+    });
     const startDate = normalizeDateInput(payload.start_date);
     const endDate = normalizeDateInput(payload.end_date);
 
@@ -113,6 +118,10 @@ async function updateCycle(req, res, next) {
     }
 
     const payload = updateCycleSchema.parse(req.body);
+    assertEnglishBusinessPayload(payload, {
+      code: 'Cycle code',
+      name: 'Cycle name'
+    });
 
     const currentResult = await query('SELECT * FROM okr_cycles WHERE id = $1', [id]);
     if (currentResult.rowCount === 0) {

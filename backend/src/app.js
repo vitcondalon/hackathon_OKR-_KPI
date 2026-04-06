@@ -14,9 +14,8 @@ const keyResultRoutes = require('./routes/keyResultRoutes');
 const checkinRoutes = require('./routes/checkinRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const kpiRoutes = require('./routes/kpiRoutes');
-const funnyRoutes = require('./routes/funnyRoutes');
-const insightRoutes = require('./routes/insightRoutes');
 const guideRoutes = require('./routes/guideRoutes');
+const workspaceRoutes = require('./routes/workspaceRoutes');
 const swaggerRoutes = require('./docs/swaggerRoutes');
 const { notFoundMiddleware, errorMiddleware } = require('./middlewares/errorMiddleware');
 
@@ -52,8 +51,7 @@ app.use(`${env.apiPrefix}/key-results`, keyResultRoutes);
 app.use(`${env.apiPrefix}/checkins`, checkinRoutes);
 app.use(`${env.apiPrefix}/dashboard`, dashboardRoutes);
 app.use(`${env.apiPrefix}/kpis`, kpiRoutes);
-app.use(`${env.apiPrefix}/funny`, funnyRoutes);
-app.use(`${env.apiPrefix}/insights`, insightRoutes);
+app.use(`${env.apiPrefix}/workspace`, workspaceRoutes);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);

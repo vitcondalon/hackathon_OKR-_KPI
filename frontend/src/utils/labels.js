@@ -1,5 +1,6 @@
 ﻿export function roleLabel(role) {
   if (role === 'admin') return 'Quản trị viên';
+  if (role === 'hr') return 'Nhân sự';
   if (role === 'manager') return 'Quản lý';
   if (role === 'employee') return 'Nhân viên';
   return role || '-';
@@ -10,7 +11,7 @@ export function statusLabel(status) {
   if (status === 'active') return 'Đang chạy';
   if (status === 'on_track') return 'Đúng tiến độ';
   if (status === 'planning') return 'Lên kế hoạch';
-  if (status === 'draft') return 'Nháp';
+  if (status === 'draft') return 'Nhập liệu';
   if (status === 'pending') return 'Đang chờ';
   if (status === 'closed') return 'Đã đóng';
   if (status === 'at_risk') return 'Rủi ro';

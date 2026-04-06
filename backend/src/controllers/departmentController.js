@@ -1,6 +1,7 @@
 const { z } = require('zod');
 const { query } = require('../config/db');
 const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
+const { assertEnglishBusinessPayload } = require('../utils/englishValidation');
 
 const departmentSchema = z.object({
   code: z.string().trim().min(2).max(30).optional(),
@@ -105,6 +106,11 @@ async function listDepartments(req, res, next) {
 async function createDepartment(req, res, next) {
   try {
     const payload = departmentSchema.parse(req.body);
+    assertEnglishBusinessPayload(payload, {
+      code: 'Department code',
+      name: 'Department name',
+      description: 'Department description'
+    });
     const managerUserId = payload.manager_user_id ?? payload.manager_id ?? null;
 
     await assertManager(managerUserId);
@@ -165,6 +171,11 @@ async function updateDepartment(req, res, next) {
     }
 
     const payload = updateDepartmentSchema.parse(req.body);
+    assertEnglishBusinessPayload(payload, {
+      code: 'Department code',
+      name: 'Department name',
+      description: 'Department description'
+    });
 
     const currentResult = await query('SELECT * FROM departments WHERE id = $1', [id]);
     if (currentResult.rowCount === 0) {

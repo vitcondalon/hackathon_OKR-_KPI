@@ -19,13 +19,14 @@ async function run() {
 
     console.log('Schema and seed executed successfully.');
     console.log('Demo accounts:');
-    console.log('admin@okr.local / Admin@123');
-    console.log('manager.eng@okr.local / Manager@123');
-    console.log('manager.sales@okr.local / Manager@123');
-    console.log('manager.hr@okr.local / Manager@123');
-    console.log('lan@okr.local / Employee@123');
-    console.log('nam@okr.local / Employee@123');
-    console.log('ha@okr.local / Employee@123');
+    console.log('ADM-001@company / Admin@123');
+    console.log('MGR-ENG-001@company / Manager@123');
+    console.log('MGR-SAL-001@company / Manager@123');
+    console.log('MGR-HR-001@company / Manager@123');
+    console.log('HR-001@company / Manager@123');
+    console.log('EMP-ENG-001@company / Employee@123');
+    console.log('EMP-SAL-001@company / Employee@123');
+    console.log('EMP-HR-001@company / Employee@123');
   } finally {
     client.release();
     await pool.end();

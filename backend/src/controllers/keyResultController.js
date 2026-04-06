@@ -2,6 +2,7 @@ const { z } = require('zod');
 const { query } = require('../config/db');
 const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
 const { calculateProgress, recalculateObjectiveProgress, recalculateKeyResultProgress } = require('../services/progressService');
+const { assertEnglishBusinessPayload } = require('../utils/englishValidation');
 
 const keyResultStatusSchema = z.enum(['draft', 'on_track', 'at_risk', 'completed', 'cancelled', 'active']);
 
@@ -173,6 +174,13 @@ async function listKeyResults(req, res, next) {
 async function createKeyResult(req, res, next) {
   try {
     const payload = keyResultSchema.parse(req.body);
+    assertEnglishBusinessPayload(payload, {
+      code: 'Key result code',
+      title: 'Key result title',
+      description: 'Key result description',
+      measurement_unit: 'Measurement unit',
+      unit: 'Measurement unit'
+    });
 
     const objective = await assertObjective(payload.objective_id);
     if (req.user.role === 'employee' && objective.owner_user_id !== req.user.id) {
@@ -273,6 +281,13 @@ async function updateKeyResult(req, res, next) {
   try {
     const id = Number(req.params.id);
     const payload = updateKeyResultSchema.parse(req.body);
+    assertEnglishBusinessPayload(payload, {
+      code: 'Key result code',
+      title: 'Key result title',
+      description: 'Key result description',
+      measurement_unit: 'Measurement unit',
+      unit: 'Measurement unit'
+    });
 
     const currentResult = await query('SELECT * FROM key_results WHERE id = $1', [id]);
     if (currentResult.rowCount === 0) {

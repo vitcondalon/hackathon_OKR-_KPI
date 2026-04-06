@@ -39,11 +39,7 @@ const env = {
   apiPrefix: '/api',
   databaseUrl: required('DATABASE_URL'),
   jwtSecret: required('JWT_SECRET'),
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1d',
-  funnyEnabled: process.env.FUNNY_ENABLED !== 'false',
-  geminiApiKey: process.env.GEMINI_API_KEY || '',
-  geminiModel: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
-  geminiTimeoutMs: numberFromEnv('GEMINI_TIMEOUT_MS', 8000, { min: 1000, integer: true })
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1d'
 };
 
 module.exports = env;

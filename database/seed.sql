@@ -1,7 +1,13 @@
 BEGIN;
 
 TRUNCATE TABLE
-  funny_logs,
+  review_approvals,
+  review_comments,
+  employee_review_items,
+  employee_reviews,
+  review_periods,
+  employee_projects,
+  projects,
   audit_logs,
   kpi_checkins,
   kpi_metrics,
@@ -18,6 +24,7 @@ RESTART IDENTITY CASCADE;
 INSERT INTO roles (code, display_name, description)
 VALUES
   ('admin', 'Administrator', 'Full-system administration access'),
+  ('hr', 'Human Resources', 'Human resources review and approval access'),
   ('manager', 'Manager', 'Manage team OKR/KPI and review progress'),
   ('employee', 'Employee', 'Update own objectives, key results, and KPI check-ins');
 
@@ -32,7 +39,7 @@ VALUES
   (
     'ADM-001',
     'admin',
-    'admin@okr.local',
+    'adm-001@company',
     'System Admin',
     '$2a$10$kMdZ3/zGH/3Z.8iniKK2Buqzz4FQQvCQQNjWAd80t1datvwcFcsJe',
     (SELECT id FROM roles WHERE code = 'admin'),
@@ -43,7 +50,7 @@ VALUES
   (
     'MGR-ENG-001',
     'manager.eng',
-    'manager.eng@okr.local',
+    'mgr-eng-001@company',
     'Nguyen Minh Anh',
     '$2a$10$XumuU9xUyrfe64B65bWb7O4wRsaK0WwEO/8eZI7f7g6k.3TlwNICO',
     (SELECT id FROM roles WHERE code = 'manager'),
@@ -54,7 +61,7 @@ VALUES
   (
     'MGR-SAL-001',
     'manager.sales',
-    'manager.sales@okr.local',
+    'mgr-sal-001@company',
     'Tran Quoc Bao',
     '$2a$10$XumuU9xUyrfe64B65bWb7O4wRsaK0WwEO/8eZI7f7g6k.3TlwNICO',
     (SELECT id FROM roles WHERE code = 'manager'),
@@ -65,7 +72,7 @@ VALUES
   (
     'MGR-HR-001',
     'manager.hr',
-    'manager.hr@okr.local',
+    'mgr-hr-001@company',
     'Do Thu Hang',
     '$2a$10$XumuU9xUyrfe64B65bWb7O4wRsaK0WwEO/8eZI7f7g6k.3TlwNICO',
     (SELECT id FROM roles WHERE code = 'manager'),
@@ -74,9 +81,20 @@ VALUES
     TRUE
   ),
   (
+    'HR-001',
+    'hr.lead',
+    'hr-001@company',
+    'Human Resources Lead',
+    '$2a$10$XumuU9xUyrfe64B65bWb7O4wRsaK0WwEO/8eZI7f7g6k.3TlwNICO',
+    (SELECT id FROM roles WHERE code = 'hr'),
+    (SELECT id FROM departments WHERE code = 'HR'),
+    (SELECT id FROM users WHERE username = 'admin'),
+    TRUE
+  ),
+  (
     'EMP-ENG-001',
     'lan',
-    'lan@okr.local',
+    'emp-eng-001@company',
     'Le Thi Lan',
     '$2a$10$00HJFUwuTJv24hVu2.8ulehRAadYi/T/vWmL9k9FJYWD4AxHVqK3C',
     (SELECT id FROM roles WHERE code = 'employee'),
@@ -87,7 +105,7 @@ VALUES
   (
     'EMP-SAL-001',
     'nam',
-    'nam@okr.local',
+    'emp-sal-001@company',
     'Pham Hoang Nam',
     '$2a$10$00HJFUwuTJv24hVu2.8ulehRAadYi/T/vWmL9k9FJYWD4AxHVqK3C',
     (SELECT id FROM roles WHERE code = 'employee'),
@@ -98,7 +116,7 @@ VALUES
   (
     'EMP-HR-001',
     'ha',
-    'ha@okr.local',
+    'emp-hr-001@company',
     'Vo Thu Ha',
     '$2a$10$00HJFUwuTJv24hVu2.8ulehRAadYi/T/vWmL9k9FJYWD4AxHVqK3C',
     (SELECT id FROM roles WHERE code = 'employee'),
@@ -485,6 +503,255 @@ VALUES
     73,
     29.41,
     'Engagement score improved, but still below target.'
+  );
+
+INSERT INTO review_periods (code, name, period_type, start_date, end_date, status, created_by_user_id)
+VALUES
+  (
+    '2026-M03',
+    'Month 03 / 2026',
+    'monthly',
+    DATE '2026-03-01',
+    DATE '2026-03-31',
+    'closed',
+    (SELECT id FROM users WHERE username = 'admin')
+  ),
+  (
+    '2026-Q2',
+    'Quarter 2 / 2026',
+    'quarterly',
+    DATE '2026-04-01',
+    DATE '2026-06-30',
+    'active',
+    (SELECT id FROM users WHERE username = 'admin')
+  ),
+  (
+    '2026-Y',
+    'Year 2026',
+    'yearly',
+    DATE '2026-01-01',
+    DATE '2026-12-31',
+    'planning',
+    (SELECT id FROM users WHERE username = 'admin')
+  );
+
+INSERT INTO projects (code, name, description, department_id, owner_user_id, start_date, end_date, status)
+VALUES
+  (
+    'PRJ-API-01',
+    'API Performance Upgrade',
+    'Upgrade core APIs to improve release quality and response time.',
+    (SELECT id FROM departments WHERE code = 'ENG'),
+    (SELECT id FROM users WHERE username = 'manager.eng'),
+    DATE '2026-01-10',
+    DATE '2026-07-20',
+    'active'
+  ),
+  (
+    'PRJ-SALES-01',
+    'Enterprise Pipeline Expansion',
+    'Expand strategic pipeline and improve win rate quality.',
+    (SELECT id FROM departments WHERE code = 'SAL'),
+    (SELECT id FROM users WHERE username = 'manager.sales'),
+    DATE '2026-02-01',
+    DATE '2026-08-30',
+    'active'
+  ),
+  (
+    'PRJ-HR-01',
+    'Retention Touchpoint Program',
+    'Run retention and engagement touchpoint initiative.',
+    (SELECT id FROM departments WHERE code = 'HR'),
+    (SELECT id FROM users WHERE username = 'hr.lead'),
+    DATE '2026-01-15',
+    DATE '2026-10-31',
+    'active'
+  );
+
+INSERT INTO employee_projects (employee_user_id, project_id, role_name, contribution_note, assigned_at)
+VALUES
+  (
+    (SELECT id FROM users WHERE username = 'lan'),
+    (SELECT id FROM projects WHERE code = 'PRJ-API-01'),
+    'Backend Engineer',
+    'Implemented API optimization and deployment automation improvements.',
+    DATE '2026-01-15'
+  ),
+  (
+    (SELECT id FROM users WHERE username = 'nam'),
+    (SELECT id FROM projects WHERE code = 'PRJ-SALES-01'),
+    'Account Executive',
+    'Handled strategic outbound and opportunity qualification.',
+    DATE '2026-02-10'
+  ),
+  (
+    (SELECT id FROM users WHERE username = 'ha'),
+    (SELECT id FROM projects WHERE code = 'PRJ-HR-01'),
+    'HR Specialist',
+    'Coordinated engagement sessions and retention follow-up.',
+    DATE '2026-02-05'
+  );
+
+INSERT INTO employee_reviews (
+  period_id,
+  employee_user_id,
+  department_id,
+  manager_user_id,
+  status,
+  total_weight,
+  total_score,
+  rating_level,
+  created_by_user_id
+)
+VALUES
+  (
+    (SELECT id FROM review_periods WHERE code = '2026-Q2'),
+    (SELECT id FROM users WHERE username = 'lan'),
+    (SELECT id FROM departments WHERE code = 'ENG'),
+    (SELECT id FROM users WHERE username = 'manager.eng'),
+    'employee_submitted',
+    7.00,
+    83.57,
+    'tot',
+    (SELECT id FROM users WHERE username = 'manager.eng')
+  ),
+  (
+    (SELECT id FROM review_periods WHERE code = '2026-Q2'),
+    (SELECT id FROM users WHERE username = 'nam'),
+    (SELECT id FROM departments WHERE code = 'SAL'),
+    (SELECT id FROM users WHERE username = 'manager.sales'),
+    'manager_reviewed',
+    7.00,
+    78.21,
+    'dat',
+    (SELECT id FROM users WHERE username = 'manager.sales')
+  ),
+  (
+    (SELECT id FROM review_periods WHERE code = '2026-Q2'),
+    (SELECT id FROM users WHERE username = 'ha'),
+    (SELECT id FROM departments WHERE code = 'HR'),
+    (SELECT id FROM users WHERE username = 'manager.hr'),
+    'approved',
+    7.00,
+    87.14,
+    'tot',
+    (SELECT id FROM users WHERE username = 'hr.lead')
+  );
+
+INSERT INTO employee_review_items (
+  review_id,
+  item_order,
+  category,
+  project_code,
+  project_name,
+  description,
+  weight,
+  plan_percent,
+  actual_percent,
+  achievement_score,
+  weighted_score,
+  evidence_note,
+  manager_note,
+  is_required,
+  is_locked,
+  updated_by_user_id
+)
+VALUES
+  (
+    (SELECT id FROM employee_reviews WHERE employee_user_id = (SELECT id FROM users WHERE username = 'lan') AND period_id = (SELECT id FROM review_periods WHERE code = '2026-Q2')),
+    1,
+    'Project KPI',
+    'PRJ-API-01',
+    'API Performance Upgrade',
+    'Delivered the API upgrade target and stabilized the deployment flow.',
+    3.00,
+    100.00,
+    86.00,
+    86.00,
+    258.00,
+    'Benchmark report and release checklist were updated.',
+    'Progress is good. Keep reducing production issues.',
+    TRUE,
+    FALSE,
+    (SELECT id FROM users WHERE username = 'lan')
+  ),
+  (
+    (SELECT id FROM employee_reviews WHERE employee_user_id = (SELECT id FROM users WHERE username = 'lan') AND period_id = (SELECT id FROM review_periods WHERE code = '2026-Q2')),
+    2,
+    'Discipline and Collaboration',
+    NULL,
+    NULL,
+    'Maintained on-time updates and coordinated well with QA.',
+    2.00,
+    100.00,
+    80.00,
+    80.00,
+    160.00,
+    'All check-ins were submitted on schedule.',
+    'Should be more proactive when cross-team blockers appear.',
+    TRUE,
+    FALSE,
+    (SELECT id FROM users WHERE username = 'manager.eng')
+  ),
+  (
+    (SELECT id FROM employee_reviews WHERE employee_user_id = (SELECT id FROM users WHERE username = 'lan') AND period_id = (SELECT id FROM review_periods WHERE code = '2026-Q2')),
+    3,
+    'Improvement Initiative',
+    NULL,
+    NULL,
+    'Proposed improvements to the code review process.',
+    2.00,
+    100.00,
+    83.00,
+    83.00,
+    166.00,
+    'The new review checklist has been applied.',
+    'The impact is clear. Continue rolling it out to the wider team.',
+    TRUE,
+    TRUE,
+    (SELECT id FROM users WHERE username = 'manager.eng')
+  );
+
+INSERT INTO review_comments (review_id, comment_type, content, author_user_id)
+VALUES
+  (
+    (SELECT id FROM employee_reviews WHERE employee_user_id = (SELECT id FROM users WHERE username = 'lan') AND period_id = (SELECT id FROM review_periods WHERE code = '2026-Q2')),
+    'employee_self',
+    'Most goals were completed. Cross-team blocker handling speed still needs improvement.',
+    (SELECT id FROM users WHERE username = 'lan')
+  ),
+  (
+    (SELECT id FROM employee_reviews WHERE employee_user_id = (SELECT id FROM users WHERE username = 'lan') AND period_id = (SELECT id FROM review_periods WHERE code = '2026-Q2')),
+    'manager',
+    'The employee showed steady progress and reached a Good rating this cycle.',
+    (SELECT id FROM users WHERE username = 'manager.eng')
+  ),
+  (
+    (SELECT id FROM employee_reviews WHERE employee_user_id = (SELECT id FROM users WHERE username = 'ha') AND period_id = (SELECT id FROM review_periods WHERE code = '2026-Q2')),
+    'hr',
+    'The review record is complete and ready for final approval.',
+    (SELECT id FROM users WHERE username = 'hr.lead')
+  );
+
+INSERT INTO review_approvals (review_id, action_type, note, actor_user_id)
+VALUES
+  (
+    (SELECT id FROM employee_reviews WHERE employee_user_id = (SELECT id FROM users WHERE username = 'lan') AND period_id = (SELECT id FROM review_periods WHERE code = '2026-Q2')),
+    'submit',
+    'Employee submitted the review for approval.',
+    (SELECT id FROM users WHERE username = 'lan')
+  ),
+  (
+    (SELECT id FROM employee_reviews WHERE employee_user_id = (SELECT id FROM users WHERE username = 'nam') AND period_id = (SELECT id FROM review_periods WHERE code = '2026-Q2')),
+    'manager_approve',
+    'Manager reviewed and approved the department-level evaluation.',
+    (SELECT id FROM users WHERE username = 'manager.sales')
+  ),
+  (
+    (SELECT id FROM employee_reviews WHERE employee_user_id = (SELECT id FROM users WHERE username = 'ha') AND period_id = (SELECT id FROM review_periods WHERE code = '2026-Q2')),
+    'approve',
+    'HR approved the review cycle result.',
+    (SELECT id FROM users WHERE username = 'hr.lead')
   );
 
 INSERT INTO audit_logs (actor_user_id, action, entity_type, entity_id, metadata)

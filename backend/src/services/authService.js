@@ -22,6 +22,8 @@ function mapUser(row) {
 }
 
 async function getUserByIdentifier(identifier) {
+  const normalized = String(identifier || '').trim().toLowerCase();
+
   const result = await query(
     `SELECT
        u.id,
@@ -43,9 +45,14 @@ async function getUserByIdentifier(identifier) {
      JOIN roles r ON r.id = u.role_id
      LEFT JOIN departments d ON d.id = u.department_id
      WHERE u.deleted_at IS NULL
-       AND (u.email = $1 OR u.username = $1)
+       AND (
+         LOWER(u.email) = $1
+         OR LOWER(u.username) = $1
+         OR LOWER(u.employee_code) = $1
+         OR LOWER(CONCAT(u.employee_code, '@company')) = $1
+       )
      LIMIT 1`,
-    [identifier]
+    [normalized]
   );
 
   return result.rows[0] || null;

@@ -2,6 +2,7 @@ const { z } = require('zod');
 const { query } = require('../config/db');
 const { sendSuccess, sendCreated, sendNoContent } = require('../utils/response');
 const { calculateProgress, recalculateKpiProgress } = require('../services/progressService');
+const { assertEnglishBusinessPayload } = require('../utils/englishValidation');
 
 const scopeSchema = z.enum(['employee', 'department']);
 const kpiStatusSchema = z.enum(['active', 'on_track', 'at_risk', 'completed', 'cancelled', 'draft']);
@@ -204,6 +205,13 @@ async function listKpis(req, res, next) {
 async function createKpi(req, res, next) {
   try {
     const payload = kpiSchema.parse(req.body);
+    assertEnglishBusinessPayload(payload, {
+      code: 'KPI code',
+      name: 'KPI name',
+      description: 'KPI description',
+      measurement_unit: 'Measurement unit',
+      unit: 'Measurement unit'
+    });
 
     const scopeType = req.user.role === 'employee' ? 'employee' : resolveScope(payload);
     const ownerUserId = req.user.role === 'employee'
@@ -323,6 +331,13 @@ async function updateKpi(req, res, next) {
   try {
     const id = Number(req.params.id);
     const payload = updateKpiSchema.parse(req.body);
+    assertEnglishBusinessPayload(payload, {
+      code: 'KPI code',
+      name: 'KPI name',
+      description: 'KPI description',
+      measurement_unit: 'Measurement unit',
+      unit: 'Measurement unit'
+    });
 
     const currentResult = await query('SELECT * FROM kpi_metrics WHERE id = $1', [id]);
     if (currentResult.rowCount === 0) {
