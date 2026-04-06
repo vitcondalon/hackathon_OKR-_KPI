@@ -1,76 +1,152 @@
-# Deployment Guide
+﻿# Hướng Dẫn Triển Khai
 
-This project is deployed as:
-- Backend Node.js API on `127.0.0.1:8000`
-- Frontend Vite build output in `frontend/dist`
-- Nginx serves frontend static files and proxies `/api` to backend
-- Public traffic should go through Nginx on `80/443` (do not expose app ports directly)
+## Kiến trúc triển khai hiện tại
 
-See full production checklist in [DEPLOY_NOTES.md](./DEPLOY_NOTES.md).
+Mô hình triển khai hiện tại của hệ thống gồm:
 
-## Quick Start
+- PostgreSQL chạy bằng Docker Compose
+- backend Node.js chạy dưới dạng service trên `127.0.0.1:8000`
+- frontend được build ra thư mục `frontend/dist`
+- Nginx phục vụ frontend tĩnh và proxy `/api` sang backend
 
-1. Configure backend env from `backend/.env.example`.
-2. Configure frontend env from `frontend/.env.example` (`VITE_API_BASE_URL=/api`).
-3. Build frontend:
+## Quy tắc triển khai quan trọng
+
+`deploy/update_app.sh` không tự khởi động PostgreSQL cho bạn.
+
+Điều đó có nghĩa là trên VPS phải có sẵn một trong hai trạng thái sau:
+
+- container `postgres` đã chạy sẵn
+- hoặc PostgreSQL được quản lý ở nơi khác và `DATABASE_URL` đang trỏ đúng tới instance đó
+
+Nếu `docker compose ps` không thấy container database đang chạy, backend sẽ không đăng nhập được và dữ liệu sẽ không tải ra workspace.
+
+## Các file môi trường cần có
+
+### Root `.env` cho container PostgreSQL
+
+```env
+POSTGRES_DB=okr_kpi_db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_PORT=5433
+TZ=Asia/Ho_Chi_Minh
+```
+
+### `backend/.env`
+
+```env
+NODE_ENV=production
+HOST=127.0.0.1
+PORT=8000
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/okr_kpi_db
+JWT_SECRET=replace_with_long_random_secret
+JWT_EXPIRES_IN=1d
+```
+
+### `frontend/.env`
+
+```env
+VITE_API_BASE_URL=/api
+```
+
+## Kiểm tra đồng bộ cổng database
+
+Cổng database trong backend phải khớp với cổng publish ở root `.env`.
+
+Ví dụ đúng:
+
+- root `.env` dùng `POSTGRES_PORT=5433`
+- `backend/.env` cũng phải trỏ `127.0.0.1:5433`
+
+Lệch cổng này từng gây lỗi production thật trên VPS, nên đây là bước bắt buộc phải kiểm tra.
+
+## Thiết lập VPS lần đầu
+
+1. Clone repo vào `/var/www/okr-kpi`.
+2. Tạo các file `.env` cần thiết ở root, `backend`, và `frontend`.
+3. Khởi động PostgreSQL:
 
 ```bash
-cd frontend
+cd /var/www/okr-kpi
+docker compose up -d postgres
+docker compose ps
+```
+
+4. Cài dependency backend:
+
+```bash
+cd /var/www/okr-kpi/backend
+npm ci
+```
+
+5. Cài dependency và build frontend:
+
+```bash
+cd /var/www/okr-kpi/frontend
 npm ci
 npm run build
 ```
 
-4. Run backend:
+6. Cài cấu hình systemd và nginx nếu cần:
 
 ```bash
-cd backend
-npm ci
-npm start
+bash /var/www/okr-kpi/deploy/update_app.sh --init
 ```
 
-5. Configure Nginx with `deploy/nginx/okr-kpi.conf` and reload Nginx.
-
-## GitHub Actions CI/CD
-
-This project can auto-deploy to a VPS when code is pushed to `main`.
-
-Workflow file:
-- `.github/workflows/deploy.yml`
-
-Flow:
-- GitHub Actions starts on `push` to `main`
-- The workflow connects to the VPS over SSH
-- It runs `deploy/update_app.sh`
-- The script pulls the latest code, installs dependencies, builds the frontend, restarts backend, and reloads Nginx
-
-Required GitHub repository secrets:
-- `VPS_HOST`: public IP or domain of the VPS
-- `VPS_PORT`: SSH port, usually `22`
-- `VPS_USER`: deploy user on the VPS
-- `VPS_SSH_KEY`: private SSH key for that user
-- `VPS_KNOWN_HOSTS`: output of `ssh-keyscan -H <your-vps-host>`
-- `APP_DIR`: optional, defaults to `/var/www/okr-kpi`
-
-Recommended VPS setup:
-- The app repository already exists at `/var/www/okr-kpi`
-- The deploy user can access that directory
-- The deploy user can run the required `sudo systemctl` and `sudo nginx -t` commands from `deploy/update_app.sh`
-
-Typical first-time setup:
+## Quy trình release tiêu chuẩn trên VPS
 
 ```bash
-ssh-keygen -t ed25519 -C "github-actions-deploy"
-ssh-copy-id -i ~/.ssh/id_ed25519.pub <user>@<your-vps-host>
-ssh-keyscan -H <your-vps-host>
+cd /var/www/okr-kpi
+git pull
+docker compose up -d postgres
+cd backend && npm ci
+cd ../frontend && npm ci && npm run build
+sudo systemctl restart okr-kpi-backend
+sudo systemctl reload nginx
 ```
 
-Then add the private key and host fingerprint to GitHub repository secrets.
+## Tự động deploy bằng GitHub Actions
 
-## Cloudflare (Recommended)
+Repo này có thể tự động deploy lên VPS khi push lên `main`.
 
-If your DNS is on Cloudflare:
+Luồng hiện tại:
 
-1. Keep DNS `A` records (`@`, `www`) as **Proxied** (orange cloud).
-2. Use SSL mode `Full` or `Full (strict)`, not `Flexible`.
-3. If using `Full (strict)`, install Cloudflare Origin CA cert on Nginx first.
-4. Avoid redirect loops by not stacking conflicting redirects between Cloudflare and origin.
+- GitHub Actions SSH vào VPS
+- chạy `deploy/update_app.sh`
+- script sẽ cập nhật source, cài dependencies, build frontend, restart backend và reload nginx
+
+Secret cần có:
+
+- `VPS_HOST`
+- `VPS_PORT`
+- `VPS_USER`
+- `VPS_SSH_KEY`
+- `VPS_KNOWN_HOSTS`
+- `APP_DIR` nếu muốn ghi đè đường dẫn mặc định
+
+## Tóm tắt routing của Nginx
+
+- phục vụ thư mục `frontend/dist`
+- proxy `/api` sang `http://127.0.0.1:8000`
+- chỉ public traffic qua `80/443`
+- không mở cổng backend trực tiếp ra internet
+
+## Thao tác với database
+
+### Reseed dữ liệu demo
+
+```bash
+cd /var/www/okr-kpi/backend
+npm run seed
+```
+
+### Sửa môi trường cũ mà không reset toàn bộ database
+
+```bash
+npm run backfill:manager-links
+npm run backfill:rating-levels
+```
+
+Chỉ reseed khi bạn chấp nhận nạp lại dữ liệu demo. Nếu muốn sửa môi trường cũ mà không làm mới toàn bộ, hãy dùng backfill.
+
+

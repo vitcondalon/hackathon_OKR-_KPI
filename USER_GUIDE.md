@@ -1,348 +1,158 @@
-# OKR/KPI HR MANAGEMENT SYSTEM - USER GUIDE
+﻿# Hướng Dẫn Sử Dụng Hệ Thống OKR/KPI HR
 
-## 1. Introduction
+## 1. Giới thiệu
 
-This website helps teams manage:
-- objectives
-- key results
-- KPIs
-- check-ins
-- role-based dashboards
-- Funny Assistant for insights and guided questions
+Sản phẩm hiện tại dùng mô hình làm việc tập trung theo workspace:
 
-The system is designed for three main roles:
-- `admin`
-- `manager`
-- `employee`
+- đăng nhập tại `/login`
+- thao tác chính trên một màn hình duy nhất là `/workspace`
+- đánh giá hiệu suất nhân sự theo tháng, quý hoặc năm
+- ghi nhận nhận xét, phê duyệt và lịch sử xử lý ngay trên cùng một luồng
 
----
+Giao diện hỗ trợ nhãn hiển thị bằng tiếng Việt và tiếng Anh. Tuy nhiên, dữ liệu nghiệp vụ mới trong hồ sơ vẫn nên nhập bằng tiếng Anh để đồng bộ database.
 
-## 2. Sign In
+## 2. Đăng nhập
 
-1. Open the login page.
-2. Enter your email or username.
-3. Enter your password.
-4. Click `Enter workspace`.
+Hệ thống chấp nhận các định danh sau:
 
-Demo accounts:
-- `admin@okr.local / Admin@123`
-- `manager.eng@okr.local / Manager@123`
-- `manager.sales@okr.local / Manager@123`
-- `manager.hr@okr.local / Manager@123`
-- `lan@okr.local / Employee@123`
-- `nam@okr.local / Employee@123`
-- `ha@okr.local / Employee@123`
+- mã nhân viên, ví dụ `EMP-ENG-001`
+- tài khoản dạng mã nhân viên, ví dụ `EMP-ENG-001@company`
+- email hệ thống được tạo từ mã nhân viên
+- username hệ thống
 
-After successful sign-in, the system redirects you to the dashboard.
+Tài khoản demo:
 
----
+- `ADM-001@company / Admin@123`
+- `MGR-ENG-001@company / Manager@123`
+- `MGR-SAL-001@company / Manager@123`
+- `MGR-HR-001@company / Manager@123`
+- `HR-001@company / Manager@123`
+- `EMP-ENG-001@company / Employee@123`
+- `EMP-SAL-001@company / Employee@123`
+- `EMP-HR-001@company / Employee@123`
 
-## 3. User Roles
+Đăng nhập thành công sẽ chuyển đến `/workspace`.
+
+## 3. Vai trò sử dụng
 
 ### Admin
-- view the full system overview
-- manage users and departments
-- review top performers
-- track departments that need attention
-- use Funny Assistant for global summary and insights
+
+Admin có thể:
+
+- tạo và quản lý tài khoản người dùng
+- reset mật khẩu
+- tạo chu kỳ đánh giá
+- tạo hồ sơ đánh giá
+- phê duyệt, khóa và mở khóa hồ sơ
+- theo dõi toàn bộ luồng phê duyệt
+
+### HR
+
+HR có thể:
+
+- tạo chu kỳ đánh giá
+- tạo hồ sơ đánh giá
+- thêm nhận xét HR
+- thực hiện bước phê duyệt HR
+- khóa hồ sơ sau khi hoàn tất
 
 ### Manager
-- monitor team progress
-- review low-progress objectives
-- monitor risky KPIs
-- follow up on missing check-ins
-- use Funny Assistant for team-level summary
+
+Manager có thể:
+
+- mở hồ sơ nhân sự trong phạm vi phụ trách
+- tạo hồ sơ đánh giá cho phạm vi của mình
+- cập nhật ghi chú quản lý
+- phê duyệt hoặc trả hồ sơ về bổ sung
 
 ### Employee
-- view personal objectives and KPIs
-- submit check-ins
-- see what to focus on next
-- use Funny Assistant for quick explanations and guidance
-
----
-
-## 4. Main Interface
-
-### Sidebar
-The left sidebar provides quick access to:
-- Dashboard
-- Funny Assistant
-- Objectives
-- Key Results
-- KPIs
-- Check-ins
-- Users
-- Departments
-- Cycles
-- Profile
-
-### Topbar
-The top section displays:
-- breadcrumb navigation
-- page title
-- short page description
-- guide download button
-- theme toggle
-- sign out button
-
-### Main Content Area
-The main area shows:
-- tables
-- forms
-- charts
-- insight sections
-- action-focused summaries
-
----
-
-## 5. Dashboard
-
-The dashboard is the best place to start after sign-in.
-
-It helps users:
-- see summary cards
-- review progress charts
-- monitor risks and alerts
-- check top performers
-- understand recommended next actions
-
-Role-based usage:
-- admins should use it for the full system view
-- managers should focus on risk and follow-up areas
-- employees should focus on progress and next actions
 
----
+Employee có thể:
 
-## 6. Objectives
+- mở hồ sơ của chính mình
+- cập nhật dữ liệu dự án, tiến độ và minh chứng
+- thêm nhận xét cá nhân
+- gửi hồ sơ để duyệt
 
-The Objectives page is used to:
-- create objectives
-- update objectives
-- assign owners
-- link objectives to cycles
-- monitor progress
-- manage status
+## 4. Bố cục workspace
 
-Best practice:
-- define objectives clearly
-- attach them to the correct cycle
-- review progress regularly
+Workspace hiện gồm các khu chính:
 
----
+- khu chọn nhân sự và chu kỳ đánh giá
+- khu thiết lập chu kỳ
+- khu thông tin tóm tắt hồ sơ nhân sự
+- khu biểu đồ snapshot để nhìn nhanh trạng thái
+- bảng tiêu chí đánh giá
+- khu nhận xét và thao tác phê duyệt
+- lịch sử công tác và lịch sử đánh giá
+- khu quản trị tài khoản dành riêng cho admin
 
-## 7. Key Results
+## 5. Luồng thao tác cơ bản
 
-The Key Results page is used to:
-- create measurable results under objectives
-- update start, current, and target values
-- monitor progress
-- review execution status
+### Tạo chu kỳ đánh giá
 
-Best practice:
-- use clear measurable numbers whenever possible
-
----
-
-## 8. KPIs
-
-The KPI page is used to:
-- create and manage KPIs
-- compare target and current values
-- monitor progress
-- identify risky KPIs
-
-Best practice:
-- keep KPI values updated so dashboard and assistant insights stay accurate
-
----
+1. Chọn loại chu kỳ: tháng, quý hoặc năm.
+2. Nhập tên chu kỳ.
+3. Chọn ngày neo bắt đầu.
+4. Hệ thống tự căn chỉnh khoảng ngày hợp lệ.
+5. Lưu chu kỳ đánh giá.
 
-## 9. Check-ins
+### Tạo hồ sơ đánh giá
 
-The Check-ins page is used to:
-- submit regular updates
-- add notes
-- record the latest execution status
+1. Chọn nhân sự.
+2. Chọn chu kỳ.
+3. Bấm tạo hồ sơ.
+4. Hệ thống sinh sẵn các tiêu chí mặc định.
 
-Check-ins help:
-- managers track follow-up rhythm
-- employees update ongoing work
-- the system generate better insights and summaries
+### Cập nhật chi tiết hồ sơ
 
----
+Các trường thường dùng:
 
-## 10. Users
+- tên tiêu chí
+- mã dự án hoặc tên dự án
+- mô tả
+- hệ số
+- phần trăm kế hoạch
+- phần trăm thực đạt
+- ghi chú minh chứng
+- ghi chú quản lý
 
-The Users page is used to:
-- create users
-- edit users
-- assign roles
-- assign departments
-- enable or disable active status
+### Gửi duyệt và phê duyệt
 
-Notes:
-- user role directly affects access level
-- this page is mainly for admin and manager workflows
+Luồng trạng thái chuẩn:
 
----
+- `draft`
+- `employee_submitted`
+- `manager_reviewed`
+- `hr_reviewed`
+- `approved`
+- `locked`
 
-## 11. Departments
+Các thao tác đặc biệt:
 
-The Departments page is used to:
-- create departments
-- update department details
-- assign department managers
+- `return`
+- `unlock` chỉ dành cho admin
 
-Departments are important for:
-- ownership
-- KPI grouping
-- performance reporting
+## 6. Quy tắc quan trọng
 
----
+- Nhân viên chỉ được sửa dữ liệu trong khoảng thời gian hiệu lực của chu kỳ.
+- Mục đã khóa sẽ hiện biểu tượng khóa màu đỏ.
+- Trước khi submit, các trường bắt buộc phải được điền đầy đủ.
+- Tổng hệ số phải lớn hơn `0` và không vượt quá `7`.
+- Manager không được dùng endpoint danh sách user toàn hệ thống.
+- Dữ liệu nghiệp vụ mới nên giữ bằng tiếng Anh để đảm bảo nhất quán dữ liệu.
 
-## 12. Cycles
+## 7. Các endpoint tài liệu online
 
-The Cycles page is used to:
-- create OKR cycles
-- update start and end dates
-- manage `planning`, `active`, and `closed` status
+Backend hiện có các endpoint tài liệu:
 
-Recommendation:
-- keep only the necessary cycles active at the same time
+- `GET /api/guides/user-guide`
+- `GET /api/guides/user-guide/view`
+- `GET /api/guides/user-guide/download`
 
----
+## 8. Tài liệu liên quan
 
-## 13. Profile
+- Tài liệu Word chính: [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx)
+- Tài liệu phân quyền: [ROLE_PERMISSIONS.md](./ROLE_PERMISSIONS.md)
+- Tài liệu triển khai: [DEPLOYMENT.md](./DEPLOYMENT.md)
 
-The Profile page allows users to:
-- view current account details
-- verify role
-- review current department or employee code
-
----
-
-## 14. Funny Assistant
-
-Funny Assistant is the built-in guided assistant workspace.
-
-Funny can help users:
-- use preset questions
-- ask free-form questions
-- review recommended questions
-- use quick actions
-- review insight cards
-- read role-based summary
-- open explain/help responses
-
-### Typical use flow
-1. Open `Funny Assistant`.
-2. Pick a preset question or type your own question.
-3. Submit the question.
-4. Review:
-- answer
-- links
-- quick actions
-- suggestions
-- insights
-- role-based summary
-
-### Example questions
-- Which KPIs are at risk?
-- Which objectives are low progress?
-- What should I focus on next?
-- Explain KPI progress.
-- Summarize the current situation.
-
-Note:
-- if AI narrative is unavailable, Funny still works with deterministic fallback responses
-
----
-
-## 15. Download the User Guide
-
-The website includes a `Download guide` button.
-
-It is available from:
-- the login page
-- the main application topbar
-
-The guide is downloaded as a PDF file for easy sharing and presentation.
-
----
-
-## 16. Switch Theme
-
-Users can switch between light and dark mode:
-1. Click the theme toggle button.
-2. The interface changes immediately.
-3. The selected theme is saved for the next visit.
-
----
-
-## 17. Search and Fast Actions
-
-On pages such as Users, Objectives, and KPIs:
-- use the search field to filter visible data
-- review clean status badges
-- use progress bars where available
-- work faster with simplified actions
-
----
-
-## 18. Recommended Daily Flow
-
-### For Admin
-1. Sign in
-2. Open Dashboard
-3. Review risks and top performers
-4. Open Funny Assistant
-5. Ask for a system summary
-6. Review Users or Departments if needed
-
-### For Manager
-1. Sign in
-2. Open Dashboard
-3. Review low-progress objectives
-4. Review pending check-ins
-5. Use Funny Assistant for team risks
-
-### For Employee
-1. Sign in
-2. Open Dashboard
-3. Review personal objectives and KPIs
-4. Submit check-ins
-5. Use Funny Assistant for priorities and explanations
-
----
-
-## 19. Common Issues
-
-### Cannot sign in
-- verify email or username
-- verify password
-- refresh the page and try again
-
-### Cannot see expected data
-- check filters or search keywords
-- confirm your role has access to that data
-- refresh the page
-
-### Funny has no AI narrative
-- this is not a critical problem
-- the system still works with deterministic fallback responses
-
-### A role appears to have limited data
-- this may come from the current seeded demo dataset
-- it does not necessarily mean the system is broken
-
----
-
-## 20. Suggested Demo Flow
-
-1. Sign in as admin
-2. Open Dashboard
-3. Open Funny Assistant
-4. Ask about risky KPIs
-5. Ask for an explanation of KPI progress
-6. Open Objectives or KPIs
-7. Open Check-ins
-8. Download the guide PDF

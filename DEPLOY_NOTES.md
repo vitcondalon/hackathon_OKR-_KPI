@@ -1,140 +1,126 @@
-# DEPLOY NOTES (Vite + Node.js + PostgreSQL)
+﻿# Ghi Chú Triển Khai
 
-## 1. Frontend API Base URL
+## 1. Hợp đồng đăng nhập hiện tại
 
-Frontend must use only one env variable:
+Endpoint đăng nhập đang dùng là:
 
-```env
-VITE_API_BASE_URL=/api
+```http
+POST /api/auth/login
 ```
 
-- Do not use `VITE_API_URL`.
-- Do not hardcode `http://localhost:8000` in production.
-- Current frontend fallback is `/api` when env is missing.
-
-## 2. Backend API + Login Contract
-
-- Backend API prefix: `/api`
-- Login endpoint: `POST /api/auth/login`
-- Login payload:
+Payload:
 
 ```json
 {
-  "identifier": "admin@okr.local",
+  "identifier": "ADM-001@company",
   "password": "Admin@123"
 }
 ```
 
-## 3. Nginx Production Mapping
+Các kiểu định danh được chấp nhận:
 
-Use Nginx to serve static frontend build and reverse proxy `/api`:
+- `employee_code`
+- `employee_code@company`
+- email hệ thống
+- username
 
-```nginx
-server {
-    listen 80;
-    server_name _;
+## 2. Tài khoản demo hiện tại
 
-    root /var/www/okr-kpi/frontend/dist;
-    index index.html;
+- `ADM-001@company / Admin@123`
+- `MGR-ENG-001@company / Manager@123`
+- `MGR-SAL-001@company / Manager@123`
+- `MGR-HR-001@company / Manager@123`
+- `HR-001@company / Manager@123`
+- `EMP-ENG-001@company / Employee@123`
+- `EMP-SAL-001@company / Employee@123`
+- `EMP-HR-001@company / Employee@123`
 
-    location /api/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+## 3. Checklist kiểm tra cổng database
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-}
-```
+Trước khi restart backend, hãy kiểm tra hai giá trị này phải khớp nhau:
 
-Important:
-- `proxy_pass http://127.0.0.1:8000;` (no trailing slash) to keep `/api` prefix intact.
-- Keep public access on `80/443` only, and keep app processes internal (`127.0.0.1:*`).
+- root `.env` -> `POSTGRES_PORT`
+- `backend/.env` -> cổng nằm trong `DATABASE_URL`
 
-## 3.1 Cloudflare SSL (Recommended)
-
-- DNS records for `@` and `www` should be **Proxied**.
-- Use SSL mode `Full` or `Full (strict)`. Avoid `Flexible`.
-- For `Full (strict)`, install a Cloudflare Origin CA certificate/key on Nginx.
-- Prevent redirect loops: avoid duplicate or conflicting HTTPS redirects between Cloudflare and origin.
-
-## 4. Backend Production Env
-
-Recommended `backend/.env`:
+Ví dụ đúng:
 
 ```env
-NODE_ENV=production
-HOST=127.0.0.1
-PORT=8000
-DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/okr_kpi_db
-JWT_SECRET=replace_with_long_random_secret
-JWT_EXPIRES_IN=1d
-FUNNY_ENABLED=true
-GEMINI_API_KEY=
-GEMINI_MODEL=gemini-1.5-flash
-GEMINI_TIMEOUT_MS=8000
+POSTGRES_PORT=5433
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/okr_kpi_db
 ```
 
-## 5. Reseed Demo Data
+## 4. Chẩn đoán nhanh trên VPS
+
+### Kiểm tra PostgreSQL trong Docker
 
 ```bash
-cd /var/www/okr-kpi/backend
-npm run seed
+cd /var/www/okr-kpi
+docker compose ps
 ```
 
-Demo users:
-- `admin@okr.local / Admin@123`
-- `manager.eng@okr.local / Manager@123`
-- `manager.sales@okr.local / Manager@123`
-- `manager.hr@okr.local / Manager@123`
-- `lan@okr.local / Employee@123`
-- `nam@okr.local / Employee@123`
-- `ha@okr.local / Employee@123`
+Nếu không có container nào hiện ra, nghĩa là PostgreSQL chưa chạy.
 
-## 6. Typical Release Steps On VPS
+### Kiểm tra env của backend
+
+```bash
+grep -n "DATABASE_URL\|HOST\|PORT\|JWT_SECRET" backend/.env
+```
+
+### Kiểm tra health của backend
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+### Kiểm tra log backend
+
+```bash
+sudo journalctl -u okr-kpi-backend -n 80 --no-pager
+```
+
+## 5. Các lỗi production thường gặp nhất
+
+- backend vẫn trỏ `5432` trong khi Docker PostgreSQL đang publish ở `5433`
+- container PostgreSQL bị tắt sau khi reboot server
+- frontend đã build lại nhưng backend chưa được restart
+- tài khoản demo cũ vẫn đang được dùng từ tài liệu cũ
+- mọi người tưởng seed sẽ tự chạy lại trên volume database cũ
+
+## 6. Những sự thật runtime cần nhớ
+
+- Docker Compose trong repo này chỉ quản lý PostgreSQL.
+- Backend và frontend không chạy bằng Docker Compose trong mô hình deploy hiện tại.
+- Các file trong `docker-entrypoint-initdb.d` chỉ chạy khi volume PostgreSQL được tạo mới.
+- `npm run seed` sẽ chủ động nạp lại schema và demo data.
+
+## 7. Bộ lệnh release chuẩn
+
+### Release thông thường
 
 ```bash
 cd /var/www/okr-kpi
 git pull
+docker compose up -d postgres
 cd backend && npm ci
 cd ../frontend && npm ci && npm run build
 sudo systemctl restart okr-kpi-backend
 sudo systemctl reload nginx
 ```
 
-## 7. Deploy Script Notes
-
-`deploy/update_app.sh` now:
-- checks required env files,
-- removes default nginx site on `--init` by default (can disable via `DISABLE_DEFAULT_NGINX_SITE=false`),
-- retries backend health check (`BACKEND_STARTUP_RETRIES`, default `30`) before failing.
-
-## 8. CI/CD Deploy Option
-
-If you want the VPS to update automatically after each push:
-
-1. Keep the project cloned on the VPS at `/var/www/okr-kpi`.
-2. Add GitHub Actions secrets:
-   - `VPS_HOST`
-   - `VPS_PORT`
-   - `VPS_USER`
-   - `VPS_SSH_KEY`
-   - `VPS_KNOWN_HOSTS`
-   - `APP_DIR` (optional)
-3. Push to `main`.
-
-The workflow in `.github/workflows/deploy.yml` will SSH into the VPS and run:
+### Nếu cần sửa manager link hoặc rating level cho môi trường cũ
 
 ```bash
-bash /var/www/okr-kpi/deploy/update_app.sh
+cd /var/www/okr-kpi/backend
+npm run backfill:manager-links
+npm run backfill:rating-levels
+sudo systemctl restart okr-kpi-backend
 ```
 
-Important:
-- This is CI/CD through GitHub Actions, not a webhook listener running on the VPS.
-- The deploy user should have permission to restart the backend service and reload Nginx.
-- If `package-lock.json` changes, the script already handles reinstalling dependencies with `npm ci`.
+## 8. Thứ tự ưu tiên khi đọc tài liệu
+
+Khi onboarding hoặc xử lý sự cố, nên đọc theo thứ tự sau:
+
+1. [README.md](./README.md)
+2. [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx)
+3. [DEPLOYMENT.md](./DEPLOYMENT.md)
+4. [ROLE_PERMISSIONS.md](./ROLE_PERMISSIONS.md)

@@ -1,70 +1,161 @@
-# OKR/KPI Database Architecture Notes
+﻿# Ghi Chú Kiến Trúc Database
 
-## 1) Why this redesign is stronger
+## 1. Định hướng database hiện tại
 
-- Standardized naming: all tables/columns use clear snake_case and plural table names (`okr_cycles`, `key_result_checkins`, `kpi_metrics`), removing ambiguity like `objective` vs `objectives` and typo-prone fields like `key_reult_id`.
-- Clean RBAC foundation: `roles` table with FK in `users` replaces loose string-role usage and allows safe role expansion later.
-- Authentication-ready model: `auth_sessions` supports refresh-token/session tracking (expiry, revoke, IP, user-agent) for real demo login/logout handling.
-- Enforced data quality with constraints:
-  - cycle date validity (`start_date <= end_date`)
-  - allowed status/state values via `CHECK`
-  - progress/value bounds (`0..100` where needed)
-  - KPI scope correctness (`employee` requires `owner_user_id`, `department` requires `department_id`)
-  - measurement direction consistency (`maintain` requires `target_value = start_value`)
-- Better relationship clarity:
-  - department manager (`departments.manager_user_id -> users.id`)
-  - user reporting line (`users.manager_user_id -> users.id`)
-  - objective hierarchy (`objectives.parent_objective_id`)
-- Consistent auditing and lifecycle support:
-  - `audit_logs` table for action tracking
-  - `deleted_at` in `users` for soft delete
-  - auto-maintained `updated_at` using trigger function `fn_set_updated_at`
-- Dashboard-ready SQL views included in schema:
-  - `vw_objective_progress`
-  - `vw_cycle_dashboard_stats`
-  - `vw_department_progress`
-  - `vw_risky_key_results`
-- Performance readiness: indexes added across common filter/join paths (cycle, status, owner, department, check-in dates, logs).
+Database hiện hỗ trợ đồng thời hai lớp dữ liệu:
 
-## 2) Core entity mapping to project scope
+- lớp OKR/KPI cũ được giữ lại để tương thích và phục vụ mở rộng về sau
+- lớp review tập trung đang phục vụ trực tiếp cho luồng `/workspace`
 
-- Authentication/users: `users`, `roles`, `auth_sessions`
-- Departments: `departments`
-- OKR cycles: `okr_cycles`
-- Objectives: `objectives`
-- Key Results: `key_results`
-- KPI metrics: `kpi_metrics`
-- Check-ins/progress updates: `key_result_checkins`, `kpi_checkins`
-- Dashboard statistics: views listed above
-- Role-based access: role FK model (`users.role_id -> roles.id`)
+Điều này có nghĩa là schema hiện tại không còn chỉ là một hệ thống theo dõi OKR truyền thống. Nó đã được mở rộng để phục vụ thêm chu kỳ đánh giá nhân sự, tiêu chí đánh giá, nhận xét, phê duyệt và lịch sử dự án.
 
-## 3) Seed data strategy
+## 2. Các nhóm bảng chính
 
-Seed includes:
-- 3 roles (`admin`, `manager`, `employee`)
-- 3 departments (`ENG`, `SAL`, `HR`) with managers
-- 7 users (admin + managers + employees)
-- 3 OKR cycles (`2026-Q1`, `2026-Q2`, `2026-Q3`)
-- realistic objectives/key results/check-ins
-- KPI metrics and KPI check-ins
-- initial audit log record
+### Nhóm định danh và truy cập
 
-Default demo login passwords (bcrypt-hashed in seed):
-- `admin@okr.local` / `Admin@123`
-- manager accounts (`manager.eng@okr.local`, `manager.sales@okr.local`, `manager.hr@okr.local`) / `Manager@123`
-- employee accounts (`lan@okr.local`, `nam@okr.local`, `ha@okr.local`) / `Employee@123`
+- `roles`
+- `users`
+- `auth_sessions`
 
-## 4) Files and usage
+Các vai trò seed hiện tại:
 
-- `database/schema.sql`: full DDL, constraints, triggers, indexes, views
-- `database/seed.sql`: deterministic demo seed for hackathon
+- `admin`
+- `hr`
+- `manager`
+- `employee`
 
-Suggested run order:
-1. apply `schema.sql`
-2. apply `seed.sql`
+### Nhóm cơ cấu tổ chức
 
-## 5) Intentional scope boundaries
+- `departments`
+- `projects`
+- `employee_projects`
 
-- No feature expansion outside OKR/KPI management.
-- No permission matrix table yet (kept practical for hackathon); RBAC is role-based and backend can map role -> allowed actions.
-- No heavy historical snapshot tables; progress history is handled through check-in tables.
+### Nhóm OKR/KPI cũ để tương thích
+
+- `okr_cycles`
+- `objectives`
+- `key_results`
+- `key_result_checkins`
+- `kpi_metrics`
+- `kpi_checkins`
+
+Các bảng này vẫn còn tồn tại vì backend vẫn đang mở các API hỗ trợ cho OKR/KPI. Tuy nhiên, đây không còn là luồng frontend chính ở thời điểm hiện tại.
+
+### Nhóm schema review đang dùng cho workspace
+
+- `review_periods`
+- `employee_reviews`
+- `employee_review_items`
+- `review_comments`
+- `review_approvals`
+
+Đây là nhóm bảng đang phục vụ trực tiếp cho quy trình đánh giá hiệu suất trên workspace.
+
+## 3. Workspace hiện dùng những gì
+
+### `review_periods`
+
+Lưu các khoảng thời gian đánh giá theo tháng, quý hoặc năm.
+
+### `employee_reviews`
+
+Lưu một hồ sơ đánh giá cho mỗi nhân sự theo từng chu kỳ, bao gồm:
+
+- trạng thái hồ sơ
+- liên kết quản lý phụ trách
+- liên kết phòng ban
+- tổng hệ số
+- tổng điểm
+- `rating_level`
+
+### `employee_review_items`
+
+Lưu các dòng tiêu chí trong hồ sơ đánh giá, bao gồm:
+
+- tên tiêu chí
+- mã dự án và tên dự án
+- mô tả
+- hệ số
+- phần trăm kế hoạch
+- phần trăm thực đạt
+- ghi chú minh chứng
+- ghi chú quản lý
+- trạng thái khóa
+
+### `review_comments`
+
+Lưu nhận xét do nhân viên, quản lý, HR hoặc người kết luận cuối cùng nhập vào.
+
+### `review_approvals`
+
+Lưu lịch sử luồng phê duyệt như:
+
+- `submit`
+- `manager_approve`
+- `hr_approve`
+- `approve`
+- `return`
+- `lock`
+- `unlock`
+
+## 4. Chiến lược seed hiện tại
+
+Seed hiện tại đã được căn chỉnh theo đúng trạng thái sản phẩm đang dùng.
+
+Seed bao gồm:
+
+- 4 role
+- 3 phòng ban
+- admin, HR, manager và employee
+- dữ liệu mẫu OKR để tương thích backend
+- dữ liệu review theo chu kỳ
+- lịch sử dự án của nhân sự
+
+Tài khoản demo hiện tại:
+
+- `ADM-001@company / Admin@123`
+- `MGR-ENG-001@company / Manager@123`
+- `MGR-SAL-001@company / Manager@123`
+- `MGR-HR-001@company / Manager@123`
+- `HR-001@company / Manager@123`
+- `EMP-ENG-001@company / Employee@123`
+- `EMP-SAL-001@company / Employee@123`
+- `EMP-HR-001@company / Employee@123`
+
+## 5. Những quy tắc dữ liệu quan trọng
+
+- `manager_user_id` đã được sửa và có script backfill để vá môi trường cũ khi cần
+- `rating_level` được lưu theo dạng chuẩn tiếng Anh
+- các field ngày được kỳ vọng trả ra từ backend theo định dạng `YYYY-MM-DD`
+- dữ liệu nghiệp vụ mới nên giữ bằng tiếng Anh để đảm bảo tính nhất quán giữa các môi trường
+
+## 6. Ghi chú vận hành
+
+### Reseed môi trường mới hoàn toàn
+
+```bash
+cd backend
+npm run seed
+```
+
+### Vá môi trường cũ mà không reset toàn bộ database
+
+```bash
+npm run backfill:manager-links
+npm run backfill:rating-levels
+```
+
+## 7. Các file nguồn chuẩn
+
+- `database/schema.sql`: nguồn chuẩn cho schema
+- `database/seed.sql`: dữ liệu mẫu ổn định
+- `database/database.sql`: snapshot kết hợp để tra cứu nhanh
+
+Nếu cần hiểu nghiệp vụ tổng thể, hãy xem thêm:
+
+- [README.md](../README.md)
+- [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md](../TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md)
+- [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx](../TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx)
+
+
+

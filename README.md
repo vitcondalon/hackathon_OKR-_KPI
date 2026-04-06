@@ -1,62 +1,64 @@
-﻿# OKR / KPI HR Management System
+﻿# Hệ Thống Quản Lý OKR / KPI HR
 
-Detailed usage guide: `USER_GUIDE.md`
-Role permissions summary: `ROLE_PERMISSIONS.md`
+## Tài liệu chính
 
-Backend-first rebuild using:
-- Node.js + Express.js (JavaScript)
-- PostgreSQL
-- JWT auth + RBAC
-- Zod validation
-- bcryptjs + pg + dotenv + cors + helmet + morgan
+- Tài liệu Word chính: [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx)
+- Slide tóm tắt: [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_SLIDES.pptx](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_SLIDES.pptx)
+- Bản Markdown tổng hợp: [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md)
+- Bản nghiệp vụ rút gọn: [TAI_LIEU_NGHIEP_VU_HE_THONG.md](./TAI_LIEU_NGHIEP_VU_HE_THONG.md)
+- Tài liệu phân quyền: [ROLE_PERMISSIONS.md](./ROLE_PERMISSIONS.md)
+- Hướng dẫn sử dụng: [USER_GUIDE.md](./USER_GUIDE.md)
+- Hướng dẫn triển khai: [DEPLOYMENT.md](./DEPLOYMENT.md)
+- Ghi chú triển khai: [DEPLOY_NOTES.md](./DEPLOY_NOTES.md)
+- Ghi chú kỹ thuật database: [database/notes.md](./database/notes.md)
 
-## Repository Structure
+## Tổng quan hệ thống hiện tại
+
+Hệ thống hiện được tối giản về một luồng làm việc chính:
+
+- route frontend đang dùng: `/login`, `/workspace`, `*`
+- `workspace` là màn hình trung tâm để chọn nhân sự, chọn chu kỳ, cập nhật tiêu chí, nhận xét và phê duyệt
+- giao diện hỗ trợ hai ngôn ngữ cho phần nhãn hiển thị: `VI` và `EN`
+- dữ liệu nghiệp vụ mới được chuẩn hóa lưu ở dạng chuẩn tiếng Anh để tránh lệch dữ liệu giữa các môi trường
+- hệ thống phân quyền hiện hành gồm `admin`, `hr`, `manager`, `employee`
+- các API cũ như `objectives`, `key-results`, `kpis`, `checkins`, `dashboard` vẫn còn ở backend cho mục đích tương thích và mở rộng, nhưng luồng frontend chính hiện tập trung vào workspace đánh giá nhân sự
+
+Các tính năng đã loại khỏi luồng đang dùng:
+
+- `Trợ lý Funny`
+- chuyển giao diện sáng/tối
+- sidebar nhiều module kiểu dashboard cũ
+
+## Cấu trúc repo
 
 ```text
 backend/
   src/
-    config/
-      env.js
-      db.js
-    middlewares/
-      authMiddleware.js
-      roleMiddleware.js
-      errorMiddleware.js
-      validate.js
-    controllers/
-      authController.js
-      userController.js
-      departmentController.js
-      cycleController.js
-      objectiveController.js
-      keyResultController.js
-      checkinController.js
-      kpiController.js
-      dashboardController.js
-    services/
-      authService.js
-      progressService.js
-      dashboardService.js
-    routes/
-      authRoutes.js
-      userRoutes.js
-      departmentRoutes.js
-      cycleRoutes.js
-      objectiveRoutes.js
-      keyResultRoutes.js
-      checkinRoutes.js
-      kpiRoutes.js
-      dashboardRoutes.js
-    utils/
-      jwt.js
-      password.js
-      response.js
-      aiSanitizer.js
     app.js
     server.js
+    config/
+    controllers/
+    docs/
+    middlewares/
+    routes/
+    services/
+    utils/
   scripts/
     seed.js
+    backfillManagerLinks.js
+    backfillRatingLevels.js
   .env
+  .env.example
+
+frontend/
+  src/
+    App.jsx
+    api/
+    components/
+    contexts/
+    pages/
+    routes/
+    styles/
   .env.example
 
 database/
@@ -64,60 +66,63 @@ database/
   seed.sql
   database.sql
   notes.md
+
+deploy/
+  nginx/
+  systemd/
+  update_app.sh
 ```
 
-## Database Source of Truth
+## Nguồn chuẩn cho database
 
-Primary DB files:
-- `database/schema.sql`: full schema, constraints, trigger, indexes, views
-- `database/seed.sql`: deterministic demo data
-- `database/database.sql`: combined schema + seed snapshot
+- `database/schema.sql`: schema chính
+- `database/seed.sql`: dữ liệu mẫu ổn định
+- `database/database.sql`: snapshot schema + seed để tra cứu nhanh
 
-`docker-compose.yml` mounts:
-- `database/schema.sql` -> `01-schema.sql`
-- `database/seed.sql` -> `02-seed.sql`
+`docker-compose.yml` hiện chỉ chạy PostgreSQL:
 
-## Backend Env
+- service: `postgres`
+- container: `okr_kpi_postgres`
+- root `.env` local hiện đang cấu hình cổng `5433`
 
-Use only these variables in `backend/.env`:
+## Cấu hình môi trường local
+
+Root `.env` hiện tại:
+
+```env
+POSTGRES_DB=okr_kpi_db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_PORT=5433
+TZ=Asia/Ho_Chi_Minh
+```
+
+`backend/.env` local mẫu:
 
 ```env
 NODE_ENV=development
-PORT=8000
 HOST=0.0.0.0
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/okr_kpi_db
+PORT=8000
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/okr_kpi_db
 JWT_SECRET=change_me_to_a_long_random_secret
 JWT_EXPIRES_IN=1d
 ```
 
-## Run PostgreSQL (Docker)
+Lưu ý rất quan trọng:
 
-1. Copy docker env template:
+- `DATABASE_URL` trong `backend/.env` phải dùng đúng cổng đang map ở root `.env`
+- nếu root `.env` để `POSTGRES_PORT=5433` mà backend vẫn trỏ `5432`, backend sẽ không kết nối được database
 
-```bash
-cp .env.docker.example .env
-```
+## Chạy local
 
-2. Start database:
+### 1. Khởi động PostgreSQL
 
 ```bash
 docker compose up -d postgres
-```
-
-3. Check status:
-
-```bash
 docker compose ps
 ```
 
-4. Re-init schema + seed (if needed):
-
-```bash
-docker compose down -v
-docker compose up -d postgres
-```
-
-## Run Backend
+### 2. Chạy backend
 
 ```bash
 cd backend
@@ -125,35 +130,31 @@ npm install
 npm run dev
 ```
 
-Production:
+### 3. Chạy frontend
 
 ```bash
-npm start
+cd frontend
+npm install
+npm run dev
 ```
 
-Health:
-- `GET /health`
-
-API prefix:
-- `http://localhost:8000/api`
-
-Primary frontend route:
-- `http://localhost:5173/workspace`
-
-## Seed Script
-
-If DB already running, you can reseed from backend:
+### 4. Build frontend production
 
 ```bash
-cd backend
-npm run seed
+cd frontend
+npm run build
 ```
 
-This script executes directly:
-- `../database/schema.sql`
-- `../database/seed.sql`
+## URL và điểm kiểm tra chính
 
-## Demo Accounts
+- health check backend: `GET /health`
+- Swagger UI: `http://localhost:8000/api/docs`
+- OpenAPI JSON: `http://localhost:8000/api/docs/openapi.json`
+- frontend local: `http://localhost:5173/login`
+- workspace local: `http://localhost:5173/workspace`
+- API prefix: `http://localhost:8000/api`
+
+## Tài khoản demo
 
 - `ADM-001@company / Admin@123`
 - `MGR-ENG-001@company / Manager@123`
@@ -164,46 +165,92 @@ This script executes directly:
 - `EMP-SAL-001@company / Employee@123`
 - `EMP-HR-001@company / Employee@123`
 
-You can also login using `employee_code` directly (for example `EMP-ENG-001`).
+Bạn cũng có thể đăng nhập bằng `employee_code` trực tiếp, ví dụ `EMP-ENG-001`.
 
-## API Coverage
+## Luồng nghiệp vụ đang dùng
 
-- Auth: `/api/auth/login`, `/api/auth/me`
-- Users: CRUD `/api/users`
-- Departments: CRUD `/api/departments`
-- Cycles: list/create/update `/api/cycles`
-- Objectives: CRUD `/api/objectives`
-- Key Results: CRUD `/api/key-results`
-- Check-ins: list/create `/api/checkins` (KR + KPI check-ins)
-- KPIs: CRUD `/api/kpis`
-- Dashboard:
-  - `/api/dashboard/summary`
-  - `/api/dashboard/progress`
-  - `/api/dashboard/risks`
-  - `/api/dashboard/top-performers`
-  - `/api/dashboard/charts`
-- Workspace (single-page flow):
-  - `GET /api/workspace/bootstrap`
-  - `POST /api/workspace/periods`
-  - `POST /api/workspace/reviews`
-  - `POST /api/workspace/reviews/:reviewId/items`
-  - `PUT /api/workspace/reviews/:reviewId/items/:itemId`
-  - `POST /api/workspace/reviews/:reviewId/comments`
-  - `POST /api/workspace/reviews/:reviewId/actions`
-- Guides:
-  - `GET /api/guides/user-guide`
-  - `GET /api/guides/user-guide/view`
-  - `GET /api/guides/user-guide/download`
+### Đăng nhập
 
-## Notes
+- chấp nhận `email`, `username`, `employee_code`, hoặc `employee_code@company`
+- đăng nhập thành công sẽ vào `/workspace`
 
-- Active runtime is Node/Express + PostgreSQL.
-- Legacy backend schema file `backend/src/db/init.sql` is marked deprecated and not used by runtime.
-- Frontend production API base URL must use `VITE_API_BASE_URL=/api`.
-- Detailed production instructions: `DEPLOY_NOTES.md`.
+### Workspace
 
-## Swagger
+- chọn nhân sự theo phạm vi quyền được phép thấy
+- chọn chu kỳ đánh giá
+- tạo chu kỳ và hồ sơ đánh giá nếu có quyền
+- cập nhật tiêu chí, mô tả, dự án, kế hoạch, thực đạt
+- thêm nhận xét, gửi duyệt, phê duyệt, khóa, mở khóa theo luồng phê duyệt
+- hiển thị biểu đồ snapshot, lịch sử đánh giá và lịch sử dự án
 
-- UI: http://localhost:8000/api/docs
-- OpenAPI JSON: http://localhost:8000/api/docs/openapi.json
+## Tóm tắt phân quyền
+
+- `admin`: quản trị tài khoản, reset mật khẩu, xem danh sách user toàn hệ thống, mở khóa hồ sơ, phê duyệt cuối cùng
+- `hr`: theo dõi đa phòng ban, tạo chu kỳ, tạo hồ sơ, phê duyệt HR, khóa hồ sơ
+- `manager`: tạo chu kỳ, tạo hồ sơ trong phạm vi phụ trách, nhận xét và phê duyệt cấp quản lý
+- `employee`: cập nhật hồ sơ của chính mình trong thời gian hiệu lực và gửi duyệt
+
+Xem chi tiết tại [ROLE_PERMISSIONS.md](./ROLE_PERMISSIONS.md).
+
+## API trọng tâm
+
+### API đang phục vụ frontend hiện tại
+
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+- `GET /api/workspace/bootstrap`
+- `POST /api/workspace/periods`
+- `POST /api/workspace/reviews`
+- `POST /api/workspace/reviews/:reviewId/items`
+- `PUT /api/workspace/reviews/:reviewId/items/:itemId`
+- `POST /api/workspace/reviews/:reviewId/comments`
+- `POST /api/workspace/reviews/:reviewId/actions`
+- `GET /api/users` và CRUD user: chỉ dành cho `admin`
+
+### API hỗ trợ vẫn còn ở backend
+
+- `departments`
+- `cycles`
+- `objectives`
+- `key-results`
+- `checkins`
+- `kpis`
+- `dashboard`
+- `guides`
+
+## Seed và backfill
+
+Reseed dữ liệu local:
+
+```bash
+cd backend
+npm run seed
+```
+
+Sửa liên kết manager cho DB cũ:
+
+```bash
+npm run backfill:manager-links
+```
+
+Chuẩn hóa `rating_level` sang dạng chuẩn tiếng Anh cho DB cũ:
+
+```bash
+npm run backfill:rating-levels
+```
+
+## Ghi chú triển khai
+
+- Docker compose hiện không build frontend/backend, chỉ quản lý PostgreSQL
+- `deploy/update_app.sh` sẽ pull code, cài dependencies, build frontend, restart backend, reload nginx
+- script deploy không tự `docker compose up -d postgres`, nên VPS phải có PostgreSQL container đang chạy sẵn hoặc được quản lý riêng
+
+## Thứ tự nên đọc tài liệu
+
+1. [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx)
+2. [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md)
+3. [ROLE_PERMISSIONS.md](./ROLE_PERMISSIONS.md)
+4. [DEPLOYMENT.md](./DEPLOYMENT.md)
+5. [DEPLOY_NOTES.md](./DEPLOY_NOTES.md)
+
 

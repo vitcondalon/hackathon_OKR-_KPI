@@ -1,71 +1,50 @@
-# DEBUG REPORT - OKR/KPI Backend
+﻿# Báo Cáo Debug Kỹ Thuật
 
-## 1) Scope and current state
-- Actual workspace: `C:\hackathon_OKR _KPI`
-- Active backend runtime: **Node.js + Express + PostgreSQL + JWT**.
-- Git checkpoint branch created before major debugging: `debug-checkpoint-20260330-...` (base short SHA: `3d4751b`).
+## Mục đích file này
 
-## 2) Issues found
-### Issue A: `password authentication failed for user "postgres"`
-- Symptom: `/api/auth/login` returned 500 with DB auth failure.
-- Evidence:
-  - PostgreSQL container was healthy.
-  - Local host PostgreSQL occupied port `5432`, causing target conflict.
-- Root cause:
-  - Backend was connecting to the wrong PostgreSQL target due to port conflict.
-- Fix applied:
-  - Moved Docker PostgreSQL to port `5433`.
-  - Updated `backend/.env`:
-    `DATABASE_URL=postgresql://postgres:postgres@localhost:5433/okr_kpi_db`
-  - Added root `.env` with `POSTGRES_PORT=5433` for docker compose consistency.
-  - Reseeded database successfully.
+Đây là file ghi chú lịch sử debug và không còn là nguồn tài liệu nghiệp vụ hay triển khai chính của dự án.
 
-### Issue B: `inconsistent types deduced for parameter $1`
-- Symptom:
-  - `POST /api/key-results` and `POST /api/checkins` returned 500.
-- Evidence from stack trace:
-  - Error thrown in `recalculateObjectiveProgress` (`backend/src/services/progressService.js`).
-  - PostgreSQL error code `42P08`, detail `integer versus numeric`.
-- Root cause:
-  - The same SQL placeholder was inferred with conflicting numeric types in update logic.
-- Fix applied:
-  - Added explicit numeric casting for progress update parameters.
+Nếu cần tài liệu hiện hành, hãy ưu tiên:
 
-## 3) Files changed
-- `backend/src/services/progressService.js`
-- `backend/.env`
-- `.env`
+- [README.md](./README.md)
+- [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx)
+- [DEPLOYMENT.md](./DEPLOYMENT.md)
+- [DEPLOY_NOTES.md](./DEPLOY_NOTES.md)
 
-## 4) Verification steps
-### 4.1 Startup and database
-- Direct PostgreSQL connectivity test with `pg`: PASS on `localhost:5433`.
-- `npm run seed`: PASS.
-- `GET /health`: PASS.
+## Những lỗi lớn đã từng xảy ra và đã được xử lý
 
-### 4.2 Core flow verification
-1. `POST /auth/login` -> PASS
-2. `GET /auth/me` -> PASS
-3. `POST /departments` -> PASS
-4. `POST /cycles` -> PASS
-5. `POST /objectives` -> PASS
-6. `POST /key-results` -> PASS
-7. `POST /checkins` -> PASS
-8. `GET /dashboard/summary` -> PASS
+### 1. Lệch cổng database giữa Docker và backend
 
-### 4.3 Error case verification
-- Wrong login password -> `401 Invalid credentials`
-- Missing token for `/auth/me` -> `401 Unauthorized`
-- Invalid payload (`department.name` empty) -> `400 Validation error`
-- Not found resource (`/objectives/999999`) -> `404 Objective not found`
+Từng xảy ra tình huống:
 
-## 5) Frontend adjustments needed
-- If frontend still shows DB auth errors, ensure backend process is restarted after `.env` changes.
-- Login payload should be:
-  - `identifier: admin@okr.local`
-  - `password: Admin@123`
-- Bearer token format must be:
-  - `Authorization: Bearer <token>`
+- root `.env` map PostgreSQL sang `5433`
+- `backend/.env` vẫn trỏ `5432`
 
-## 6) Remaining risks
-- Worktree is heavily dirty (large migration history); baseline branch alignment is recommended before release.
-- Port `5432` is still occupied by local PostgreSQL; keeping Docker DB on `5433` avoids conflicts.
+Hậu quả:
+
+- đăng nhập lỗi
+- backend không kết nối được database
+- dữ liệu không tải ra workspace
+
+### 2. Liên kết manager trong seed bị sai
+
+Seed cũ từng khiến `manager_user_id` không được gắn đúng cho user. Điều này đã được sửa bằng:
+
+- điều chỉnh `database/seed.sql`
+- thêm `npm run backfill:manager-links`
+
+### 3. `rating_level` legacy không đồng nhất
+
+Dữ liệu cũ từng dùng các code kiểu Việt như `tot`, `dat`, `khong_dat`. Hiện tại đã được chuẩn hóa sang dạng chuẩn tiếng Anh và có script:
+
+- `npm run backfill:rating-levels`
+
+### 4. Field ngày trả ra timestamp có timezone
+
+Các field ngày từng bị trả ra dạng timestamp ISO thay vì `YYYY-MM-DD`. Hiện backend đã chuẩn hóa contract ngày cho các luồng chính.
+
+## Cách dùng file này
+
+Hãy xem file này như nhật ký kỹ thuật tham khảo. Không dùng file này làm nguồn hướng dẫn chính cho người dùng hoặc quy trình deploy mới.
+
+
