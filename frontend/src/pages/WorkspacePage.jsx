@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { workspaceApi } from '../api/workspaceApi';
 import { usersApi } from '../api/usersApi';
 import { departmentsApi } from '../api/departmentsApi';
 import { apiErrorMessage } from '../api/helpers';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../contexts/LocaleContext';
+import AppModeTabs from '../components/layout/AppModeTabs';
 
 const statusClass = {
   draft: 'bg-slate-100 text-slate-700 border-slate-300',
@@ -597,9 +597,8 @@ function getWindowState(startDate, endDate) {
 }
 
 function WorkspacePage() {
-  const { user, logout } = useAuth();
-  const { locale, setLocale } = useLocale();
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { locale } = useLocale();
   const t = copy[locale] || copy.vi;
   const panelClass = 'ui-panel';
   const roleOptions = ['employee', 'manager', 'hr', 'admin'];
@@ -976,32 +975,7 @@ function WorkspacePage() {
               </p>
               <p className="mt-2 text-sm text-amber-700">{t.businessEnglishNotice}</p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 rounded-[1rem] border border-slate-200/90 bg-white/85 p-1.5 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setLocale('vi')}
-                className={`rounded-lg border px-3 py-2 text-sm font-semibold ${locale === 'vi' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-700'}`}
-              >
-                VI
-              </button>
-              <button
-                type="button"
-                onClick={() => setLocale('en')}
-                className={`rounded-lg border px-3 py-2 text-sm font-semibold ${locale === 'en' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-700'}`}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  logout();
-                  navigate('/login');
-                }}
-                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700"
-              >
-                {t.logout}
-              </button>
-            </div>
+            <AppModeTabs active="kpi" />
           </div>
 
           {error ? <p className="mt-4 rounded-[1rem] border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700">{error}</p> : null}

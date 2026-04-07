@@ -9,6 +9,12 @@ Mô hình triển khai hiện tại của hệ thống gồm:
 - frontend được build ra thư mục `frontend/dist`
 - Nginx phục vụ frontend tĩnh và proxy `/api` sang backend
 
+Frontend sau khi build sẽ phục vụ cùng lúc ba route nghiệp vụ chính:
+
+- `/login`
+- `/workspace` cho KPI
+- `/okr` cho OKR basic
+
 ## Quy tắc triển khai quan trọng
 
 `deploy/update_app.sh` không tự khởi động PostgreSQL cho bạn.
@@ -18,7 +24,7 @@ Mô hình triển khai hiện tại của hệ thống gồm:
 - container `postgres` đã chạy sẵn
 - hoặc PostgreSQL được quản lý ở nơi khác và `DATABASE_URL` đang trỏ đúng tới instance đó
 
-Nếu `docker compose ps` không thấy container database đang chạy, backend sẽ không đăng nhập được và dữ liệu sẽ không tải ra workspace.
+Nếu `docker compose ps` không thấy container database đang chạy, backend sẽ không đăng nhập được và dữ liệu KPI hoặc OKR sẽ không tải ra giao diện.
 
 ## Các file môi trường cần có
 
@@ -130,6 +136,7 @@ Secret cần có:
 - proxy `/api` sang `http://127.0.0.1:8000`
 - chỉ public traffic qua `80/443`
 - không mở cổng backend trực tiếp ra internet
+- phục vụ cùng một frontend build cho `login`, `KPI` và `OKR`
 
 ## Thao tác với database
 

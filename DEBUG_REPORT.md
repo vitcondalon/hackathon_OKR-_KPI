@@ -24,7 +24,7 @@ Hậu quả:
 
 - đăng nhập lỗi
 - backend không kết nối được database
-- dữ liệu không tải ra workspace
+- dữ liệu KPI và OKR không tải ra giao diện
 
 ### 2. Liên kết manager trong seed bị sai
 
@@ -45,6 +45,6 @@ Các field ngày từng bị trả ra dạng timestamp ISO thay vì `YYYY-MM-DD`
 
 ## Cách dùng file này
 
-Hãy xem file này như nhật ký kỹ thuật tham khảo. Không dùng file này làm nguồn hướng dẫn chính cho người dùng hoặc quy trình deploy mới.
+Hãy xem file này như nhật ký kỹ thuật tham khảo. Không dùng file này làm nguồn hướng dẫn chính cho người dùng hoặc quy trình deploy mới. Nguồn tài liệu vận hành nên ưu tiên vẫn là `README`, tài liệu Word chính và bộ file hướng dẫn triển khai.
 
 

@@ -90,6 +90,7 @@ sudo journalctl -u okr-kpi-backend -n 80 --no-pager
 
 - Docker Compose trong repo này chỉ quản lý PostgreSQL.
 - Backend và frontend không chạy bằng Docker Compose trong mô hình deploy hiện tại.
+- Frontend build hiện phục vụ chung cho `/login`, `/workspace` và `/okr`.
 - Các file trong `docker-entrypoint-initdb.d` chỉ chạy khi volume PostgreSQL được tạo mới.
 - `npm run seed` sẽ chủ động nạp lại schema và demo data.
 

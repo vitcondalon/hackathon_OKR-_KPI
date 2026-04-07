@@ -71,7 +71,13 @@ export default function LoginPage() {
       await login(identifier, password);
       navigate('/workspace', { replace: true });
     } catch (err) {
-      setError(err?.response?.data?.message || t.loginFailed);
+      const message = err?.response?.data?.message
+        || (err?.code === 'ERR_NETWORK' || !err?.response
+          ? (locale === 'en'
+            ? 'Cannot connect to backend API. Please make sure the backend is running on port 8000.'
+            : 'Không kết nối được backend API. Hãy chắc chắn backend đang chạy ở cổng 8000.')
+          : t.loginFailed);
+      setError(message);
     } finally {
       setLoading(false);
     }
