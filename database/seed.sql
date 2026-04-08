@@ -792,7 +792,7 @@ WITH department_manager AS (
       WHEN 'HR' THEN (SELECT id FROM users WHERE username = 'manager.hr')
     END AS manager_user_id
   FROM departments d
-  WHERE d.code IN ('ENG', 'SAL')
+  WHERE d.code IN ('ENG', 'SAL', 'HR')
 ),
 generated AS (
   SELECT
@@ -855,7 +855,7 @@ WITH department_owner AS (
       WHEN 'HR' THEN (SELECT id FROM users WHERE username = 'hr.lead')
     END AS owner_user_id
   FROM departments d
-  WHERE d.code IN ('ENG', 'SAL')
+  WHERE d.code IN ('ENG', 'SAL', 'HR')
 ),
 generated AS (
   SELECT

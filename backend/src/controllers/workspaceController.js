@@ -507,12 +507,30 @@ async function bootstrap(req, res, next) {
     const activePeriod = periods.rows.find((item) => item.status === 'active') || periods.rows[0] || null;
     const requestedEmployeeId = Number(req.query.employee_id);
     const requestedPeriodId = Number(req.query.period_id);
-    const selectedEmployeeId = Number.isInteger(requestedEmployeeId) && employees.some((item) => Number(item.id) === requestedEmployeeId)
-      ? requestedEmployeeId
-      : (employees[0] ? Number(employees[0].id) : null);
     const selectedPeriodId = Number.isInteger(requestedPeriodId) && periods.rows.some((item) => Number(item.id) === requestedPeriodId)
       ? requestedPeriodId
       : (activePeriod ? Number(activePeriod.id) : null);
+
+    let reviewedEmployeeIds = new Set();
+    if (selectedPeriodId) {
+      const reviewedRows = await query(
+        `SELECT employee_user_id
+         FROM employee_reviews
+         WHERE period_id = $1`,
+        [selectedPeriodId]
+      );
+      reviewedEmployeeIds = new Set(reviewedRows.rows.map((row) => Number(row.employee_user_id)));
+    }
+
+    const fallbackEmployee =
+      employees.find((item) => reviewedEmployeeIds.has(Number(item.id))) ||
+      employees.find((item) => item.role === 'employee') ||
+      employees[0] ||
+      null;
+
+    const selectedEmployeeId = Number.isInteger(requestedEmployeeId) && employees.some((item) => Number(item.id) === requestedEmployeeId)
+      ? requestedEmployeeId
+      : (fallbackEmployee ? Number(fallbackEmployee.id) : null);
 
     let review = null;
     if (selectedEmployeeId && selectedPeriodId) {

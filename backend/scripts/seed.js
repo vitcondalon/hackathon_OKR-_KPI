@@ -32,7 +32,7 @@ async function run() {
     console.log('- Bulk employees: EMP-<DEPT>-002');
     console.log('- Bulk usernames: emp.<dept-lower>.002');
     console.log('- Bulk password: Employee@123');
-    console.log('- Departments with bulk data: ENG, SAL');
+    console.log('- Departments with bulk data: ENG, SAL, HR');
   } finally {
     client.release();
     await pool.end();
