@@ -728,6 +728,115 @@ VALUES
     (SELECT id FROM users WHERE username = 'manager.eng')
   );
 
+-- --------------------------------------------------------------------------
+-- Backfill review items for any seeded review that still has approval state
+-- but does not yet have detail rows. This keeps review/project details visible
+-- in the workspace for demo accounts across all seeded periods.
+-- --------------------------------------------------------------------------
+
+CREATE TEMP TABLE tmp_reviews_missing_items (
+  review_id BIGINT PRIMARY KEY,
+  employee_user_id BIGINT NOT NULL,
+  manager_user_id BIGINT,
+  review_status VARCHAR(30) NOT NULL,
+  total_score NUMERIC(6,2) NOT NULL,
+  project_code VARCHAR(80),
+  project_name VARCHAR(255),
+  contribution_note TEXT
+) ON COMMIT DROP;
+
+INSERT INTO tmp_reviews_missing_items (
+  review_id,
+  employee_user_id,
+  manager_user_id,
+  review_status,
+  total_score,
+  project_code,
+  project_name,
+  contribution_note
+)
+SELECT
+  er.id,
+  er.employee_user_id,
+  er.manager_user_id,
+  er.status,
+  COALESCE(er.total_score, 75.00),
+  latest_project.project_code,
+  latest_project.project_name,
+  latest_project.contribution_note
+FROM employee_reviews er
+LEFT JOIN LATERAL (
+  SELECT
+    p.code AS project_code,
+    p.name AS project_name,
+    ep.contribution_note
+  FROM employee_projects ep
+  JOIN projects p ON p.id = ep.project_id
+  WHERE ep.employee_user_id = er.employee_user_id
+  ORDER BY COALESCE(ep.released_at, CURRENT_DATE) DESC, ep.assigned_at DESC, ep.project_id DESC
+  LIMIT 1
+) latest_project ON TRUE
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM employee_review_items eri
+  WHERE eri.review_id = er.id
+);
+
+INSERT INTO employee_review_items (
+  review_id,
+  item_order,
+  category,
+  project_code,
+  project_name,
+  description,
+  weight,
+  plan_percent,
+  actual_percent,
+  achievement_score,
+  weighted_score,
+  evidence_note,
+  manager_note,
+  is_required,
+  is_locked,
+  updated_by_user_id
+)
+SELECT
+  r.review_id,
+  item_seed.item_order,
+  item_seed.category,
+  CASE WHEN item_seed.item_order = 1 THEN r.project_code ELSE NULL END,
+  CASE WHEN item_seed.item_order = 1 THEN r.project_name ELSE NULL END,
+  CASE
+    WHEN item_seed.item_order = 1 THEN COALESCE(r.contribution_note, 'Project contribution details were prepared for this review record.')
+    WHEN item_seed.item_order = 2 THEN 'Reviewed work quality, delivery consistency, and output completeness for the selected review cycle.'
+    ELSE 'Reviewed discipline, collaboration, and communication quality during the selected review cycle.'
+  END,
+  item_seed.weight,
+  100.00,
+  LEAST(100.00, r.total_score),
+  r.total_score,
+  ROUND(r.total_score * item_seed.weight, 2),
+  CASE
+    WHEN item_seed.item_order = 1 THEN 'Seed backfill linked this review to the latest assigned project history.'
+    WHEN item_seed.item_order = 2 THEN 'Seed backfill created a work-quality detail row so the review is fully visible in the workspace.'
+    ELSE 'Seed backfill created a collaboration detail row so the review is fully visible in the workspace.'
+  END,
+  CASE
+    WHEN item_seed.item_order = 1 THEN 'Backfilled review item to keep project details visible in demo data.'
+    WHEN item_seed.item_order = 2 THEN 'Backfilled review item to complete the review structure.'
+    ELSE 'Backfilled review item to complete the review structure.'
+  END,
+  TRUE,
+  r.review_status = 'locked',
+  COALESCE(r.manager_user_id, r.employee_user_id)
+FROM tmp_reviews_missing_items r
+CROSS JOIN (
+  VALUES
+    (1, 'Project KPI', 3.00::NUMERIC),
+    (2, 'Work Quality', 2.00::NUMERIC),
+    (3, 'Discipline and Collaboration', 2.00::NUMERIC)
+) AS item_seed(item_order, category, weight);
+
 INSERT INTO review_comments (review_id, comment_type, content, author_user_id)
 VALUES
   (

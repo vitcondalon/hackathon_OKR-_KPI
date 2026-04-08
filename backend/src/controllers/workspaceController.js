@@ -800,6 +800,76 @@ async function addReviewItem(req, res, next) {
   }
 }
 
+async function deleteReviewItem(req, res, next) {
+  try {
+    if (!canManage(req.user)) {
+      const error = new Error('Báº¡n khÃ´ng cÃ³ quyá»n thá»±c hiá»‡n thao tÃ¡c nÃ y');
+      error.status = 403;
+      throw error;
+    }
+
+    const reviewId = Number(req.params.reviewId);
+    const itemId = Number(req.params.itemId);
+    if (!Number.isInteger(reviewId) || reviewId <= 0 || !Number.isInteger(itemId) || itemId <= 0) {
+      const error = new Error('Tham chiáº¿u tiÃªu chÃ­ Ä‘Ã¡nh giÃ¡ khÃ´ng há»£p lá»‡');
+      error.status = 400;
+      throw error;
+    }
+
+    const [review, item] = await Promise.all([
+      getReviewSummary(reviewId),
+      query(`SELECT * FROM employee_review_items WHERE id = $1 AND review_id = $2`, [itemId, reviewId])
+    ]);
+    assertReviewAccess(req.user, review);
+    if (item.rowCount === 0) {
+      const error = new Error('KhÃ´ng tÃ¬m tháº¥y tiÃªu chÃ­ Ä‘Ã¡nh giÃ¡');
+      error.status = 404;
+      throw error;
+    }
+
+    const current = item.rows[0];
+    if (review.status === 'locked' && !isAdmin(req.user)) {
+      const error = new Error('Há»“ sÆ¡ Ä‘Ã¡nh giÃ¡ Ä‘Ã£ bá»‹ khÃ³a');
+      error.status = 403;
+      throw error;
+    }
+    if (current.is_locked && !isAdmin(req.user)) {
+      const error = new Error('TiÃªu chÃ­ Ä‘Ã¡nh giÃ¡ nÃ y Ä‘Ã£ bá»‹ khÃ³a');
+      error.status = 403;
+      throw error;
+    }
+
+    await query(
+      `DELETE FROM employee_review_items
+       WHERE id = $1
+         AND review_id = $2`,
+      [itemId, reviewId]
+    );
+
+    await query(
+      `WITH ordered AS (
+         SELECT
+           id,
+           ROW_NUMBER() OVER (ORDER BY item_order ASC, id ASC) AS next_order
+         FROM employee_review_items
+         WHERE review_id = $1
+       )
+       UPDATE employee_review_items eri
+       SET item_order = ordered.next_order
+       FROM ordered
+       WHERE eri.id = ordered.id
+         AND eri.item_order <> ordered.next_order`,
+      [reviewId]
+    );
+
+    await refreshReviewTotals(reviewId);
+    const response = await buildReviewPayload(reviewId);
+    return sendSuccess(res, response, 'ÄÃ£ xÃ³a tiÃªu chÃ­ Ä‘Ã¡nh giÃ¡');
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function updateReviewItem(req, res, next) {
   try {
     const reviewId = Number(req.params.reviewId);
@@ -1098,6 +1168,7 @@ module.exports = {
   createPeriod,
   createReview,
   addReviewItem,
+  deleteReviewItem,
   updateReviewItem,
   addReviewComment,
   applyReviewAction

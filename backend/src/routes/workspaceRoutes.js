@@ -5,6 +5,7 @@ const {
   createPeriod,
   createReview,
   addReviewItem,
+  deleteReviewItem,
   updateReviewItem,
   addReviewComment,
   applyReviewAction
@@ -18,6 +19,7 @@ router.get('/bootstrap', bootstrap);
 router.post('/periods', createPeriod);
 router.post('/reviews', createReview);
 router.post('/reviews/:reviewId/items', addReviewItem);
+router.delete('/reviews/:reviewId/items/:itemId', deleteReviewItem);
 router.put('/reviews/:reviewId/items/:itemId', updateReviewItem);
 router.post('/reviews/:reviewId/comments', addReviewComment);
 router.post('/reviews/:reviewId/actions', applyReviewAction);

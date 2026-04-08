@@ -77,6 +77,8 @@ const copy = {
     itemLockedAt: 'Khóa lúc',
     notUpdatedYet: 'Chưa phát sinh cập nhật',
     save: 'Lưu',
+    deleteItem: 'Xóa',
+    confirmDeleteItem: 'Bạn có chắc muốn xóa tiêu chí này không?',
     addItem: 'Thêm tiêu chí',
     newItem: 'Tiêu chí mới',
     shortDesc: 'Mô tả ngắn',
@@ -162,6 +164,7 @@ const copy = {
       createReview: 'Không tạo được hồ sơ đánh giá',
       addItem: 'Không thêm được tiêu chí',
       saveItem: 'Không lưu được tiêu chí',
+      deleteItem: 'Không xóa được tiêu chí',
       addComment: 'Không thêm được nhận xét',
       action: 'Thao tác thất bại',
       createUser: 'Không tạo được tài khoản',
@@ -227,6 +230,8 @@ const copy = {
     itemLockedAt: 'Locked at',
     notUpdatedYet: 'No update recorded yet',
     save: 'Save',
+    deleteItem: 'Delete',
+    confirmDeleteItem: 'Are you sure you want to delete this criteria item?',
     addItem: 'Add criteria',
     newItem: 'New criteria',
     shortDesc: 'Short description',
@@ -312,6 +317,7 @@ const copy = {
       createReview: 'Unable to create review',
       addItem: 'Unable to add item',
       saveItem: 'Unable to save item',
+      deleteItem: 'Unable to delete item',
       addComment: 'Unable to add comment',
       action: 'Action failed',
       createUser: 'Unable to create account',
@@ -319,6 +325,9 @@ const copy = {
     }
   }
 };
+
+copy.vi.emptyItemsHint = 'Ho so nay da co trang thai danh gia nhung chua co tieu chi chi tiet trong du lieu hien tai. Hay chay lai seed de dong bo du lieu demo.';
+copy.en.emptyItemsHint = 'This review already has an approval status, but the current dataset does not include detailed criteria rows yet. Rerun the seed to sync demo data.';
 
 function LockBadge({ label }) {
   return (
@@ -858,6 +867,22 @@ function WorkspacePage() {
     }
   }
 
+  async function deleteItem(itemId) {
+    if (!review) return;
+    if (!window.confirm(t.confirmDeleteItem)) return;
+
+    setBusy(true);
+    setError('');
+    try {
+      await workspaceApi.removeItem(review.id, itemId);
+      await refreshCurrent();
+    } catch (err) {
+      setError(apiErrorMessage(err, t.fallback.deleteItem));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function addComment(event) {
     event.preventDefault();
     if (!review || !commentText.trim()) return;
@@ -1233,13 +1258,32 @@ function WorkspacePage() {
                             )}
                           </td>
                           <td className="border border-slate-200 px-2 py-2">
-                            <button type="button" onClick={() => saveItem(item.id)} className="rounded-md bg-slate-900 px-2 py-1 text-xs font-semibold text-white" disabled={busy || disabled}>
-                              {t.save}
-                            </button>
+                            <div className="flex flex-wrap gap-2">
+                              <button type="button" onClick={() => saveItem(item.id)} className="rounded-md bg-slate-900 px-2 py-1 text-xs font-semibold text-white" disabled={busy || disabled}>
+                                {t.save}
+                              </button>
+                              {canManage ? (
+                                <button
+                                  type="button"
+                                  onClick={() => deleteItem(item.id)}
+                                  className="rounded-md bg-red-600 px-2 py-1 text-xs font-semibold text-white"
+                                  disabled={busy || disabled}
+                                >
+                                  {t.deleteItem}
+                                </button>
+                              ) : null}
+                            </div>
                           </td>
                         </tr>
                       );
                     })}
+                    {(review.items || []).length === 0 ? (
+                      <tr>
+                        <td colSpan={11} className="border border-slate-200 px-3 py-6 text-sm text-amber-700">
+                          {t.emptyItemsHint}
+                        </td>
+                      </tr>
+                    ) : null}
                   </tbody>
                 </table>
               </div>
