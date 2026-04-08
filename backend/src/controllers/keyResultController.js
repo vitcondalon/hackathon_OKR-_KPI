@@ -109,13 +109,18 @@ function mapKeyResultRow(row) {
 
 async function listKeyResults(req, res, next) {
   try {
-    const { objective_id, status, owner_id, owner_user_id } = req.query;
+    const { objective_id, cycle_id, status, owner_id, owner_user_id } = req.query;
     const values = [];
     const conditions = [];
 
     if (objective_id) {
       values.push(Number(objective_id));
       conditions.push(`kr.objective_id = $${values.length}`);
+    }
+
+    if (cycle_id) {
+      values.push(Number(cycle_id));
+      conditions.push(`o.cycle_id = $${values.length}`);
     }
 
     if (status) {

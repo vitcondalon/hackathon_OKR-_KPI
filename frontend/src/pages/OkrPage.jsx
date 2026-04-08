@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import Card from '../components/common/Card';
+import { useDeferredValue } from 'react';
 import Button from '../components/common/Button';
 import { okrApi } from '../api/okrApi';
 import { workspaceApi } from '../api/workspaceApi';
@@ -248,6 +249,7 @@ export default function OkrPage() {
   const [objectiveForm, setObjectiveForm] = useState(blankObjective);
   const [keyResultForm, setKeyResultForm] = useState(blankKeyResult);
   const [checkinForm, setCheckinForm] = useState(blankCheckin);
+  const deferredSearchKeyword = useDeferredValue(searchKeyword);
 
   const canCreateCycle = user?.role === 'admin' || user?.role === 'manager';
 
@@ -263,9 +265,16 @@ export default function OkrPage() {
     [cycles, selectedCycleId]
   );
 
+  const displayedObjectives = useMemo(() => {
+    const keyword = deferredSearchKeyword.trim().toLowerCase();
+    if (!keyword) return objectives;
+
+    return objectives.filter((item) => [item.code, item.title, item.description].join(' ').toLowerCase().includes(keyword));
+  }, [deferredSearchKeyword, objectives]);
+
   const selectedObjective = useMemo(
-    () => objectives.find((item) => String(item.id) === String(selectedObjectiveId)) || null,
-    [objectives, selectedObjectiveId]
+    () => displayedObjectives.find((item) => String(item.id) === String(selectedObjectiveId)) || null,
+    [displayedObjectives, selectedObjectiveId]
   );
 
   const selectedKeyResult = useMemo(
@@ -274,15 +283,15 @@ export default function OkrPage() {
   );
 
   const summary = useMemo(() => {
-    const keyResults = objectives.flatMap((item) => item.keyResults || []);
-    const avgProgress = objectives.length ? objectives.reduce((total, item) => total + safePercent(item.progress_percent), 0) / objectives.length : 0;
+    const keyResults = displayedObjectives.flatMap((item) => item.keyResults || []);
+    const avgProgress = displayedObjectives.length ? displayedObjectives.reduce((total, item) => total + safePercent(item.progress_percent), 0) / displayedObjectives.length : 0;
     return {
-      objectives: objectives.length,
+      objectives: displayedObjectives.length,
       keyResults: keyResults.length,
       avgProgress,
       atRisk: keyResults.filter((item) => item.status === 'at_risk').length
     };
-  }, [objectives]);
+  }, [displayedObjectives]);
 
   async function loadBoard({ initial = false } = {}) {
     if (!selectedCycleId) {
@@ -299,17 +308,24 @@ export default function OkrPage() {
       const params = { cycle_id: Number(selectedCycleId) };
       if (selectedOwnerId) params.owner_user_id = Number(selectedOwnerId);
 
-      const objectiveRows = await okrApi.listObjectives(params);
-      const keyword = searchKeyword.trim().toLowerCase();
-      const filtered = (Array.isArray(objectiveRows) ? objectiveRows : []).filter((item) => {
-        if (!keyword) return true;
-        return [item.code, item.title, item.description].join(' ').toLowerCase().includes(keyword);
-      });
+      const [objectiveRows, keyResultRows] = await Promise.all([
+        okrApi.listObjectives(params),
+        okrApi.listKeyResults(params)
+      ]);
 
-      const keyResultGroups = await Promise.all(filtered.map((item) => okrApi.listKeyResults({ objective_id: item.id })));
-      const enriched = filtered.map((item, index) => ({ ...item, keyResults: Array.isArray(keyResultGroups[index]) ? keyResultGroups[index] : [] }));
+      const keyResultsByObjectiveId = new Map();
+      for (const item of Array.isArray(keyResultRows) ? keyResultRows : []) {
+        const key = String(item.objective_id);
+        const bucket = keyResultsByObjectiveId.get(key) || [];
+        bucket.push(item);
+        keyResultsByObjectiveId.set(key, bucket);
+      }
+
+      const enriched = (Array.isArray(objectiveRows) ? objectiveRows : []).map((item) => ({
+        ...item,
+        keyResults: keyResultsByObjectiveId.get(String(item.id)) || []
+      }));
       setObjectives(enriched);
-      setSelectedObjectiveId((current) => (current && enriched.some((item) => String(item.id) === String(current)) ? current : enriched[0] ? String(enriched[0].id) : ''));
     } catch (err) {
       setError(apiErrorMessage(err, t.fallback.load));
     } finally {
@@ -330,6 +346,10 @@ export default function OkrPage() {
 
         const defaultCycle = resolvedCycles.find((item) => item.status === 'active') || resolvedCycles[0] || null;
         setSelectedCycleId(defaultCycle ? String(defaultCycle.id) : '');
+        if (!defaultCycle) {
+          setLoading(false);
+          setHasLoadedBoard(true);
+        }
         if (user?.role === 'employee') {
           setSelectedOwnerId(String(user.id));
           setObjectiveForm((current) => ({ ...current, owner_user_id: String(user.id) }));
@@ -347,7 +367,17 @@ export default function OkrPage() {
     if (selectedCycleId) {
       loadBoard({ initial: !hasLoadedBoard });
     }
-  }, [hasLoadedBoard, searchKeyword, selectedCycleId, selectedOwnerId]);
+  }, [hasLoadedBoard, selectedCycleId, selectedOwnerId]);
+
+  useEffect(() => {
+    setSelectedObjectiveId((current) => (
+      current && displayedObjectives.some((item) => String(item.id) === String(current))
+        ? current
+        : displayedObjectives[0]
+        ? String(displayedObjectives[0].id)
+        : ''
+    ));
+  }, [displayedObjectives]);
 
   useEffect(() => {
     if (!selectedObjective) {
@@ -535,8 +565,8 @@ export default function OkrPage() {
 
             <Card title={t.objectiveList}>
               <div className="space-y-4">
-                {objectives.length === 0 ? <div className="rounded-[1rem] border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500">{t.noObjectives}</div> : null}
-                {objectives.map((objective) => {
+                {displayedObjectives.length === 0 ? <div className="rounded-[1rem] border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500">{t.noObjectives}</div> : null}
+                {displayedObjectives.map((objective) => {
                   const activeObjective = String(objective.id) === String(selectedObjectiveId);
                   return (
                     <article key={objective.id} className={`rounded-[1.25rem] border p-4 ${activeObjective ? 'border-blue-300 bg-blue-50/50' : 'border-slate-200 bg-white'}`}>
