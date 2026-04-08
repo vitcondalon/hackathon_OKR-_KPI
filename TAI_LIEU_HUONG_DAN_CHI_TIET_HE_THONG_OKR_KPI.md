@@ -2,137 +2,196 @@
 
 ## 1. Mục đích tài liệu
 
-Tài liệu này được viết cho người mới tiếp nhận hệ thống, kể cả khi chưa biết gì về sản phẩm trước đó.
+Tài liệu này là bản hướng dẫn sử dụng chi tiết theo trạng thái hệ thống hiện tại, dùng cho:
 
-Mục tiêu của tài liệu:
+- đội vận hành nội bộ;
+- đội demo/hackathon;
+- người dùng mới tiếp nhận hệ thống.
 
-- giúp hiểu hệ thống đang dùng để làm gì
-- giúp hiểu từng vai trò được làm gì và không được làm gì
-- giúp hiểu từng khu trên giao diện và từng trường dữ liệu quan trọng
-- giúp hiểu luồng KPI từ lúc tạo đến lúc khóa
-- giúp hiểu trang OKR basic đang hoạt động như thế nào
-- giúp hiểu các điểm mạnh, giới hạn và lưu ý vận hành thực tế
+Mục tiêu:
 
-## 2. Hệ thống này dùng để làm gì
+1. Thống nhất cách hiểu nghiệp vụ KPI và OKR.
+2. Hướng dẫn thao tác đúng theo vai trò.
+3. Giảm lỗi demo do sai luồng hoặc sai phân quyền.
 
-Đây là hệ thống phục vụ hai nhu cầu nghiệp vụ chính trong doanh nghiệp:
+## 2. Phạm vi hệ thống
 
-- `KPI` tại `/workspace`: đánh giá hiệu suất nhân sự theo chu kỳ tháng, quý hoặc năm
-- `OKR` tại `/okr`: theo dõi objective, key result và check-in tiến độ ở mức cơ bản
+Hệ thống gồm hai không gian nghiệp vụ chính:
 
-Nói ngắn gọn:
+1. `KPI Workspace` tại `/workspace`.
+2. `OKR Workspace` tại `/okr`.
 
-- KPI dùng để đánh giá và phê duyệt kết quả công việc theo kỳ
-- OKR dùng để theo dõi mục tiêu và tiến độ thực hiện mục tiêu
+Luồng truy cập chuẩn:
 
-## 3. Triết lý thiết kế hiện tại
+1. Đăng nhập tại `/login`.
+2. Đăng nhập thành công chuyển vào `/workspace`.
+3. Chuyển tab giữa `KPI` và `OKR` theo nhu cầu.
 
-Hệ thống được thiết kế theo hướng thực dụng cho nội bộ công ty:
+## 3. Vai trò người dùng
 
-- ít route
-- ít bước bấm
-- tách KPI và OKR để tránh rối
-- giao diện rõ, chữ dễ đọc, tải nhanh
-- không dùng dark mode trong luồng chính
-- không dùng AI hoặc funny assistant trong luồng chính
+Hệ thống có bốn vai trò:
 
-## 4. Các route chính
+- `admin`
+- `hr`
+- `manager`
+- `employee`
 
-- `/login`: đăng nhập
-- `/workspace`: không gian KPI
-- `/okr`: không gian OKR basic
+## 4. Ma trận phân quyền chính
 
-Người dùng đăng nhập thành công sẽ vào `/workspace`, sau đó có thể chuyển giữa `KPI` và `OKR` bằng tab điều hướng trên giao diện.
+| Chức năng | admin | hr | manager | employee |
+|---|---|---|---|---|
+| Truy cập `/workspace` | Có | Có | Có | Có |
+| Truy cập `/okr` | Có | Có | Có | Có |
+| Tạo chu kỳ KPI | Có | Có | Có | Không |
+| Tạo hồ sơ KPI | Có | Có | Có (đúng phạm vi) | Không |
+| `manager_approve` KPI | Có | Có | Có (đúng manager được gán) | Không |
+| `hr_approve`, `approve`, `lock` KPI | Có | Có | Không | Không |
+| `unlock` KPI | Có | Không | Không | Không |
+| Tạo chu kỳ OKR | Có | Không | Có | Không |
+| Tạo objective/KR/check-in | Có | Có | Có | Có (dữ liệu thuộc mình) |
+| Xem danh sách user `/api/users` | Có | Không | Không | Không |
+| Tạo user/reset mật khẩu | Có | Không | Không | Không |
 
-## 5. Các vai trò trong hệ thống
+## 5. Hướng dẫn chi tiết KPI Workspace (`/workspace`)
 
-Hệ thống hiện có 4 vai trò:
+## 5.1 Chọn nhân sự và chu kỳ
 
-1. `admin`
-2. `hr`
-3. `manager`
-4. `employee`
+1. Chọn nhân sự ở danh sách `Nhân sự được đánh giá`.
+2. Chọn chu kỳ ở danh sách `Chu kỳ đánh giá`.
+3. Hệ thống tải hồ sơ theo cặp `(nhân sự, chu kỳ)`.
 
-### 5.1 Admin
+Lưu ý trạng thái chưa có hồ sơ:
 
-Admin có thể:
+- giao diện hiển thị `Chưa tạo hồ sơ`;
+- vẫn hiển thị thông tin nhân sự và chu kỳ đang chọn;
+- tránh cảm giác mất dữ liệu khi đổi kỳ.
 
-- tạo user mới
-- reset mật khẩu
-- xem danh sách user toàn hệ thống
-- tạo chu kỳ KPI
-- tạo hồ sơ KPI
-- hỗ trợ mở khóa KPI đã khóa
-- phê duyệt cuối cùng hoặc khóa hồ sơ KPI
-- tạo chu kỳ OKR
-- theo dõi toàn bộ dữ liệu OKR
+## 5.2 Tạo chu kỳ KPI
 
-Admin là lớp quyền cuối cùng để xử lý ngoại lệ.
+1. Chọn loại chu kỳ: tháng/quý/năm.
+2. Nhập tên chu kỳ.
+3. Chọn mốc ngày bắt đầu (hệ thống tự chuẩn hóa theo loại kỳ).
+4. Nhấn `Khởi tạo chu kỳ`.
 
-### 5.2 HR
+## 5.3 Tạo hồ sơ KPI
 
-HR có thể:
+1. Chọn nhân sự.
+2. Chọn chu kỳ.
+3. Nhấn `Khởi tạo hồ sơ đánh giá cho nhân sự đã chọn`.
 
-- tạo hồ sơ KPI
-- theo dõi KPI liên phòng ban
-- thêm nhận xét HR
-- thực hiện `hr_approve`
-- thực hiện `approve`
-- khóa hồ sơ KPI
-- xem và cập nhật dữ liệu OKR cơ bản
+Ràng buộc:
 
-HR không có quyền:
+- mỗi cặp `(employee_user_id, period_id)` chỉ có một hồ sơ KPI.
 
-- CRUD user toàn hệ thống như admin
-- mở khóa KPI đã khóa
-- tạo chu kỳ OKR qua giao diện hiện tại
+## 5.4 Cập nhật tiêu chí đánh giá
 
-### 5.3 Manager
+Một tiêu chí KPI thường gồm:
 
-Manager có thể:
+- nhóm tiêu chí;
+- mã/tên dự án;
+- mô tả;
+- hệ số;
+- kế hoạch (%);
+- thực đạt (%);
+- minh chứng;
+- ghi chú quản lý.
 
-- xem KPI của nhân sự trong phạm vi phụ trách
-- tạo hồ sơ KPI cho nhân sự thuộc phạm vi mình quản lý
-- cập nhật ghi chú quản lý
-- thực hiện `manager_approve`
-- trả KPI về bằng `return`
-- tạo chu kỳ OKR cơ bản
-- tạo objective, key result và check-in ở trang OKR
+Ràng buộc quan trọng:
 
-Manager không có quyền:
+- tổng hệ số toàn hồ sơ phải `> 0` và `<= 7`;
+- hồ sơ `locked` bị chặn sửa (trừ khi admin mở khóa).
 
-- xem toàn bộ user qua `/api/users`
-- mở khóa KPI đã khóa
-- quản trị tài khoản user
+## 5.5 Nhận xét và lịch sử thao tác
 
-### 5.4 Employee
+Hệ thống lưu:
 
-Employee có thể:
+- nhận xét theo vai trò (`employee_self`, `manager`, `hr`, `final`);
+- lịch sử thao tác duyệt (`submit`, `manager_approve`, `hr_approve`, `approve`, `return`, `lock`, `unlock`).
 
-- xem KPI của chính mình
-- cập nhật mô tả công việc, tiến độ, minh chứng, dữ liệu dự án trong KPI
-- gửi nhận xét cá nhân
-- `submit` KPI để chuyển sang bước duyệt
-- xem objective hoặc key result thuộc mình
-- gửi check-in OKR trên dữ liệu thuộc mình
+## 5.6 Luồng trạng thái KPI
 
-Employee không có quyền:
+| Trạng thái | Mô tả |
+|---|---|
+| `draft` | Hồ sơ đang nhập liệu |
+| `employee_submitted` | Nhân viên đã gửi duyệt |
+| `manager_reviewed` | Quản lý đã duyệt |
+| `hr_reviewed` | HR đã duyệt |
+| `approved` | Hồ sơ đã phê duyệt |
+| `locked` | Hồ sơ đã khóa |
+| `returned` | Hồ sơ trả về để bổ sung |
 
-- tạo chu kỳ KPI
-- tạo hồ sơ KPI
-- đổi trọng số hoặc cấu trúc tiêu chí gốc
-- duyệt KPI của người khác
+Nguyên tắc kiểm soát:
 
-## 6. Cách đăng nhập
+- manager chỉ duyệt hồ sơ do mình phụ trách;
+- employee chỉ submit hồ sơ của chính mình;
+- `unlock` chỉ dành cho admin.
 
-Hệ thống chấp nhận các định danh sau:
+## 5.7 Quy tắc thời gian cho employee
 
-- mã nhân viên
-- mã nhân viên kèm `@company`
-- email hệ thống
-- username
+- employee chỉ chỉnh KPI của mình trong khoảng ngày hiệu lực của chu kỳ;
+- nếu chưa đến kỳ hoặc quá kỳ, backend chặn và trả lỗi nghiệp vụ.
 
-Tài khoản demo:
+## 6. Hướng dẫn chi tiết OKR Workspace (`/okr`)
+
+## 6.1 Luồng thao tác chuẩn
+
+1. Chọn hoặc tạo chu kỳ OKR.
+2. Tạo objective.
+3. Tạo key result cho objective.
+4. Tạo check-in để cập nhật tiến độ.
+
+## 6.2 Tạo objective
+
+Các trường chính:
+
+- `title`, `description`;
+- `cycle_id`;
+- `owner_user_id`;
+- `objective_type`;
+- `start_date`, `due_date`.
+
+Lưu ý quyền:
+
+- employee tạo objective cho chính mình;
+- role khác có thể tạo objective theo quyền được cấp.
+
+## 6.3 Tạo key result
+
+Các trường chính:
+
+- `objective_id`, `title`;
+- `direction` (`increase`, `decrease`, `maintain`);
+- `start_value`, `current_value`, `target_value`;
+- `measurement_unit`.
+
+Lưu ý quyền:
+
+- employee không được tạo KR vào objective không thuộc quyền của mình.
+
+## 6.4 Tạo check-in
+
+Check-in hỗ trợ cập nhật:
+
+- giá trị sau cập nhật;
+- ngày check-in;
+- mức độ tự tin;
+- ghi chú cập nhật;
+- blocker (nếu có).
+
+Ràng buộc:
+
+- phải có `note` hoặc `update_note`;
+- sai quyền trả `403`, sai dữ liệu trả `400`.
+
+## 7. Quy tắc dữ liệu và ngôn ngữ
+
+Để đồng bộ giữa local, seed và production:
+
+- dữ liệu nghiệp vụ mới nên nhập bằng tiếng Anh;
+- tên riêng nhân sự giữ nguyên theo thực tế;
+- giao diện có thể hiển thị song ngữ `VI/EN`.
+
+## 8. Tài khoản demo chuẩn
 
 - `ADM-001@company / Admin@123`
 - `MGR-ENG-001@company / Manager@123`
@@ -143,208 +202,49 @@ Tài khoản demo:
 - `EMP-SAL-001@company / Employee@123`
 - `EMP-HR-001@company / Employee@123`
 
-Nếu màn hình login báo không kết nối được API, cần kiểm tra backend local có đang chạy ở cổng `8000` hay không.
+## 9. Checklist chạy nhanh trước demo
 
-## 7. Bố cục trang KPI tại `/workspace`
+- [ ] Chạy `backend` seed thành công.
+- [ ] Chạy build `frontend` thành công.
+- [ ] Chạy smoke API pass toàn bộ case.
+- [ ] Kiểm tra `/workspace`: đổi nhân sự, đổi chu kỳ, không rơi trạng thái trống khó hiểu.
+- [ ] Kiểm tra `/okr`: tạo objective, KR, check-in đúng quyền.
 
-Trang KPI gồm các khu chính:
+Lệnh tham chiếu:
 
-- khu tiêu đề hệ thống và chuyển ngôn ngữ
-- khu chọn nhân sự và chu kỳ đánh giá
-- khu thiết lập chu kỳ KPI
-- khối thông tin tóm tắt hồ sơ nhân sự
-- khối snapshot để nhìn nhanh tình trạng hồ sơ
-- bảng tiêu chí đánh giá
-- khối nhận xét và thao tác phê duyệt
-- lịch sử công tác và lịch sử đánh giá
-- khu quản trị tài khoản dành riêng cho admin
+```bash
+cd backend
+npm.cmd run seed
 
-## 8. Bố cục trang OKR tại `/okr`
+cd ../frontend
+npm.cmd run build
 
-Trang OKR gồm các khu chính:
+cd ..
+powershell -ExecutionPolicy Bypass -File tools/smoke_api.ps1
+```
 
-- bộ lọc chu kỳ OKR và người phụ trách
-- khối tổng quan nhanh về objective và key result
-- danh sách objective
-- danh sách key result nằm trong từng objective
-- form tạo chu kỳ OKR
-- form tạo objective
-- form tạo key result
-- form gửi check-in tiến độ
-- lịch sử check-in
+## 10. Xử lý sự cố thường gặp
 
-Trang OKR hiện được làm theo hướng basic, thực dụng, không đi theo workflow phức tạp như KPI.
+1. Không gọi được API:
+   - kiểm tra backend đang chạy `http://127.0.0.1:8000`.
+2. Đổi chu kỳ không có hồ sơ:
+   - kiểm tra đã có review cho cặp nhân sự-kỳ chưa;
+   - nếu cần chạy lại seed.
+3. Thao tác bị từ chối:
+   - kiểm tra role hiện tại và phạm vi dữ liệu.
 
-## 9. Luồng KPI tổng quát
+## 11. Endpoint tài liệu online
 
-Một vòng đời KPI thường diễn ra như sau:
+Backend cung cấp endpoint tài liệu:
 
-1. Admin, HR hoặc Manager tạo chu kỳ đánh giá
-2. Admin, HR hoặc Manager tạo hồ sơ KPI cho nhân sự
-3. Hệ thống sinh sẵn các tiêu chí mặc định
-4. Employee cập nhật dữ liệu công việc
-5. Employee gửi hồ sơ bằng `submit`
-6. Manager xem và duyệt bằng `manager_approve`, hoặc trả về bằng `return`
-7. HR xem và duyệt bằng `hr_approve`
-8. HR hoặc Admin thực hiện `approve`
-9. HR hoặc Admin thực hiện `lock`
-10. Nếu cần chỉnh lại hồ sơ đã khóa, chỉ Admin mới có thể `unlock`
+- `GET /api/guides/user-guide`
+- `GET /api/guides/user-guide/view`
+- `GET /api/guides/user-guide/download`
 
-## 10. Trạng thái KPI
+## 12. Tài liệu liên quan
 
-Các trạng thái chính:
-
-- `draft`: đang nhập liệu
-- `employee_submitted`: nhân viên đã gửi duyệt
-- `manager_reviewed`: quản lý đã duyệt
-- `hr_reviewed`: HR đã duyệt
-- `approved`: hồ sơ đã được phê duyệt hoàn tất
-- `locked`: hồ sơ đã khóa
-- `returned`: hồ sơ bị trả về để bổ sung
-
-Ý nghĩa vận hành:
-
-- `draft` và `returned` là hai trạng thái hay dùng cho nhập liệu
-- `locked` là trạng thái chốt dữ liệu
-- hồ sơ đã khóa thì người dùng thông thường không được sửa
-
-## 11. Các trường quan trọng trong KPI
-
-### 11.1 Tiêu chí
-
-Đây là tên đầu việc hoặc nhóm đánh giá.
-
-Ví dụ:
-
-- `Project KPI`
-- `Work Quality`
-- `Discipline and Collaboration`
-
-### 11.2 Mô tả
-
-Đây là phần mô tả chi tiết nhân sự đã làm gì hoặc cần đạt điều gì.
-
-### 11.3 Mã dự án
-
-`Mã dự án` là mã nhận diện ngắn của dự án hoặc công việc liên quan đến tiêu chí KPI.
-
-Ví dụ:
-
-- `PRJ-API-01`
-- `CRM-SALES-Q2`
-- `HR-ONBOARD-2026`
-
-Hiện tại trường này đang theo hướng:
-
-- có thể do người thao tác nhập thủ công
-- có thể để trống nếu tiêu chí không gắn với một dự án cụ thể
-- dùng để tham chiếu nhanh khi đối chiếu giữa nhiều tiêu chí hoặc nhiều kỳ
-
-Nói đơn giản:
-
-- có dòng có mã dự án vì tiêu chí đó gắn với một dự án thật
-- có dòng không có mã dự án vì đó là tiêu chí chung như kỷ luật, phối hợp hoặc sáng kiến
-
-### 11.4 Hệ số
-
-Hệ số thể hiện mức độ quan trọng của tiêu chí.
-
-Quy tắc hiện tại:
-
-- tổng hệ số phải lớn hơn `0`
-- tổng hệ số không vượt quá `7`
-
-### 11.5 Phần trăm kế hoạch và phần trăm thực đạt
-
-Hai trường này dùng để so sánh kế hoạch và kết quả thực tế.
-
-Hệ thống sẽ dùng chúng để tính điểm theo logic đã thiết kế ở backend.
-
-## 12. Luồng OKR tổng quát
-
-Một vòng làm việc OKR cơ bản thường diễn ra như sau:
-
-1. Chọn hoặc tạo chu kỳ OKR
-2. Tạo objective cho cá nhân hoặc bộ phận
-3. Tạo key result cho objective
-4. Nhập giá trị bắt đầu, hiện tại và mục tiêu
-5. Thực hiện check-in định kỳ
-6. Theo dõi objective nào đang `on_track`, objective nào `at_risk`, objective nào `completed`
-
-## 13. Các khái niệm chính của OKR
-
-### 13.1 Objective
-
-Objective là mục tiêu cần đạt.
-
-Ví dụ:
-
-- nâng chất lượng onboarding cho kỹ thuật
-- cải thiện tốc độ phản hồi sale
-- nâng tỷ lệ giữ chân nhân sự
-
-### 13.2 Key Result
-
-Key result là kết quả then chốt dùng để đo objective.
-
-Ví dụ:
-
-- thời gian onboarding giảm còn 3 ngày
-- tỷ lệ chuyển đổi tăng lên 25 phần trăm
-- tỷ lệ nghỉ việc giảm xuống dưới 8 phần trăm
-
-### 13.3 Check-in
-
-Check-in là lần cập nhật tiến độ mới nhất cho key result.
-
-Một check-in thường gồm:
-
-- ngày check-in
-- giá trị sau cập nhật
-- ghi chú cập nhật
-- mức độ tự tin
-- vướng mắc nếu có
-
-## 14. Quy tắc dữ liệu và ngôn ngữ
-
-Các trường dữ liệu nghiệp vụ mới trong hệ thống hiện được giữ bằng tiếng Anh ở database để:
-
-- đồng bộ dữ liệu giữa local và production
-- giảm lệch seed
-- tránh một khái niệm có nhiều cách viết khác nhau
-- thuận tiện mở rộng giao diện song ngữ sau này
-
-Điều này áp dụng cho:
-
-- tên tiêu chí KPI
-- mô tả KPI
-- objective title
-- key result title
-- check-in note
-- các dữ liệu nghiệp vụ tương tự
-
-Tên riêng của nhân sự không bị ép sang tiếng Anh.
-
-## 15. Các giới hạn hiện tại của hệ thống
-
-- KPI hiện là phần chặt và đầy đủ hơn OKR
-- OKR hiện mới là bản basic, chưa phải nền tảng OKR enterprise hoàn chỉnh
-- backend vẫn còn giữ một số API cũ để tương thích
-- chưa có bộ automated test đầy đủ cho toàn hệ thống
-
-## 16. Khi nào hệ thống phù hợp để áp dụng thực tế
-
-Hệ thống hiện phù hợp với doanh nghiệp cần:
-
-- đánh giá hiệu suất theo kỳ
-- quản lý phê duyệt KPI nhiều cấp
-- theo dõi mục tiêu OKR ở mức đơn giản
-- ưu tiên thao tác nhanh, dễ đào tạo, dễ vận hành
-
-## 17. Tài liệu nên đọc tiếp
-
-- [README.md](./README.md)
-- [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md)
+- [USER_GUIDE.md](./USER_GUIDE.md)
 - [ROLE_PERMISSIONS.md](./ROLE_PERMISSIONS.md)
+- [TAI_LIEU_NGHIEP_VU_HE_THONG.md](./TAI_LIEU_NGHIEP_VU_HE_THONG.md)
+- [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md)
 - [DEPLOYMENT.md](./DEPLOYMENT.md)
-- [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx)

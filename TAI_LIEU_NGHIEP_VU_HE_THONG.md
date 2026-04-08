@@ -1,68 +1,59 @@
 ﻿# TÀI LIỆU NGHIỆP VỤ HỆ THỐNG OKR/KPI HR
 
-## Phạm vi tài liệu
+## 1. Mục tiêu tài liệu
 
-Đây là bản nghiệp vụ rút gọn để mô tả cách hệ thống đang vận hành thực tế ở thời điểm hiện tại. Nguồn tài liệu đầy đủ nên ưu tiên đọc là:
+Tài liệu này mô tả nghiệp vụ lõi của hệ thống theo trạng thái triển khai hiện tại, dùng để:
 
-- [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI_BAN_DEP.docx)
-- [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md)
+- thống nhất hiểu biết giữa nghiệp vụ và kỹ thuật;
+- làm chuẩn đối chiếu khi kiểm thử/demo;
+- làm nền cho mở rộng tính năng sau hackathon.
 
-## Mục tiêu hệ thống
+## 2. Phạm vi nghiệp vụ
 
-Hệ thống hiện phục vụ đồng thời hai nhu cầu nghiệp vụ:
+Hệ thống gồm 2 module chính:
 
-- `KPI` tại `/workspace`: quản lý hồ sơ đánh giá hiệu suất nhân sự theo chu kỳ `tháng`, `quý`, `năm`
-- `OKR` tại `/okr`: theo dõi objective, key result và check-in ở mức basic, dễ dùng
+1. `KPI` tại `/workspace`: đánh giá hiệu suất nhân sự theo chu kỳ.
+2. `OKR` tại `/okr`: quản lý mục tiêu và tiến độ thực hiện.
 
-Trọng tâm nghiệp vụ hiện tại:
+Luồng hệ thống trọng tâm:
 
-- chọn nhân sự và chu kỳ KPI
-- tạo hồ sơ đánh giá
-- cập nhật tiêu chí và số liệu thực hiện
-- ghi nhận nhận xét nhiều cấp
-- phê duyệt theo luồng phê duyệt
-- khóa hồ sơ KPI sau khi hoàn tất
-- theo dõi mục tiêu OKR và cập nhật check-in tiến độ
+- đăng nhập -> KPI workspace;
+- từ KPI chuyển qua OKR khi cần theo dõi mục tiêu.
 
-## Đối tượng sử dụng
+## 3. Thực thể dữ liệu nghiệp vụ
 
-- `admin`: quản trị toàn hệ thống
-- `hr`: điều phối và phê duyệt ở cấp nhân sự
-- `manager`: phê duyệt ở cấp quản lý trực tiếp và vận hành OKR cơ bản
-- `employee`: cập nhật KPI của chính mình và gửi check-in OKR trên dữ liệu thuộc mình
+## 3.1 Khối dữ liệu KPI
 
-## Đơn vị dữ liệu chính
+- `review_periods`: chu kỳ đánh giá.
+- `employee_reviews`: hồ sơ đánh giá theo nhân sự và kỳ.
+- `employee_review_items`: tiêu chí chi tiết trong hồ sơ.
+- `review_comments`: nhận xét theo vai trò.
+- `review_approvals`: lịch sử hành động duyệt.
+- `employee_projects`: lịch sử phân công dự án.
 
-### Nhóm KPI
+## 3.2 Khối dữ liệu OKR
 
-- `review_periods`: chu kỳ đánh giá
-- `employee_reviews`: hồ sơ đánh giá theo nhân sự và chu kỳ
-- `employee_review_items`: từng tiêu chí đánh giá trong hồ sơ
-- `review_comments`: nhận xét theo vai trò
-- `review_approvals`: lịch sử thao tác phê duyệt
-- `employee_projects`: lịch sử dự án của nhân sự
+- `okr_cycles`: chu kỳ OKR.
+- `objectives`: mục tiêu.
+- `key_results`: kết quả then chốt.
+- `key_result_checkins`: lịch sử cập nhật tiến độ KR.
 
-### Nhóm OKR
+## 4. Quy tắc nghiệp vụ KPI
 
-- `okr_cycles`: chu kỳ OKR
-- `objectives`: mục tiêu
-- `key_results`: kết quả then chốt
-- `key_result_checkins`: lịch sử check-in key result
+## 4.1 Quy tắc hồ sơ
 
-## Nguyên tắc vận hành
+- Mỗi cặp `(employee_user_id, period_id)` chỉ có một hồ sơ KPI.
+- Hồ sơ gắn với một quản lý phụ trách và một phòng ban.
 
-### 1. Hai không gian nghiệp vụ rõ ràng
+## 4.2 Quy tắc nhập liệu
 
-Frontend hiện tách thành:
+- Tổng hệ số KPI phải `> 0` và `<= 7`.
+- Trạng thái `locked` chặn sửa dữ liệu nghiệp vụ.
+- Employee chỉ sửa hồ sơ của chính mình và trong cửa sổ thời gian chu kỳ.
 
-- `/workspace` cho KPI và đánh giá hiệu suất
-- `/okr` cho OKR basic
+## 4.3 Quy tắc workflow
 
-Cách tách này giúp người dùng ít bị rối hơn khi thao tác.
-
-### 2. Workflow KPI rõ ràng
-
-Luồng KPI chuẩn:
+Trạng thái chính:
 
 - `draft`
 - `employee_submitted`
@@ -70,40 +61,61 @@ Luồng KPI chuẩn:
 - `hr_reviewed`
 - `approved`
 - `locked`
-
-Luồng bổ sung:
-
 - `returned`
-- `unlock`
 
-### 3. KPI bị khóa theo vai trò và thời gian
+Hành động chính:
 
-- Employee chỉ sửa được KPI của mình
-- Employee chỉ sửa được trong thời gian hiệu lực của chu kỳ
-- Manager chỉ phê duyệt KPI thuộc phạm vi quản lý
-- HR và Admin là hai lớp phê duyệt sau
-- Admin là người duy nhất mở khóa KPI đã khóa
+- `submit`
+- `manager_approve`
+- `hr_approve`
+- `approve`
+- `return`
+- `lock`
+- `unlock` (admin)
 
-### 4. OKR theo hướng basic, thực dụng
+## 5. Quy tắc nghiệp vụ OKR
 
-- tập trung vào objective, key result và check-in
-- không đi theo workflow nhiều cấp phức tạp như KPI
-- ưu tiên thao tác nhanh và dễ hiểu cho nội bộ công ty
+- Chu kỳ OKR do `admin` hoặc `manager` tạo.
+- Objective/KR/check-in có thể thao tác bởi nhiều vai trò theo quyền.
+- Employee chỉ thao tác dữ liệu thuộc scope của mình.
+- Tạo KR/check-in sai scope bị chặn `403`.
+- Dữ liệu không hợp lệ bị chặn `400`.
 
-### 5. Dữ liệu nghiệp vụ mới dùng dạng chuẩn tiếng Anh
+## 6. Quy tắc phân quyền theo phạm vi dữ liệu
 
-Phần dữ liệu nghiệp vụ mới được giữ ở tiếng Anh để:
+- `admin`: toàn quyền dữ liệu và xử lý ngoại lệ cuối.
+- `hr`: giám sát và duyệt KPI cấp HR, không mở khóa.
+- `manager`: duyệt KPI trong phạm vi quản lý; vận hành OKR cơ bản.
+- `employee`: nhập và submit dữ liệu của chính mình.
 
-- đồng bộ seed và dữ liệu runtime
-- giảm mâu thuẫn khi đổi giao diện VI/EN
-- dễ chuẩn hóa hơn cho backend và báo cáo
+## 7. Chuẩn dữ liệu và ngôn ngữ
 
-## Kết luận nghiệp vụ
+- Dữ liệu nghiệp vụ mới nên nhập tiếng Anh để đồng bộ seed và DB.
+- Giao diện hiển thị hỗ trợ VI/EN.
+- Tên riêng nhân sự được giữ theo dữ liệu thực tế.
 
-Hệ thống hiện phù hợp với mô hình doanh nghiệp cần:
+## 8. Dữ liệu mẫu và vận hành demo
 
-- một trang KPI đủ chặt để đánh giá hiệu suất theo kỳ
-- một trang OKR basic để theo dõi mục tiêu và tiến độ
-- ít route nhưng tách đúng nghiệp vụ để người dùng dễ tiếp cận
+Mục tiêu gói dữ liệu demo:
 
-Nếu cần hiểu chi tiết hơn về hướng dẫn sử dụng, phân quyền và điểm mạnh yếu của hệ thống, hãy xem tài liệu tổng hợp chính tại [TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md](./TAI_LIEU_TONG_HOP_HE_THONG_OKR_KPI.md).
+- đủ account cho 4 vai trò;
+- đủ chu kỳ để đổi kỳ không bị trống khó hiểu;
+- đủ dữ liệu KPI/OKR để demo xuyên suốt luồng.
+
+## 9. Giới hạn hiện tại
+
+- KPI đang hoàn thiện hơn OKR về chiều sâu workflow.
+- OKR hiện theo hướng basic, ưu tiên thao tác gọn nhẹ.
+- Chưa có bộ test tự động toàn diện cho mọi case nghiệp vụ.
+
+## 10. Kết luận
+
+Hệ thống phù hợp với doanh nghiệp cần:
+
+1. vận hành đánh giá KPI theo kỳ có kiểm soát quyền;
+2. theo dõi mục tiêu OKR mức thực dụng;
+3. giao diện gọn, dễ đào tạo và dễ trình diễn.
+
+Tài liệu hướng dẫn thao tác chi tiết xem tại:
+
+- [TAI_LIEU_HUONG_DAN_CHI_TIET_HE_THONG_OKR_KPI.md](./TAI_LIEU_HUONG_DAN_CHI_TIET_HE_THONG_OKR_KPI.md)

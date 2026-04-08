@@ -1,111 +1,267 @@
-# Checklist Day-1 De Day Di Thi (Tang Tu Kha -> Rat On)
+﻿# TÀI LIỆU HƯỚNG DẪN CHI TIẾT HỆ THỐNG OKR/KPI HR
 
-Tai lieu nay dung de day diem nhanh trong 1 ngay truoc vong loai.
-Muc tieu: toi uu G1..G7 + UI/UX + kich ban demo + Q&A.
+## 1. Thông tin tài liệu
 
-## 1) Muc Tieu 24h
+- Tên tài liệu: Hướng dẫn vận hành và demo hệ thống OKR/KPI HR.
+- Phiên bản: `v1.0`.
+- Ngày cập nhật: `08/04/2026`.
+- Phạm vi áp dụng: bản dự án hiện tại dùng cho môi trường local/demo và triển khai VPS.
 
-- Dong bo ban build moi nhat len VPS, khong con case "trong du lieu khi doi chu ky".
-- Chot 1 kich ban demo 5 phut, ro vai tro va gia tri nghiep vu.
-- Chay smoke test role-based truoc demo, khong cho loi vo san khau.
-- Co 1 diem "wow nhe" bang storytelling + dashboard risk + workflow approve.
+## 2. Mục tiêu và phạm vi
 
-## 2) Viec Can Lam Theo Muc Uu Tien
+Tài liệu này giúp đội dự án và người dùng nội bộ:
 
-### P0 - Bat Buoc (lam truoc)
+1. Hiểu đúng nghiệp vụ đang chạy thực tế.
+2. Thao tác đúng vai trò và đúng luồng duyệt.
+3. Demo sản phẩm mạch lạc trong 5 phút.
+4. Kiểm tra nhanh chất lượng hệ thống trước khi trình bày.
 
-1. Deploy ban moi + reseed:
-   - `bash deploy/update_app.sh --seed`
-2. Kiem tra health:
-   - `curl http://127.0.0.1:8000/health`
-3. Chay smoke test API:
-   - `powershell -ExecutionPolicy Bypass -File tools/smoke_api.ps1`
-4. Verify nhanh UI:
-   - `/workspace`: doi nhan su, doi chu ky, khong bi trang/trong bat ngo.
-   - `/okr`: tao objective, tao KR, check-in.
+Phạm vi chức năng hiện tại:
 
-### P1 - Tang Diem UX/UI (2-3h)
+- Không gian KPI: `/workspace`.
+- Không gian OKR: `/okr`.
+- Luồng đăng nhập: `/login` -> `/workspace`.
 
-1. Route fallback da duoc fix ve `/workspace`:
-   - [frontend/src/routes/ProtectedRoute.jsx](c:/hackathon_OKR%20_KPI/frontend/src/routes/ProtectedRoute.jsx)
-   - [frontend/src/pages/NotFoundPage.jsx](c:/hackathon_OKR%20_KPI/frontend/src/pages/NotFoundPage.jsx)
-2. Khi chu ky chua co review, giao dien van hien thong tin nhan su:
-   - [frontend/src/pages/WorkspacePage.jsx](c:/hackathon_OKR%20_KPI/frontend/src/pages/WorkspacePage.jsx)
-3. Test tren 3 kich thuoc man hinh:
-   - 1366x768, 1920x1080, mobile ngang.
+## 3. Tổng quan hệ thống
 
-### P2 - Tang "Wow Nhe" (1-2h, khong can them module lon)
+Hệ thống bao gồm 2 module cốt lõi:
 
-1. Storytelling wow trong demo:
-   - "Phat hien risk -> xu ly approve -> khoa ho so -> truy vet lich su"
-2. Nhac manh workflow co thuc te:
-   - role-based (Admin/Manager/HR/Employee)
-   - buoc phe duyet co transition ro rang.
-3. Show 2 view lien tuc:
-   - KPI Workspace (workflow)
-   - OKR Board (muc tieu + check-in)
+1. `KPI Workspace` (`/workspace`): đánh giá hiệu suất nhân sự theo chu kỳ.
+2. `OKR Workspace` (`/okr`): theo dõi mục tiêu, kết quả then chốt và check-in tiến độ.
 
-## 3) Kich Ban Demo 5 Phut
+Định hướng vận hành hiện tại:
 
-### 0:00 - 0:40
+- KPI là luồng chặt chẽ, có phê duyệt nhiều cấp.
+- OKR là luồng thực dụng, gọn để bám theo tiến độ mục tiêu.
+- Giao diện hỗ trợ song ngữ `VI/EN`; dữ liệu nghiệp vụ mới nên nhập tiếng Anh để đồng bộ cơ sở dữ liệu.
 
-- Dang nhap bang `ADM-001@company`.
-- Noi 1 cau: he thong quan ly KPI + OKR cho doanh nghiep, role-based.
+## 4. Tài khoản và đăng nhập
 
-### 0:40 - 2:00
+Hệ thống chấp nhận các định danh:
 
-- Vao `/workspace`.
-- Chon 1 nhan su, doi qua 2-3 chu ky de show du lieu lien tuc.
-- Mo phan review status + snapshot + lich su.
+- Mã nhân viên (`EMP-ENG-001`).
+- Mã nhân viên dạng email (`EMP-ENG-001@company`).
+- Email hệ thống.
+- Username.
 
-### 2:00 - 3:10
+Tài khoản demo chuẩn:
 
-- Thuc hien 1 action workflow:
-  - submit / manager_approve / lock (tu role phu hop).
-- Nhac rang buoc:
-  - tong he so <= 7
-  - employee chi sua du lieu cua minh trong cua so thoi gian.
+- `ADM-001@company / Admin@123`
+- `MGR-ENG-001@company / Manager@123`
+- `MGR-SAL-001@company / Manager@123`
+- `MGR-HR-001@company / Manager@123`
+- `HR-001@company / Manager@123`
+- `EMP-ENG-001@company / Employee@123`
+- `EMP-SAL-001@company / Employee@123`
+- `EMP-HR-001@company / Employee@123`
 
-### 3:10 - 4:20
+## 5. Ma trận phân quyền
 
-- Chuyen sang `/okr`.
-- Show objective -> key results -> check-in -> progress cap nhat.
+| Chức năng | admin | hr | manager | employee |
+|---|---|---|---|---|
+| Truy cập `/workspace` | Có | Có | Có | Có |
+| Truy cập `/okr` | Có | Có | Có | Có |
+| Tạo chu kỳ KPI | Có | Có | Có | Không |
+| Tạo hồ sơ KPI | Có | Có | Có (đúng phạm vi) | Không |
+| Duyệt `manager_approve` | Có | Có | Có (đúng scope manager) | Không |
+| Duyệt `hr_approve`, `approve`, `lock` | Có | Có | Không | Không |
+| `unlock` hồ sơ KPI | Có | Không | Không | Không |
+| Tạo chu kỳ OKR | Có | Không | Có | Không |
+| Tạo objective/KR/check-in | Có | Có | Có | Có (dữ liệu thuộc mình) |
+| Xem `/api/users` | Có | Không | Không | Không |
+| Tạo user, reset mật khẩu | Có | Không | Không | Không |
 
-### 4:20 - 5:00
+Phạm vi dữ liệu KPI:
 
-- Chot gia tri:
-  - giam sai sot quy trinh danh gia
-  - minh bach phe duyet
-  - co the mo rong AI sau vong loai.
+- `admin`: xem toàn bộ nhân sự hoạt động.
+- `hr`: xem tập dữ liệu phục vụ đánh giá toàn công ty.
+- `manager`: xem chính mình và nhân sự trong phạm vi phụ trách.
+- `employee`: chỉ xem dữ liệu của chính mình.
 
-## 4) Bo Cau Hoi Q&A Nhanh
+## 6. Hướng dẫn chi tiết module KPI (`/workspace`)
 
-1. "Tai sao khong bi trong du lieu khi doi chu ky?"
-   - Vi du lieu seed da phu all periods cho non-admin + UI fallback khong de man hinh trang.
-2. "Phan quyen co chat khong?"
-   - Da chan theo role tren backend; manager/employee khong vuot scope.
-3. "Neu loi truoc demo thi sao?"
-   - Chay `tools/smoke_api.ps1` de check nhanh pass/fail.
-4. "Scale duoc khong?"
-   - Schema co index + views tong hop dashboard.
-5. "AI o dau?"
-   - Hien tap trung core workflow on dinh; AI la roadmap ke tiep (goi y check-in, tom tat review, canh bao risk).
+### 6.1 Chọn nhân sự và chu kỳ
 
-## 5) Checklist Chot Truoc Gio Thi
+1. Chọn nhân sự tại danh sách `Nhân sự được đánh giá`.
+2. Chọn chu kỳ tại danh sách `Chu kỳ đánh giá`.
+3. Hệ thống tải hồ sơ tương ứng theo cặp `(nhân sự, chu kỳ)`.
 
-- [ ] `git pull` dung commit moi nhat
-- [ ] `bash deploy/update_app.sh --seed`
-- [ ] Health check 200
-- [ ] Smoke script pass all
-- [ ] Demo account dang nhap duoc
-- [ ] 2 route `/workspace` va `/okr` thao tac muot
-- [ ] Team thong nhat 1 nguoi click, 1 nguoi thuyet trinh, 1 nguoi Q&A
+Trường hợp chưa có hồ sơ:
 
-## 6) Lenh Su Dung Nhanh
+- Giao diện hiển thị trạng thái “Chưa tạo hồ sơ”.
+- Vẫn hiển thị thông tin nhân sự và chu kỳ đang chọn.
+- Tránh tình trạng màn hình trắng gây hiểu nhầm mất dữ liệu.
 
-- Reseed local:
-  - `cd backend && npm.cmd run seed`
-- Build frontend:
-  - `cd frontend && npm.cmd run build`
-- Smoke API:
-  - `powershell -ExecutionPolicy Bypass -File tools/smoke_api.ps1`
+### 6.2 Tạo chu kỳ đánh giá
+
+1. Chọn loại chu kỳ: tháng/quý/năm.
+2. Nhập tên chu kỳ.
+3. Chọn ngày bắt đầu và ngày kết thúc.
+4. Nhấn `Khởi tạo chu kỳ`.
+
+Lưu ý:
+
+- Chu kỳ dùng để gom dữ liệu đánh giá theo kỳ vận hành.
+- Chu kỳ nên đặt tên rõ theo tháng/quý/năm để dễ truy vết.
+
+### 6.3 Tạo hồ sơ đánh giá
+
+1. Chọn nhân sự.
+2. Chọn chu kỳ.
+3. Nhấn `Khởi tạo hồ sơ đánh giá cho nhân sự đã chọn`.
+
+Ràng buộc:
+
+- Mỗi nhân sự trong mỗi chu kỳ chỉ có một hồ sơ KPI.
+
+### 6.4 Cập nhật tiêu chí KPI
+
+Các trường chính của một dòng tiêu chí:
+
+- Tên tiêu chí.
+- Mã dự án / tên dự án (nếu có).
+- Mô tả công việc.
+- Hệ số.
+- Kế hoạch (%).
+- Thực đạt (%).
+- Minh chứng.
+- Ghi chú quản lý.
+
+Ràng buộc dữ liệu:
+
+- Tổng hệ số tất cả tiêu chí phải `> 0` và `<= 7`.
+- Hồ sơ đã `locked` chỉ admin mới có thể mở khóa để sửa.
+
+### 6.5 Nhận xét và thao tác duyệt
+
+Các thao tác hỗ trợ:
+
+- `submit`
+- `manager_approve`
+- `hr_approve`
+- `approve`
+- `return`
+- `lock`
+- `unlock` (admin)
+
+### 6.6 Vòng đời trạng thái KPI
+
+| Trạng thái | Ý nghĩa |
+|---|---|
+| `draft` | Hồ sơ đang nhập liệu |
+| `employee_submitted` | Nhân viên đã gửi duyệt |
+| `manager_reviewed` | Quản lý đã duyệt |
+| `hr_reviewed` | HR đã duyệt |
+| `approved` | Hồ sơ đã được phê duyệt |
+| `locked` | Hồ sơ đã khóa |
+| `returned` | Hồ sơ bị trả về để bổ sung |
+
+Chuyển trạng thái nghiệp vụ chính:
+
+- `submit`: từ `draft`/`returned`/`employee_submitted`.
+- `manager_approve`: từ `employee_submitted`/`manager_reviewed`.
+- `hr_approve`: từ `manager_reviewed`/`hr_reviewed`.
+- `approve`: từ `manager_reviewed`/`hr_reviewed`/`approved`.
+- `return`: từ `employee_submitted`/`manager_reviewed`/`hr_reviewed`/`returned`.
+- `lock`: từ `approved`/`hr_reviewed`/`locked`.
+- `unlock`: từ `locked`/`approved`.
+
+### 6.7 Quy tắc bảo vệ dữ liệu
+
+- Employee chỉ được sửa KPI của chính mình trong thời gian hiệu lực chu kỳ.
+- Manager duyệt trong phạm vi nhân sự được gán quản lý.
+- Quyền không hợp lệ bị chặn bằng mã lỗi `403`.
+- Dữ liệu không hợp lệ bị chặn bằng mã lỗi `400`.
+
+## 7. Hướng dẫn chi tiết module OKR (`/okr`)
+
+### 7.1 Luồng cơ bản
+
+1. Chọn chu kỳ OKR.
+2. Tạo objective.
+3. Tạo key result trong objective.
+4. Thực hiện check-in để cập nhật tiến độ.
+
+### 7.2 Quy tắc chính
+
+- Employee chỉ thao tác trên objective/KR/check-in thuộc quyền của mình.
+- Không thể tạo KR trên objective không thuộc scope.
+- Check-in cần nhập dữ liệu hợp lệ theo schema backend.
+
+## 8. Dữ liệu mẫu (mock data) và seed
+
+Mục tiêu dữ liệu demo hiện tại:
+
+- Số lượng account vừa đủ để demo nhanh.
+- Có dữ liệu cho nhiều phòng ban.
+- Dữ liệu KPI được phủ theo nhiều chu kỳ để giảm trường hợp trống.
+
+Lệnh seed local:
+
+```bash
+cd backend
+npm.cmd run seed
+```
+
+Sau seed, cần kiểm tra nhanh:
+
+- đăng nhập các tài khoản mẫu;
+- đổi nhân sự và đổi chu kỳ tại `/workspace`;
+- xem objective/KR/check-in tại `/okr`.
+
+## 9. Checklist chạy hệ thống trước khi demo
+
+### 9.1 Bắt buộc
+
+- [ ] Cập nhật source mới nhất.
+- [ ] Chạy seed backend.
+- [ ] Build frontend thành công.
+- [ ] Chạy smoke test API pass toàn bộ.
+- [ ] Mở UI kiểm tra 2 route `/workspace` và `/okr`.
+
+### 9.2 Lệnh tham chiếu
+
+```bash
+cd backend
+npm.cmd run seed
+
+cd ../frontend
+npm.cmd run build
+
+cd ..
+powershell -ExecutionPolicy Bypass -File tools/smoke_api.ps1
+```
+
+## 10. Kịch bản demo chuẩn 5 phút
+
+1. `0:00 - 0:40`: đăng nhập admin, giới thiệu mục tiêu hệ thống.
+2. `0:40 - 2:00`: vào `/workspace`, đổi nhân sự và chu kỳ, trình bày dữ liệu KPI.
+3. `2:00 - 3:10`: thực hiện một bước workflow duyệt KPI.
+4. `3:10 - 4:20`: chuyển `/okr`, tạo objective -> KR -> check-in.
+5. `4:20 - 5:00`: kết luận giá trị vận hành và khả năng mở rộng.
+
+## 11. Q&A ngắn khi phản biện
+
+1. Vì sao đổi chu kỳ không trống dữ liệu?
+   - Vì dữ liệu seed đã phủ theo nhiều chu kỳ và UI có fallback rõ ràng.
+2. Phân quyền có chặt không?
+   - Có, backend kiểm soát theo role + scope; sai quyền trả `403`.
+3. Nếu gần giờ demo bị lỗi?
+   - Chạy lại seed và smoke script để xác nhận pass/fail ngay.
+
+## 12. Sự cố thường gặp và cách xử lý
+
+1. Không gọi được API:
+   - kiểm tra backend có chạy ở `http://127.0.0.1:8000`.
+2. Giao diện không cập nhật dữ liệu mới:
+   - kiểm tra đã chạy seed đúng môi trường chưa.
+3. Lỗi phân quyền khi thao tác:
+   - kiểm tra tài khoản đang đăng nhập có đúng role nghiệp vụ không.
+
+## 13. Tài liệu liên quan
+
+- [USER_GUIDE.md](./USER_GUIDE.md)
+- [ROLE_PERMISSIONS.md](./ROLE_PERMISSIONS.md)
+- [TAI_LIEU_NGHIEP_VU_HE_THONG.md](./TAI_LIEU_NGHIEP_VU_HE_THONG.md)
+- [TAI_LIEU_HUONG_DAN_CHI_TIET_HE_THONG_OKR_KPI.md](./TAI_LIEU_HUONG_DAN_CHI_TIET_HE_THONG_OKR_KPI.md)
+- [DEPLOYMENT.md](./DEPLOYMENT.md)
