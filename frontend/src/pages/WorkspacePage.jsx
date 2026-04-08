@@ -703,6 +703,10 @@ function WorkspacePage() {
     return (bootstrap?.employees || []).find((item) => String(item.id) === String(selectedEmployeeId)) || null;
   }, [bootstrap?.employees, selectedEmployeeId]);
 
+  const selectedPeriod = useMemo(() => {
+    return (bootstrap?.periods || []).find((item) => String(item.id) === String(selectedPeriodId)) || null;
+  }, [bootstrap?.periods, selectedPeriodId]);
+
   const filteredEmployees = useMemo(() => {
     const employees = bootstrap?.employees || [];
     const keyword = employeeSearch.trim().toLowerCase();
@@ -1324,8 +1328,33 @@ function WorkspacePage() {
             </section>
           </>
         ) : (
-          <section className={`${panelClass} text-sm text-slate-600`}>
-            {t.noReviewHint}
+          <section className={panelClass}>
+            <h2 className="ui-section-title">{t.noReview}</h2>
+            <p className="mt-2 text-sm text-slate-600">{t.noReviewHint}</p>
+            {selectedEmployee ? (
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <div className="ui-metric">
+                  <p className="ui-metric-label">{t.profileName}</p>
+                  <p className="ui-metric-value">{selectedEmployee.full_name || '-'}</p>
+                </div>
+                <div className="ui-metric">
+                  <p className="ui-metric-label">{t.profileCode}</p>
+                  <p className="ui-metric-value">{selectedEmployee.employee_code || '-'}</p>
+                </div>
+                <div className="ui-metric">
+                  <p className="ui-metric-label">{t.profileDepartment}</p>
+                  <p className="ui-metric-value">{localizeDepartmentName(selectedEmployee.department_name, locale)}</p>
+                </div>
+                <div className="ui-metric">
+                  <p className="ui-metric-label">{t.profileManager}</p>
+                  <p className="ui-metric-value">{selectedEmployee.manager_name || '-'}</p>
+                </div>
+                <div className="ui-metric">
+                  <p className="ui-metric-label">{t.period}</p>
+                  <p className="ui-metric-value">{selectedPeriod ? buildPeriodDisplayName(selectedPeriod, locale) : '-'}</p>
+                </div>
+              </div>
+            ) : null}
           </section>
         )}
 

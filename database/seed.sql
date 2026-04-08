@@ -1367,7 +1367,8 @@ SELECT
 FROM tmp_bulk_review_seed r;
 
 -- --------------------------------------------------------------------------
--- Coverage top-up: ensure every non-admin account has review + KPI in Q2
+-- Coverage top-up: ensure every non-admin account has review in all periods
+-- and KPI in active cycle Q2
 -- --------------------------------------------------------------------------
 
 CREATE TEMP TABLE tmp_coverage_review_seed (
@@ -1377,10 +1378,9 @@ CREATE TEMP TABLE tmp_coverage_review_seed (
   total_score NUMERIC(6,2) NOT NULL
 ) ON COMMIT DROP;
 
-WITH q2_period AS (
+WITH target_periods AS (
   SELECT id AS period_id
   FROM review_periods
-  WHERE code = '2026-Q2'
 ),
 admin_user AS (
   SELECT u.id AS admin_id
@@ -1429,7 +1429,7 @@ inserted AS (
     END,
     t.manager_user_id
   FROM target_users t
-  CROSS JOIN q2_period p
+  CROSS JOIN target_periods p
   WHERE NOT EXISTS (
     SELECT 1
     FROM employee_reviews er
