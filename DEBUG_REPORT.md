@@ -20,6 +20,11 @@ Từng xảy ra tình huống:
 - root `.env` map PostgreSQL sang `5433`
 - `backend/.env` vẫn trỏ `5432`
 
+Giải thích đúng của mô hình này:
+
+- `5432` là cổng PostgreSQL bên trong container
+- `5433` là cổng host mà backend phải gọi tới trong môi trường hiện tại
+
 Hậu quả:
 
 - đăng nhập lỗi

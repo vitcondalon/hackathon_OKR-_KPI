@@ -59,6 +59,12 @@ VITE_API_BASE_URL=/api
 
 Cổng database trong backend phải khớp với cổng publish ở root `.env`.
 
+Lưu ý để tránh hiểu nhầm:
+
+- PostgreSQL trong container luôn chạy ở cổng nội bộ `5432`
+- backend không kết nối vào cổng nội bộ đó
+- backend phải kết nối vào cổng publish ra host, hiện chuẩn hóa là `5433`
+
 Ví dụ đúng:
 
 - root `.env` dùng `POSTGRES_PORT=5433`

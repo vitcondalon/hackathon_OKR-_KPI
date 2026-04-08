@@ -90,6 +90,8 @@ deploy/
 - service: `postgres`
 - container: `okr_kpi_postgres`
 - root `.env` local hiện đang cấu hình cổng `5433`
+- PostgreSQL bên trong container luôn nghe ở cổng `5432`
+- cổng mà backend phải dùng là cổng publish ra host, hiện chuẩn hóa là `5433`
 
 ## Cấu hình môi trường local
 

@@ -42,6 +42,12 @@ Trước khi restart backend, hãy kiểm tra hai giá trị này phải khớp 
 - root `.env` -> `POSTGRES_PORT`
 - `backend/.env` -> cổng nằm trong `DATABASE_URL`
 
+Ghi nhớ nhanh:
+
+- `5432` là cổng PostgreSQL ở bên trong container
+- `5433` là cổng publish ra host đang được dùng làm chuẩn cho repo này
+- backend phải trỏ vào `5433`, không trỏ vào `5432`, trừ khi bạn chủ động đổi hẳn chuẩn deploy
+
 Ví dụ đúng:
 
 ```env
