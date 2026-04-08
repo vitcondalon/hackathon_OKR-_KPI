@@ -792,7 +792,7 @@ WITH department_manager AS (
       WHEN 'HR' THEN (SELECT id FROM users WHERE username = 'manager.hr')
     END AS manager_user_id
   FROM departments d
-  WHERE d.code IN ('ENG', 'SAL', 'HR')
+  WHERE d.code IN ('ENG', 'SAL')
 ),
 generated AS (
   SELECT
@@ -802,7 +802,7 @@ generated AS (
     gs AS seq,
     LPAD(gs::TEXT, 3, '0') AS seq_code
   FROM department_manager dm
-  CROSS JOIN generate_series(2, 500) gs
+  CROSS JOIN generate_series(2, 2) gs
 ),
 inserted AS (
   INSERT INTO users (
@@ -855,7 +855,7 @@ WITH department_owner AS (
       WHEN 'HR' THEN (SELECT id FROM users WHERE username = 'hr.lead')
     END AS owner_user_id
   FROM departments d
-  WHERE d.code IN ('ENG', 'SAL', 'HR')
+  WHERE d.code IN ('ENG', 'SAL')
 ),
 generated AS (
   SELECT
@@ -865,7 +865,7 @@ generated AS (
     gs AS seq,
     LPAD(gs::TEXT, 3, '0') AS seq_code
   FROM department_owner dox
-  CROSS JOIN generate_series(2, 120) gs
+  CROSS JOIN generate_series(2, 2) gs
 ),
 inserted AS (
   INSERT INTO projects (
@@ -966,7 +966,7 @@ generated AS (
     e.seq,
     obj_idx AS objective_seq
   FROM tmp_bulk_employee_seed e
-  CROSS JOIN generate_series(1, 3) AS gs(obj_idx)
+  CROSS JOIN generate_series(1, 1) AS gs(obj_idx)
 ),
 inserted AS (
   INSERT INTO objectives (
@@ -1027,7 +1027,7 @@ WITH generated AS (
     o.objective_seq,
     kr_idx AS kr_seq
   FROM tmp_bulk_objective_seed o
-  CROSS JOIN generate_series(1, 3) AS gs(kr_idx)
+  CROSS JOIN generate_series(1, 2) AS gs(kr_idx)
 ),
 prepared AS (
   SELECT
@@ -1130,7 +1130,7 @@ SELECT
   END
 FROM tmp_bulk_key_result_seed k
 JOIN key_results kr ON kr.id = k.key_result_id
-CROSS JOIN generate_series(1, 3) AS c(checkin_seq);
+CROSS JOIN generate_series(1, 1) AS c(checkin_seq);
 
 CREATE TEMP TABLE tmp_bulk_kpi_seed (
   kpi_metric_id BIGINT PRIMARY KEY,
@@ -1229,7 +1229,7 @@ SELECT
   FORMAT('Auto KPI check-in %s for KPI %s', c.checkin_seq, k.kpi_metric_id)
 FROM tmp_bulk_kpi_seed k
 JOIN kpi_metrics km ON km.id = k.kpi_metric_id
-CROSS JOIN generate_series(1, 2) AS c(checkin_seq);
+CROSS JOIN generate_series(1, 1) AS c(checkin_seq);
 
 CREATE TEMP TABLE tmp_bulk_review_seed (
   review_id BIGINT PRIMARY KEY,
@@ -1347,9 +1347,7 @@ JOIN users u ON u.id = r.employee_user_id
 JOIN departments d ON d.id = u.department_id
 JOIN (
   VALUES
-    (1, 'Project KPI', 3.00::NUMERIC, 'Completed assigned deliverables and quality commitments.'),
-    (2, 'Discipline and Collaboration', 2.00::NUMERIC, 'Maintained collaboration and process discipline.'),
-    (3, 'Improvement Initiative', 2.00::NUMERIC, 'Proposed and executed improvement initiatives.')
+    (1, 'Project KPI', 3.00::NUMERIC, 'Completed assigned deliverables and quality commitments.')
 ) AS i(item_order, category, weight, description) ON TRUE;
 
 INSERT INTO review_comments (review_id, comment_type, content, author_user_id)
@@ -1360,23 +1358,6 @@ SELECT
   r.employee_user_id
 FROM tmp_bulk_review_seed r;
 
-INSERT INTO review_comments (review_id, comment_type, content, author_user_id)
-SELECT
-  r.review_id,
-  'manager',
-  FORMAT('Auto manager feedback completed for review %s.', r.review_id),
-  r.manager_user_id
-FROM tmp_bulk_review_seed r;
-
-INSERT INTO review_comments (review_id, comment_type, content, author_user_id)
-SELECT
-  r.review_id,
-  'hr',
-  FORMAT('Auto HR final check completed for review %s.', r.review_id),
-  (SELECT id FROM users WHERE username = 'hr.lead')
-FROM tmp_bulk_review_seed r
-WHERE r.review_status = 'approved';
-
 INSERT INTO review_approvals (review_id, action_type, note, actor_user_id)
 SELECT
   r.review_id,
@@ -1384,24 +1365,6 @@ SELECT
   'Auto submit from bulk employee review.',
   r.employee_user_id
 FROM tmp_bulk_review_seed r;
-
-INSERT INTO review_approvals (review_id, action_type, note, actor_user_id)
-SELECT
-  r.review_id,
-  'manager_approve',
-  'Auto manager approval from bulk dataset.',
-  r.manager_user_id
-FROM tmp_bulk_review_seed r
-WHERE r.review_status IN ('manager_reviewed', 'approved');
-
-INSERT INTO review_approvals (review_id, action_type, note, actor_user_id)
-SELECT
-  r.review_id,
-  'approve',
-  'Auto HR approval from bulk dataset.',
-  (SELECT id FROM users WHERE username = 'hr.lead')
-FROM tmp_bulk_review_seed r
-WHERE r.review_status = 'approved';
 
 UPDATE objectives o
 SET progress_percent = p.avg_progress
@@ -1419,7 +1382,7 @@ VALUES
     'seed.initialize',
     'system',
     NULL,
-    '{"source":"seed.sql","note":"Base and massive demo data loaded"}'::jsonb
+    '{"source":"seed.sql","note":"Base and balanced demo data loaded"}'::jsonb
   );
 
 INSERT INTO audit_logs (actor_user_id, action, entity_type, entity_id, metadata)
