@@ -27,6 +27,12 @@ async function run() {
     console.log('EMP-ENG-001@company / Employee@123');
     console.log('EMP-SAL-001@company / Employee@123');
     console.log('EMP-HR-001@company / Employee@123');
+    console.log('');
+    console.log('Massive demo data generated:');
+    console.log('- Bulk employees: EMP-<DEPT>-002 .. EMP-<DEPT>-500');
+    console.log('- Bulk usernames: emp.<dept-lower>.002 .. emp.<dept-lower>.500');
+    console.log('- Bulk password: Employee@123');
+    console.log('- Departments with bulk data: ENG, SAL, HR');
   } finally {
     client.release();
     await pool.end();

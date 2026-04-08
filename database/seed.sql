@@ -770,6 +770,648 @@ VALUES
     (SELECT id FROM users WHERE username = 'hr.lead')
   );
 
+-- --------------------------------------------------------------------------
+-- Massive dataset for demo and load testing
+-- --------------------------------------------------------------------------
+
+CREATE TEMP TABLE tmp_bulk_employee_seed (
+  user_id BIGINT PRIMARY KEY,
+  department_id BIGINT NOT NULL,
+  department_code VARCHAR(30) NOT NULL,
+  seq INT NOT NULL,
+  manager_user_id BIGINT NOT NULL
+) ON COMMIT DROP;
+
+WITH department_manager AS (
+  SELECT
+    d.id AS department_id,
+    d.code AS department_code,
+    CASE d.code
+      WHEN 'ENG' THEN (SELECT id FROM users WHERE username = 'manager.eng')
+      WHEN 'SAL' THEN (SELECT id FROM users WHERE username = 'manager.sales')
+      WHEN 'HR' THEN (SELECT id FROM users WHERE username = 'manager.hr')
+    END AS manager_user_id
+  FROM departments d
+  WHERE d.code IN ('ENG', 'SAL', 'HR')
+),
+generated AS (
+  SELECT
+    dm.department_id,
+    dm.department_code,
+    dm.manager_user_id,
+    gs AS seq,
+    LPAD(gs::TEXT, 3, '0') AS seq_code
+  FROM department_manager dm
+  CROSS JOIN generate_series(2, 500) gs
+),
+inserted AS (
+  INSERT INTO users (
+    employee_code,
+    username,
+    email,
+    full_name,
+    password_hash,
+    role_id,
+    department_id,
+    manager_user_id,
+    is_active
+  )
+  SELECT
+    FORMAT('EMP-%s-%s', g.department_code, g.seq_code),
+    FORMAT('emp.%s.%s', LOWER(g.department_code), g.seq_code),
+    FORMAT('emp-%s-%s@company', LOWER(g.department_code), g.seq_code),
+    FORMAT('Demo %s Employee %s', g.department_code, g.seq_code),
+    '$2a$10$00HJFUwuTJv24hVu2.8ulehRAadYi/T/vWmL9k9FJYWD4AxHVqK3C',
+    (SELECT id FROM roles WHERE code = 'employee'),
+    g.department_id,
+    g.manager_user_id,
+    TRUE
+  FROM generated g
+  RETURNING id, department_id, manager_user_id, employee_code
+)
+INSERT INTO tmp_bulk_employee_seed (user_id, department_id, department_code, seq, manager_user_id)
+SELECT
+  i.id,
+  i.department_id,
+  split_part(i.employee_code, '-', 2) AS department_code,
+  split_part(i.employee_code, '-', 3)::INT AS seq,
+  i.manager_user_id
+FROM inserted i;
+
+CREATE TEMP TABLE tmp_bulk_project_seed (
+  project_id BIGINT PRIMARY KEY,
+  department_id BIGINT NOT NULL,
+  department_code VARCHAR(30) NOT NULL,
+  seq INT NOT NULL
+) ON COMMIT DROP;
+
+WITH department_owner AS (
+  SELECT
+    d.id AS department_id,
+    d.code AS department_code,
+    CASE d.code
+      WHEN 'ENG' THEN (SELECT id FROM users WHERE username = 'manager.eng')
+      WHEN 'SAL' THEN (SELECT id FROM users WHERE username = 'manager.sales')
+      WHEN 'HR' THEN (SELECT id FROM users WHERE username = 'hr.lead')
+    END AS owner_user_id
+  FROM departments d
+  WHERE d.code IN ('ENG', 'SAL', 'HR')
+),
+generated AS (
+  SELECT
+    dox.department_id,
+    dox.department_code,
+    dox.owner_user_id,
+    gs AS seq,
+    LPAD(gs::TEXT, 3, '0') AS seq_code
+  FROM department_owner dox
+  CROSS JOIN generate_series(2, 120) gs
+),
+inserted AS (
+  INSERT INTO projects (
+    code,
+    name,
+    description,
+    department_id,
+    owner_user_id,
+    start_date,
+    end_date,
+    status
+  )
+  SELECT
+    FORMAT('BPRJ-%s-%s', g.department_code, g.seq_code),
+    FORMAT('Bulk %s Project %s', g.department_code, g.seq_code),
+    'Auto-generated project for large demo dataset.',
+    g.department_id,
+    g.owner_user_id,
+    DATE '2026-01-01' + (g.seq % 45),
+    DATE '2026-07-31' + (g.seq % 60),
+    CASE WHEN g.seq % 7 = 0 THEN 'planning' ELSE 'active' END
+  FROM generated g
+  RETURNING id, department_id, code
+)
+INSERT INTO tmp_bulk_project_seed (project_id, department_id, department_code, seq)
+SELECT
+  i.id,
+  i.department_id,
+  split_part(i.code, '-', 2) AS department_code,
+  split_part(i.code, '-', 3)::INT AS seq
+FROM inserted i;
+
+INSERT INTO employee_projects (
+  employee_user_id,
+  project_id,
+  role_name,
+  contribution_note,
+  assigned_at
+)
+SELECT
+  e.user_id,
+  p.project_id,
+  CASE e.department_code
+    WHEN 'ENG' THEN 'Backend Engineer'
+    WHEN 'SAL' THEN 'Account Executive'
+    ELSE 'HR Specialist'
+  END,
+  FORMAT(
+    'Primary contribution for %s employee %s in project %s.',
+    e.department_code,
+    LPAD(e.seq::TEXT, 3, '0'),
+    LPAD(p.seq::TEXT, 3, '0')
+  ),
+  DATE '2026-01-01' + ((e.seq + p.seq) % 120)
+FROM tmp_bulk_employee_seed e
+JOIN tmp_bulk_project_seed p
+  ON p.department_code = e.department_code
+ AND p.seq = ((e.seq - 2) % 119) + 2
+UNION ALL
+SELECT
+  e.user_id,
+  p.project_id,
+  CASE e.department_code
+    WHEN 'ENG' THEN 'Feature Owner'
+    WHEN 'SAL' THEN 'Deal Coordinator'
+    ELSE 'Program Coordinator'
+  END,
+  FORMAT(
+    'Secondary contribution for %s employee %s in project %s.',
+    e.department_code,
+    LPAD(e.seq::TEXT, 3, '0'),
+    LPAD(p.seq::TEXT, 3, '0')
+  ),
+  DATE '2026-01-10' + ((e.seq + p.seq) % 100)
+FROM tmp_bulk_employee_seed e
+JOIN tmp_bulk_project_seed p
+  ON p.department_code = e.department_code
+ AND p.seq = ((e.seq + 29 - 2) % 119) + 2
+ON CONFLICT (employee_user_id, project_id) DO NOTHING;
+
+CREATE TEMP TABLE tmp_bulk_objective_seed (
+  objective_id BIGINT PRIMARY KEY,
+  owner_user_id BIGINT NOT NULL,
+  department_id BIGINT NOT NULL,
+  objective_seq INT NOT NULL
+) ON COMMIT DROP;
+
+WITH active_cycle AS (
+  SELECT id AS cycle_id
+  FROM okr_cycles
+  WHERE code = '2026-Q2'
+),
+generated AS (
+  SELECT
+    e.user_id AS owner_user_id,
+    e.department_id,
+    e.department_code,
+    e.seq,
+    obj_idx AS objective_seq
+  FROM tmp_bulk_employee_seed e
+  CROSS JOIN generate_series(1, 3) AS gs(obj_idx)
+),
+inserted AS (
+  INSERT INTO objectives (
+    cycle_id,
+    code,
+    title,
+    description,
+    owner_user_id,
+    department_id,
+    parent_objective_id,
+    objective_type,
+    status,
+    priority,
+    progress_percent,
+    start_date,
+    due_date
+  )
+  SELECT
+    ac.cycle_id,
+    FORMAT('OBJ-Q2-%s-%s-%s', g.department_code, LPAD(g.seq::TEXT, 4, '0'), g.objective_seq),
+    FORMAT('Q2 objective %s for %s employee %s', g.objective_seq, g.department_code, LPAD(g.seq::TEXT, 3, '0')),
+    FORMAT('Auto-generated objective %s for scale-demo dataset.', g.objective_seq),
+    g.owner_user_id,
+    g.department_id,
+    NULL,
+    'individual',
+    CASE
+      WHEN ((g.seq + g.objective_seq) % 12) = 0 THEN 'completed'
+      WHEN ((g.seq + g.objective_seq) % 7) = 0 THEN 'at_risk'
+      ELSE 'on_track'
+    END,
+    ((g.seq + g.objective_seq) % 5) + 1,
+    0,
+    DATE '2026-04-01',
+    DATE '2026-06-30'
+  FROM generated g
+  CROSS JOIN active_cycle ac
+  RETURNING id, owner_user_id, department_id, code
+)
+INSERT INTO tmp_bulk_objective_seed (objective_id, owner_user_id, department_id, objective_seq)
+SELECT
+  i.id,
+  i.owner_user_id,
+  i.department_id,
+  split_part(i.code, '-', 5)::INT AS objective_seq
+FROM inserted i;
+
+CREATE TEMP TABLE tmp_bulk_key_result_seed (
+  key_result_id BIGINT PRIMARY KEY,
+  owner_user_id BIGINT NOT NULL,
+  target_value NUMERIC(14,4) NOT NULL
+) ON COMMIT DROP;
+
+WITH generated AS (
+  SELECT
+    o.objective_id,
+    o.owner_user_id,
+    o.objective_seq,
+    kr_idx AS kr_seq
+  FROM tmp_bulk_objective_seed o
+  CROSS JOIN generate_series(1, 3) AS gs(kr_idx)
+),
+prepared AS (
+  SELECT
+    g.objective_id,
+    g.owner_user_id,
+    g.kr_seq,
+    CASE g.kr_seq
+      WHEN 1 THEN 'tasks'
+      WHEN 2 THEN '%'
+      ELSE 'points'
+    END AS measurement_unit,
+    CASE g.kr_seq
+      WHEN 1 THEN 120::NUMERIC
+      WHEN 2 THEN 100::NUMERIC
+      ELSE 80::NUMERIC
+    END AS target_value,
+    (20 + ((g.owner_user_id + g.objective_seq * 17 + g.kr_seq * 11) % 105))::NUMERIC AS current_value
+  FROM generated g
+),
+with_progress AS (
+  SELECT
+    p.*,
+    LEAST(100, ROUND((p.current_value * 100.0) / NULLIF(p.target_value, 0), 2)) AS progress_percent
+  FROM prepared p
+),
+inserted AS (
+  INSERT INTO key_results (
+    objective_id,
+    code,
+    title,
+    description,
+    owner_user_id,
+    measurement_unit,
+    direction,
+    start_value,
+    target_value,
+    current_value,
+    progress_percent,
+    status,
+    weight
+  )
+  SELECT
+    wp.objective_id,
+    FORMAT('KR%s', wp.kr_seq),
+    FORMAT('KR %s auto target', wp.kr_seq),
+    FORMAT('Auto-generated KR %s for load and reporting tests.', wp.kr_seq),
+    wp.owner_user_id,
+    wp.measurement_unit,
+    'increase',
+    0,
+    wp.target_value,
+    wp.current_value,
+    wp.progress_percent,
+    CASE
+      WHEN wp.progress_percent >= 100 THEN 'completed'
+      WHEN wp.progress_percent < 45 THEN 'at_risk'
+      ELSE 'on_track'
+    END,
+    CASE WHEN wp.kr_seq = 3 THEN 33.34 ELSE 33.33 END
+  FROM with_progress wp
+  RETURNING id, owner_user_id, target_value
+)
+INSERT INTO tmp_bulk_key_result_seed (key_result_id, owner_user_id, target_value)
+SELECT
+  i.id,
+  i.owner_user_id,
+  i.target_value
+FROM inserted i;
+
+INSERT INTO key_result_checkins (
+  key_result_id,
+  checkin_by_user_id,
+  checkin_date,
+  value_before,
+  value_after,
+  progress_percent,
+  confidence_level,
+  update_note,
+  blocker_note
+)
+SELECT
+  k.key_result_id,
+  k.owner_user_id,
+  (DATE '2026-04-01' + ((c.checkin_seq * 12) + ((k.key_result_id % 15)::INT)))::DATE,
+  GREATEST(0, LEAST(k.target_value, kr.current_value - ((3 - c.checkin_seq) * 8))) AS value_before,
+  GREATEST(0, LEAST(k.target_value, kr.current_value - ((3 - c.checkin_seq) * 4))) AS value_after,
+  LEAST(
+    100,
+    ROUND(
+      (GREATEST(0, LEAST(k.target_value, kr.current_value - ((3 - c.checkin_seq) * 4))) * 100.0)
+      / NULLIF(k.target_value, 0),
+      2
+    )
+  ) AS progress_percent,
+  5 + ((k.key_result_id + c.checkin_seq) % 5),
+  FORMAT('Auto check-in %s for KR %s', c.checkin_seq, k.key_result_id),
+  CASE
+    WHEN c.checkin_seq = 1 AND (k.key_result_id % 9) = 0 THEN 'Pending external dependency alignment.'
+    ELSE NULL
+  END
+FROM tmp_bulk_key_result_seed k
+JOIN key_results kr ON kr.id = k.key_result_id
+CROSS JOIN generate_series(1, 3) AS c(checkin_seq);
+
+CREATE TEMP TABLE tmp_bulk_kpi_seed (
+  kpi_metric_id BIGINT PRIMARY KEY,
+  owner_user_id BIGINT NOT NULL
+) ON COMMIT DROP;
+
+WITH active_cycle AS (
+  SELECT id AS cycle_id
+  FROM okr_cycles
+  WHERE code = '2026-Q2'
+),
+prepared AS (
+  SELECT
+    e.user_id,
+    e.department_code,
+    e.seq,
+    (35 + ((e.user_id + e.seq) % 65))::NUMERIC AS current_value
+  FROM tmp_bulk_employee_seed e
+),
+with_progress AS (
+  SELECT
+    p.*,
+    LEAST(100, ROUND((p.current_value * 100.0) / 100.0, 2)) AS progress_percent
+  FROM prepared p
+),
+inserted AS (
+  INSERT INTO kpi_metrics (
+    cycle_id,
+    code,
+    name,
+    description,
+    scope_type,
+    owner_user_id,
+    department_id,
+    measurement_unit,
+    direction,
+    start_value,
+    target_value,
+    current_value,
+    progress_percent,
+    weight,
+    status
+  )
+  SELECT
+    ac.cycle_id,
+    FORMAT('KPI-BULK-%s-%s', wp.department_code, LPAD(wp.seq::TEXT, 4, '0')),
+    FORMAT('%s productivity KPI %s', wp.department_code, LPAD(wp.seq::TEXT, 4, '0')),
+    'Auto-generated KPI for large demo dataset.',
+    'employee',
+    wp.user_id,
+    NULL,
+    '%',
+    'increase',
+    0,
+    100,
+    wp.current_value,
+    wp.progress_percent,
+    1,
+    CASE
+      WHEN wp.progress_percent >= 90 THEN 'completed'
+      WHEN wp.progress_percent < 50 THEN 'at_risk'
+      ELSE 'on_track'
+    END
+  FROM with_progress wp
+  CROSS JOIN active_cycle ac
+  RETURNING id, owner_user_id
+)
+INSERT INTO tmp_bulk_kpi_seed (kpi_metric_id, owner_user_id)
+SELECT
+  i.id,
+  i.owner_user_id
+FROM inserted i;
+
+INSERT INTO kpi_checkins (
+  kpi_metric_id,
+  checkin_by_user_id,
+  checkin_date,
+  value_before,
+  value_after,
+  progress_percent,
+  note
+)
+SELECT
+  k.kpi_metric_id,
+  k.owner_user_id,
+  (DATE '2026-04-05' + ((c.checkin_seq * 14) + ((k.kpi_metric_id % 10)::INT)))::DATE,
+  GREATEST(0, km.current_value - ((2 - c.checkin_seq) * 6)),
+  GREATEST(0, km.current_value - ((2 - c.checkin_seq) * 2)),
+  LEAST(
+    100,
+    ROUND(
+      (GREATEST(0, km.current_value - ((2 - c.checkin_seq) * 2)) * 100.0) / NULLIF(km.target_value, 0),
+      2
+    )
+  ) AS progress_percent,
+  FORMAT('Auto KPI check-in %s for KPI %s', c.checkin_seq, k.kpi_metric_id)
+FROM tmp_bulk_kpi_seed k
+JOIN kpi_metrics km ON km.id = k.kpi_metric_id
+CROSS JOIN generate_series(1, 2) AS c(checkin_seq);
+
+CREATE TEMP TABLE tmp_bulk_review_seed (
+  review_id BIGINT PRIMARY KEY,
+  employee_user_id BIGINT NOT NULL,
+  manager_user_id BIGINT NOT NULL,
+  review_status VARCHAR(30) NOT NULL,
+  total_score NUMERIC(6,2) NOT NULL
+) ON COMMIT DROP;
+
+WITH review_period AS (
+  SELECT id AS period_id
+  FROM review_periods
+  WHERE code = '2026-Q2'
+),
+prepared AS (
+  SELECT
+    e.user_id AS employee_user_id,
+    e.department_id,
+    e.manager_user_id,
+    e.seq,
+    (62 + (e.seq % 36))::NUMERIC(6,2) AS total_score,
+    CASE
+      WHEN (e.seq % 5) = 0 THEN 'approved'
+      WHEN (e.seq % 3) = 0 THEN 'manager_reviewed'
+      ELSE 'employee_submitted'
+    END AS review_status
+  FROM tmp_bulk_employee_seed e
+),
+inserted AS (
+  INSERT INTO employee_reviews (
+    period_id,
+    employee_user_id,
+    department_id,
+    manager_user_id,
+    status,
+    total_weight,
+    total_score,
+    rating_level,
+    created_by_user_id
+  )
+  SELECT
+    rp.period_id,
+    p.employee_user_id,
+    p.department_id,
+    p.manager_user_id,
+    p.review_status,
+    7.00,
+    p.total_score,
+    CASE
+      WHEN p.total_score >= 90 THEN 'excellent'
+      WHEN p.total_score >= 80 THEN 'good'
+      WHEN p.total_score >= 70 THEN 'meets_expectations'
+      ELSE 'needs_improvement'
+    END,
+    p.manager_user_id
+  FROM prepared p
+  CROSS JOIN review_period rp
+  RETURNING id, employee_user_id, manager_user_id, status, total_score
+)
+INSERT INTO tmp_bulk_review_seed (review_id, employee_user_id, manager_user_id, review_status, total_score)
+SELECT
+  i.id,
+  i.employee_user_id,
+  i.manager_user_id,
+  i.status,
+  i.total_score
+FROM inserted i;
+
+INSERT INTO employee_review_items (
+  review_id,
+  item_order,
+  category,
+  project_code,
+  project_name,
+  description,
+  weight,
+  plan_percent,
+  actual_percent,
+  achievement_score,
+  weighted_score,
+  evidence_note,
+  manager_note,
+  is_required,
+  is_locked,
+  updated_by_user_id
+)
+SELECT
+  r.review_id,
+  i.item_order,
+  i.category,
+  CASE
+    WHEN i.item_order = 1 THEN FORMAT('BPRJ-%s-%s', d.code, LPAD((((r.employee_user_id + i.item_order) % 119) + 2)::TEXT, 3, '0'))
+    ELSE NULL
+  END,
+  CASE
+    WHEN i.item_order = 1 THEN FORMAT('Bulk project %s %s', d.code, LPAD((((r.employee_user_id + i.item_order) % 119) + 2)::TEXT, 3, '0'))
+    ELSE NULL
+  END,
+  i.description,
+  i.weight,
+  100.00,
+  LEAST(100, ROUND(r.total_score + (i.item_order * 1.5), 2)),
+  LEAST(100, ROUND(r.total_score + (i.item_order * 1.5), 2)),
+  ROUND(i.weight * LEAST(100, ROUND(r.total_score + (i.item_order * 1.5), 2)), 2),
+  FORMAT('Auto evidence item %s for review %s.', i.item_order, r.review_id),
+  FORMAT('Auto manager note item %s for review %s.', i.item_order, r.review_id),
+  TRUE,
+  FALSE,
+  CASE
+    WHEN i.item_order = 1 THEN r.employee_user_id
+    ELSE r.manager_user_id
+  END
+FROM tmp_bulk_review_seed r
+JOIN users u ON u.id = r.employee_user_id
+JOIN departments d ON d.id = u.department_id
+JOIN (
+  VALUES
+    (1, 'Project KPI', 3.00::NUMERIC, 'Completed assigned deliverables and quality commitments.'),
+    (2, 'Discipline and Collaboration', 2.00::NUMERIC, 'Maintained collaboration and process discipline.'),
+    (3, 'Improvement Initiative', 2.00::NUMERIC, 'Proposed and executed improvement initiatives.')
+) AS i(item_order, category, weight, description) ON TRUE;
+
+INSERT INTO review_comments (review_id, comment_type, content, author_user_id)
+SELECT
+  r.review_id,
+  'employee_self',
+  FORMAT('Auto self-review submitted for review %s.', r.review_id),
+  r.employee_user_id
+FROM tmp_bulk_review_seed r;
+
+INSERT INTO review_comments (review_id, comment_type, content, author_user_id)
+SELECT
+  r.review_id,
+  'manager',
+  FORMAT('Auto manager feedback completed for review %s.', r.review_id),
+  r.manager_user_id
+FROM tmp_bulk_review_seed r;
+
+INSERT INTO review_comments (review_id, comment_type, content, author_user_id)
+SELECT
+  r.review_id,
+  'hr',
+  FORMAT('Auto HR final check completed for review %s.', r.review_id),
+  (SELECT id FROM users WHERE username = 'hr.lead')
+FROM tmp_bulk_review_seed r
+WHERE r.review_status = 'approved';
+
+INSERT INTO review_approvals (review_id, action_type, note, actor_user_id)
+SELECT
+  r.review_id,
+  'submit',
+  'Auto submit from bulk employee review.',
+  r.employee_user_id
+FROM tmp_bulk_review_seed r;
+
+INSERT INTO review_approvals (review_id, action_type, note, actor_user_id)
+SELECT
+  r.review_id,
+  'manager_approve',
+  'Auto manager approval from bulk dataset.',
+  r.manager_user_id
+FROM tmp_bulk_review_seed r
+WHERE r.review_status IN ('manager_reviewed', 'approved');
+
+INSERT INTO review_approvals (review_id, action_type, note, actor_user_id)
+SELECT
+  r.review_id,
+  'approve',
+  'Auto HR approval from bulk dataset.',
+  (SELECT id FROM users WHERE username = 'hr.lead')
+FROM tmp_bulk_review_seed r
+WHERE r.review_status = 'approved';
+
+UPDATE objectives o
+SET progress_percent = p.avg_progress
+FROM (
+  SELECT objective_id, ROUND(AVG(progress_percent), 2) AS avg_progress
+  FROM key_results
+  GROUP BY objective_id
+) p
+WHERE p.objective_id = o.id;
+
 INSERT INTO audit_logs (actor_user_id, action, entity_type, entity_id, metadata)
 VALUES
   (
@@ -777,7 +1419,23 @@ VALUES
     'seed.initialize',
     'system',
     NULL,
-    '{"source":"seed.sql","note":"Initial hackathon demo data"}'::jsonb
+    '{"source":"seed.sql","note":"Base and massive demo data loaded"}'::jsonb
+  );
+
+INSERT INTO audit_logs (actor_user_id, action, entity_type, entity_id, metadata)
+SELECT
+  (SELECT id FROM users WHERE username = 'admin'),
+  'seed.bulk_generated',
+  'system',
+  NULL,
+  jsonb_build_object(
+    'source', 'seed.sql',
+    'bulk_users', (SELECT COUNT(*) FROM tmp_bulk_employee_seed),
+    'bulk_projects', (SELECT COUNT(*) FROM tmp_bulk_project_seed),
+    'bulk_objectives', (SELECT COUNT(*) FROM tmp_bulk_objective_seed),
+    'bulk_key_results', (SELECT COUNT(*) FROM tmp_bulk_key_result_seed),
+    'bulk_kpis', (SELECT COUNT(*) FROM tmp_bulk_kpi_seed),
+    'bulk_reviews', (SELECT COUNT(*) FROM tmp_bulk_review_seed)
   );
 
 COMMIT;
