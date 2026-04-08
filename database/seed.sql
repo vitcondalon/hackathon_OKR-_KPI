@@ -1366,6 +1366,241 @@ SELECT
   r.employee_user_id
 FROM tmp_bulk_review_seed r;
 
+-- --------------------------------------------------------------------------
+-- Coverage top-up: ensure every non-admin account has review + KPI in Q2
+-- --------------------------------------------------------------------------
+
+CREATE TEMP TABLE tmp_coverage_review_seed (
+  review_id BIGINT PRIMARY KEY,
+  employee_user_id BIGINT NOT NULL,
+  manager_user_id BIGINT,
+  total_score NUMERIC(6,2) NOT NULL
+) ON COMMIT DROP;
+
+WITH q2_period AS (
+  SELECT id AS period_id
+  FROM review_periods
+  WHERE code = '2026-Q2'
+),
+admin_user AS (
+  SELECT u.id AS admin_id
+  FROM users u
+  JOIN roles r ON r.id = u.role_id
+  WHERE r.code = 'admin'
+  ORDER BY u.id
+  LIMIT 1
+),
+target_users AS (
+  SELECT
+    u.id AS employee_user_id,
+    u.department_id,
+    COALESCE(u.manager_user_id, a.admin_id) AS manager_user_id
+  FROM users u
+  JOIN roles r ON r.id = u.role_id
+  CROSS JOIN admin_user a
+  WHERE u.deleted_at IS NULL
+    AND u.is_active = TRUE
+    AND r.code <> 'admin'
+),
+inserted AS (
+  INSERT INTO employee_reviews (
+    period_id,
+    employee_user_id,
+    department_id,
+    manager_user_id,
+    status,
+    total_weight,
+    total_score,
+    rating_level,
+    created_by_user_id
+  )
+  SELECT
+    p.period_id,
+    t.employee_user_id,
+    t.department_id,
+    t.manager_user_id,
+    'employee_submitted',
+    7.00,
+    (72 + (t.employee_user_id % 20))::NUMERIC(6,2),
+    CASE
+      WHEN (72 + (t.employee_user_id % 20)) >= 90 THEN 'excellent'
+      WHEN (72 + (t.employee_user_id % 20)) >= 80 THEN 'good'
+      ELSE 'meets_expectations'
+    END,
+    t.manager_user_id
+  FROM target_users t
+  CROSS JOIN q2_period p
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM employee_reviews er
+    WHERE er.period_id = p.period_id
+      AND er.employee_user_id = t.employee_user_id
+  )
+  RETURNING id, employee_user_id, manager_user_id, total_score
+)
+INSERT INTO tmp_coverage_review_seed (review_id, employee_user_id, manager_user_id, total_score)
+SELECT
+  i.id,
+  i.employee_user_id,
+  i.manager_user_id,
+  i.total_score
+FROM inserted i;
+
+INSERT INTO employee_review_items (
+  review_id,
+  item_order,
+  category,
+  project_code,
+  project_name,
+  description,
+  weight,
+  plan_percent,
+  actual_percent,
+  achievement_score,
+  weighted_score,
+  evidence_note,
+  manager_note,
+  is_required,
+  is_locked,
+  updated_by_user_id
+)
+SELECT
+  r.review_id,
+  1,
+  'Project KPI',
+  NULL,
+  NULL,
+  'Auto-generated default item to ensure review visibility for all non-admin accounts.',
+  7.00,
+  100.00,
+  r.total_score,
+  r.total_score,
+  ROUND(r.total_score * 7, 2),
+  FORMAT('Auto evidence for review %s.', r.review_id),
+  FORMAT('Auto manager note for review %s.', r.review_id),
+  TRUE,
+  FALSE,
+  COALESCE(r.manager_user_id, r.employee_user_id)
+FROM tmp_coverage_review_seed r;
+
+INSERT INTO review_comments (review_id, comment_type, content, author_user_id)
+SELECT
+  r.review_id,
+  'employee_self',
+  FORMAT('Auto self-review content for review %s.', r.review_id),
+  r.employee_user_id
+FROM tmp_coverage_review_seed r;
+
+INSERT INTO review_approvals (review_id, action_type, note, actor_user_id)
+SELECT
+  r.review_id,
+  'submit',
+  'Auto submit from coverage top-up.',
+  r.employee_user_id
+FROM tmp_coverage_review_seed r;
+
+CREATE TEMP TABLE tmp_coverage_kpi_seed (
+  kpi_metric_id BIGINT PRIMARY KEY,
+  owner_user_id BIGINT NOT NULL
+) ON COMMIT DROP;
+
+WITH active_cycle AS (
+  SELECT id AS cycle_id
+  FROM okr_cycles
+  WHERE code = '2026-Q2'
+),
+target_users AS (
+  SELECT
+    u.id AS user_id,
+    u.employee_code
+  FROM users u
+  JOIN roles r ON r.id = u.role_id
+  WHERE u.deleted_at IS NULL
+    AND u.is_active = TRUE
+    AND r.code <> 'admin'
+),
+prepared AS (
+  SELECT
+    t.user_id,
+    t.employee_code,
+    (55 + (t.user_id % 35))::NUMERIC AS current_value
+  FROM target_users t
+),
+inserted AS (
+  INSERT INTO kpi_metrics (
+    cycle_id,
+    code,
+    name,
+    description,
+    scope_type,
+    owner_user_id,
+    department_id,
+    measurement_unit,
+    direction,
+    start_value,
+    target_value,
+    current_value,
+    progress_percent,
+    weight,
+    status
+  )
+  SELECT
+    ac.cycle_id,
+    FORMAT('KPI-U-%s', p.employee_code),
+    FORMAT('Personal KPI for %s', p.employee_code),
+    'Auto-generated KPI to ensure each account has at least one KPI in demo.',
+    'employee',
+    p.user_id,
+    NULL,
+    '%',
+    'increase',
+    0,
+    100,
+    p.current_value,
+    LEAST(100, ROUND((p.current_value * 100.0) / 100.0, 2)),
+    1,
+    CASE
+      WHEN p.current_value >= 90 THEN 'completed'
+      WHEN p.current_value < 60 THEN 'at_risk'
+      ELSE 'on_track'
+    END
+  FROM prepared p
+  CROSS JOIN active_cycle ac
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM kpi_metrics km
+    WHERE km.cycle_id = ac.cycle_id
+      AND km.scope_type = 'employee'
+      AND km.owner_user_id = p.user_id
+  )
+  RETURNING id, owner_user_id
+)
+INSERT INTO tmp_coverage_kpi_seed (kpi_metric_id, owner_user_id)
+SELECT
+  i.id,
+  i.owner_user_id
+FROM inserted i;
+
+INSERT INTO kpi_checkins (
+  kpi_metric_id,
+  checkin_by_user_id,
+  checkin_date,
+  value_before,
+  value_after,
+  progress_percent,
+  note
+)
+SELECT
+  k.kpi_metric_id,
+  k.owner_user_id,
+  DATE '2026-05-10',
+  GREATEST(0, km.current_value - 5),
+  km.current_value,
+  LEAST(100, ROUND((km.current_value * 100.0) / NULLIF(km.target_value, 0), 2)),
+  FORMAT('Auto KPI check-in for coverage KPI %s', k.kpi_metric_id)
+FROM tmp_coverage_kpi_seed k
+JOIN kpi_metrics km ON km.id = k.kpi_metric_id;
+
 UPDATE objectives o
 SET progress_percent = p.avg_progress
 FROM (
