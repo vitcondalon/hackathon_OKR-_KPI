@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      seed_demo_data:
+        description: "Run demo reseed on VPS (WARNING: resets DB data)"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: production-deploy
@@ -19,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -32,6 +40,32 @@ jobs:
           printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
+      - name: Decide seed mode
+        id: seed_mode
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MANUAL_SEED_INPUT: ${{ github.event.inputs.seed_demo_data || 'false' }}
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          SHOULD_SEED="false"
+          CHANGED_FILES=""
+
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            if [ "${MANUAL_SEED_INPUT}" = "true" ]; then
+              SHOULD_SEED="true"
+            fi
+          else
+            CHANGED_FILES="$(git diff --name-only "${BEFORE_SHA}" "${CURRENT_SHA}" || true)"
+            if echo "${CHANGED_FILES}" | grep -Eq '^(database/(seed\.sql|schema\.sql)|backend/scripts/seed\.js)$'; then
+              SHOULD_SEED="true"
+            fi
+          fi
+
+          echo "should_seed=${SHOULD_SEED}" >> "$GITHUB_OUTPUT"
+          echo "Seed mode: ${SHOULD_SEED}"
+
       - name: Run deploy script on VPS
         shell: bash
         env:
@@ -40,6 +74,12 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           APP_DIR: ${{ secrets.APP_DIR }}
           BRANCH: ${{ github.ref_name }}
+          SHOULD_SEED: ${{ steps.seed_mode.outputs.should_seed }}
         run: |
+          SEED_FLAG=""
+          if [ "${SHOULD_SEED}" = "true" ]; then
+            SEED_FLAG="--seed"
+          fi
+
           ssh -p "${VPS_PORT:-22}" "${VPS_USER}@${VPS_HOST}" \
-            "export APP_DIR='${APP_DIR:-/var/www/okr-kpi}' BRANCH='${BRANCH}'; bash '${APP_DIR:-/var/www/okr-kpi}/deploy/update_app.sh'"
+            "export APP_DIR='${APP_DIR:-/var/www/okr-kpi}' BRANCH='${BRANCH}'; bash '${APP_DIR:-/var/www/okr-kpi}/deploy/update_app.sh' ${SEED_FLAG}"
