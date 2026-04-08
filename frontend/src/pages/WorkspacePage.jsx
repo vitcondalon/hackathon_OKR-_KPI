@@ -6,6 +6,7 @@ import { apiErrorMessage } from '../api/helpers';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../contexts/LocaleContext';
 import AppModeTabs from '../components/layout/AppModeTabs';
+import PasswordField from '../components/common/PasswordField';
 
 const statusClass = {
   draft: 'bg-slate-100 text-slate-700 border-slate-300',
@@ -609,6 +610,9 @@ function WorkspacePage() {
   const { user } = useAuth();
   const { locale } = useLocale();
   const t = copy[locale] || copy.vi;
+  const passwordToggleLabels = locale === 'en'
+    ? { show: 'Show password', hide: 'Hide password' }
+    : { show: 'Hiện mật khẩu', hide: 'Ẩn mật khẩu' };
   const panelClass = 'ui-panel';
   const roleOptions = ['employee', 'manager', 'hr', 'admin'];
 
@@ -1419,7 +1423,14 @@ function WorkspacePage() {
                   <option key={dep.id} value={dep.id}>{localizeDepartmentName(dep.name, locale)}</option>
                 ))}
               </select>
-              <input placeholder={t.resetPassword} value={newUser.password} onChange={(event) => setNewUser((prev) => ({ ...prev, password: event.target.value }))} required />
+              <PasswordField
+                placeholder={t.resetPassword}
+                value={newUser.password}
+                onChange={(event) => setNewUser((prev) => ({ ...prev, password: event.target.value }))}
+                autoComplete="new-password"
+                toggleLabels={passwordToggleLabels}
+                required
+              />
               <button type="submit" className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white" disabled={busy}>
                 {t.createUser}
               </button>
@@ -1445,11 +1456,13 @@ function WorkspacePage() {
                       <td className="border border-slate-200 px-2 py-2">{item.email}</td>
                       <td className="border border-slate-200 px-2 py-2">
                         <div className="flex gap-2">
-                          <input
-                            type="password"
+                          <PasswordField
+                            wrapperClassName="flex-1"
                             placeholder={t.newPassword}
                             value={passwordDraft[item.id] || ''}
                             onChange={(event) => setPasswordDraft((prev) => ({ ...prev, [item.id]: event.target.value }))}
+                            autoComplete="new-password"
+                            toggleLabels={passwordToggleLabels}
                           />
                           <button type="button" onClick={() => resetPassword(item.id)} className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white" disabled={busy || !passwordDraft[item.id]}>
                             {t.update}

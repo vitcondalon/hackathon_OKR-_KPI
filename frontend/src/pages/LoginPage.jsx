@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../contexts/LocaleContext';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
+import PasswordField from '../components/common/PasswordField';
 
 const copy = {
   vi: {
@@ -62,6 +63,9 @@ export default function LoginPage() {
   const { locale, setLocale } = useLocale();
   const navigate = useNavigate();
   const t = copy[locale] || copy.vi;
+  const passwordToggleLabels = locale === 'en'
+    ? { show: 'Show password', hide: 'Hide password' }
+    : { show: 'Hiện mật khẩu', hide: 'Ẩn mật khẩu' };
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -133,7 +137,14 @@ export default function LoginPage() {
 
             <label className="block text-sm">
               <span className="mb-1.5 block font-semibold text-slate-700">{t.passLabel}</span>
-              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder={t.passPlaceholder} required />
+              <PasswordField
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder={t.passPlaceholder}
+                autoComplete="current-password"
+                toggleLabels={passwordToggleLabels}
+                required
+              />
             </label>
 
             {error ? <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
